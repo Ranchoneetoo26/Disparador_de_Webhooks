@@ -1,0 +1,1 @@
+docker-compose.yml: Arquivo para orquestrar os contêineres da aplicação, como o Node.js, PostgreSQL e Redis.

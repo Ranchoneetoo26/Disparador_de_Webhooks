@@ -1,0 +1,1 @@
+.sequelizerc: Arquivo de configuração para o Sequelize CLI, indicando os caminhos para migrations, models, etc
