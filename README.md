@@ -167,7 +167,7 @@ Camada mais externa, contém as implementações concretas das tecnologias.
 
 **webhookRoutes.js:** Define as rotas POST /reenviar, GET /protocolo, e GET /protocolo/:uuid.
 
-**express/validationSchemas/:** Contém os esquemas de validação do Joi.
+**express/validationSchemas/:** Contém os esquemas de validação do Joi
 
 **webhookSchemas.js:** Esquemas para as rotas de reenvio e consulta, validando parâmetros como product, id, kind, type, etc..
 
