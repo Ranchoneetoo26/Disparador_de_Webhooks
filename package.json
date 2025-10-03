@@ -1,12 +1,11 @@
-
-
 {
   "name": "disparador-wb",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watchAll"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +18,7 @@
     "sequelize": "^6.37.7"
   },
   "devDependencies": {
+    "jest": "^30.2.0",
     "nodemon": "^3.1.10",
     "sequelize-cli": "^6.6.3"
   }
