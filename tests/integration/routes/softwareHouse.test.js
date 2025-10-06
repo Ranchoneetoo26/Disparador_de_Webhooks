@@ -1,7 +1,7 @@
 // tests/integration/routes/softwareHouse.test.js
 
 import { Sequelize, DataTypes } from 'sequelize';
-// O import já estava correto, usando o nome que demos
+
 import defineSoftwareHouseModel from '../../../models/SoftwareHouse.js';
 
 describe('Integration tests - SoftwareHouse model (Postgres)', () => {
@@ -16,11 +16,8 @@ describe('Integration tests - SoftwareHouse model (Postgres)', () => {
       logging: false,
     });
 
-    // ----- MUDANÇA PRINCIPAL AQUI -----
-    // Simplesmente chamamos a função que importamos.
-    // Não precisamos mais daquela lógica complicada.
+  
     SoftwareHouse = defineSoftwareHouseModel(sequelize, DataTypes);
-    // ------------------------------------
 
     await sequelize.sync({ force: true });
   }, 20000);
@@ -32,8 +29,6 @@ describe('Integration tests - SoftwareHouse model (Postgres)', () => {
     }
   });
 
-  // O RESTANTE DO CÓDIGO (TODOS OS 'test(...)') CONTINUA EXATAMENTE O MESMO
-  // ...
   test('modelo possui atributos com tipos e constraints corretos', () => {
     const attrs = SoftwareHouse.rawAttributes;
 
