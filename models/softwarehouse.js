@@ -1,16 +1,16 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+// Usamos 'import' em vez de 'require'
+import { Model } from 'sequelize';
 
-module.exports = (sequelize, DataTypes) => {
+// Usamos 'export default' em vez de 'module.exports'
+export default (sequelize, DataTypes) => {
   class SoftwareHouse extends Model {
     static associate(models) {
-      
+      // Associações futuras
     }
   }
   SoftwareHouse.init({
-    idSoftwareHouses: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
