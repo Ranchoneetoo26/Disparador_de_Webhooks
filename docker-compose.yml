@@ -1,33 +1,22 @@
-# Define a versão do Docker Compose que estamos usando. A versão "3.8" é moderna e estável.
 version: "3.8"
 
-# A seção 'services' é onde definimos os containers que queremos rodar.
 services:
-  # 'db' é o nome que estamos dando ao nosso serviço de banco de dados.
-  # Poderia ser 'postgres' ou qualquer outro nome.
   db:
-    # Diz ao Docker para usar a imagem oficial mais recente do PostgreSQL.
     image: postgres:latest
     
-    # Reinicia o container automaticamente se ele parar por algum motivo.
     restart: always
     
-    # As variáveis de ambiente são usadas para configurar o PostgreSQL.
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: disparador_test
       
-    # A seção 'ports' mapeia uma porta da sua máquina para uma porta dentro do container.
     ports:
-      # Mapeia a porta 5433 da sua máquina (localhost) para a porta 5432 do container (porta padrão do Postgres).
+ 
       - "5433:5432"
       
-    # A seção 'volumes' é usada para persistir os dados do banco de dados.
-    # Isso garante que você não perca seus dados se o container for recriado.
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-# Define um volume nomeado para ser usado pelo serviço 'db'.
 volumes:
   postgres_data:
