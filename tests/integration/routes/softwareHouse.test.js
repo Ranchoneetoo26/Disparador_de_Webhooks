@@ -1,5 +1,3 @@
-// tests/integration/routes/softwareHouse.test.js
-
 import { Sequelize, DataTypes } from 'sequelize';
 
 import defineSoftwareHouseModel from '../../../models/SoftwareHouse.js';
@@ -16,7 +14,7 @@ describe('Integration tests - SoftwareHouse model (Postgres)', () => {
       logging: false,
     });
 
-  
+
     SoftwareHouse = defineSoftwareHouseModel(sequelize, DataTypes);
 
     await sequelize.sync({ force: true });
