@@ -1,7 +1,7 @@
 // src/infrastructure/database/sequelize/models/CedenteModel.js
 'use strict';
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const Cedente = sequelize.define(
     'Cedente',
     {
@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       token: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        // representa foreign key para SoftwareHouses; a associação será definida no index
+        // representa foreign key para SoftwareHouses; a associação é definida no index
       },
       status: {
         type: DataTypes.STRING,
@@ -36,14 +36,12 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: 'Cedentes', // use o nome da tabela da migration
-      timestamps: false,     // ajuste conforme sua migration (se tiver createdAt/updatedAt)
+      tableName: 'Cedentes', // mantenha o nome conforme suas migrations
+      timestamps: false,     // ajuste se usar createdAt/updatedAt
     }
   );
 
-  // Associação placeholder — defina depois no models/index.js
   Cedente.associate = function (models) {
-    // Exemplo: Cedente pertence a SoftwareHouse (ajuste nomes conforme seu projeto)
     if (models.SoftwareHouse) {
       Cedente.belongsTo(models.SoftwareHouse, {
         foreignKey: 'token',
