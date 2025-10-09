@@ -1,7 +1,8 @@
 // tests/integration/routes/softwareHouse.test.js
 'use strict';
 
-import * as db from '@database';
+import { jest } from '@jest/globals';
+import db from '@database';
 // Pega o model e o sequelize da sua conexão central
 const { SoftwareHouse, sequelize } = db;
 

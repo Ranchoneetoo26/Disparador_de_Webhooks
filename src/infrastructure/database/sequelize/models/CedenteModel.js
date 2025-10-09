@@ -1,57 +1,28 @@
-// src/infrastructure/database/sequelize/models/CedenteModel.js
 'use strict';
+import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
-  const Cedente = sequelize.define(
-    'Cedente',
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-        allowNull: false,
-      },
-      data_criacao: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-      },
-      cnpj: {
-        type: DataTypes.STRING(14),
-        allowNull: false,
-        unique: true,
-      },
-      token: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        // representa foreign key para SoftwareHouses; a associação é definida no index
-      },
-      status: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      configuracao_notificacao: {
-        type: DataTypes.JSONB,
-        allowNull: true,
-      },
+  class Cedente extends Model {
+    static associate(models) {
+      this.belongsTo(models.SoftwareHouse, { foreignKey: 'token', as: 'softwareHouse' });
+      this.hasMany(models.Conta, { foreignKey: 'cedente_id', as: 'contas' });
+    }
+  }
+  Cedente.init({
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
+    data_criacao: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    cnpj: { type: DataTypes.STRING(14), allowNull: false, unique: true },
+    token: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
-    {
-      tableName: 'Cedentes', // mantenha o nome conforme suas migrations
-      timestamps: false,     // ajuste se usar createdAt/updatedAt
-    }
-  );
-
-  Cedente.associate = function (models) {
-    if (models.SoftwareHouse) {
-      Cedente.belongsTo(models.SoftwareHouse, {
-        foreignKey: 'token',
-        targetKey: 'id',
-        as: 'softwareHouse',
-        onUpdate: 'CASCADE',
-        onDelete: 'RESTRICT',
-      });
-    }
-  };
-
+    status: { type: DataTypes.STRING, allowNull: false },
+    configuracao_notificacao: { type: DataTypes.JSONB, allowNull: true },
+  }, {
+    sequelize,
+    modelName: 'Cedente',
+    tableName: 'Cedentes',
+    timestamps: false
+  });
   return Cedente;
 };

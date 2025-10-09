@@ -4,11 +4,14 @@ import { Model } from 'sequelize';
 export default (sequelize, DataTypes) => {
   class SoftwareHouse extends Model {
     static associate(models) {
-      // Associações serão definidas aqui no futuro.
+      // Comente as linhas da associação temporariamente para o nosso teste
+      // this.hasMany(models.Cedente, {
+      //   foreignKey: 'token',
+      //   as: 'cedentes'
+      // }); 
     }
   }
   SoftwareHouse.init({
-    // DEFINIÇÃO CORRETA E EXPLÍCITA DO ID
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -36,6 +39,8 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'SoftwareHouse',
+    tableName: 'SoftwareHouses',
+    timestamps: false
   });
   return SoftwareHouse;
 };

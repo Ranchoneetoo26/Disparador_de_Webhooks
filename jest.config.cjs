@@ -1,16 +1,16 @@
-// jest.config.cjs
-
 module.exports = {
   testEnvironment: 'node',
   clearMocks: true,
 
-  transform: {
-    '^.+\\.[tj]s$': 'babel-jest',
-  },
+  // Linha que adicionamos para carregar o setup
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 
+  transform: {
+    '^.+\\.[t|j]s$': 'babel-jest',
+  },
   moduleNameMapper: {
-    '^@models/(.*)$': '<rootDir>/src/infrastructure/database/sequelize/models/$1',
-    '^@database$': '<rootDir>/src/infrastructure/database/sequelize/models/index.js',
-    '^@/(.*)$': '<rootDir>/src/$1',
+    '@models/(.*)$': '<rootDir>/src/infrastructure/database/sequelize/models/$1',
+    '@database$': '<rootDir>/src/infrastructure/database/sequelize/models/index.js',
+    '@/(.*)$': '<rootDir>/src/$1',
   },
 };
