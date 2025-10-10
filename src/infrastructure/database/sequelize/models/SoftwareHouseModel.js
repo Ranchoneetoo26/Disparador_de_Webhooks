@@ -4,11 +4,6 @@ import { Model } from 'sequelize';
 export default (sequelize, DataTypes) => {
   class SoftwareHouse extends Model {
     static associate(models) {
-      // Comente as linhas da associação temporariamente para o nosso teste
-      // this.hasMany(models.Cedente, {
-      //   foreignKey: 'token',
-      //   as: 'cedentes'
-      // }); 
     }
   }
   SoftwareHouse.init({

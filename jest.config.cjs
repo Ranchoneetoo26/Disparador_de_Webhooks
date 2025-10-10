@@ -2,7 +2,6 @@ module.exports = {
   testEnvironment: 'node',
   clearMocks: true,
 
-  // Linha que adicionamos para carregar o setup
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 
   transform: {

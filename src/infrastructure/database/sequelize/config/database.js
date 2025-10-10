@@ -18,6 +18,5 @@ module.exports = {
     port: process.env.DB_PORT
   },
   production: {
-    // Suas configurações de produção aqui
   }
 };

@@ -1,55 +1,43 @@
 'use strict';
 
-export default (sequelize, DataTypes) => {
-  const Cedente = sequelize.define(
-    'Cedente',
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-        allowNull: false,
-      },
-      data_criacao: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-      },
-      cnpj: {
-        type: DataTypes.STRING(14),
-        allowNull: false,
-        unique: true,
-      },
-      token: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      status: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      configuracao_notificacao: {
-        type: DataTypes.JSONB,
-        allowNull: true,
-      },
-    },
-    {
-      tableName: 'Cedentes',
-      timestamps: false,
-    }
-  );
+import { jest } from '@jest/globals';
+import db from '@database';
 
-  Cedente.associate = function (models) {
-    if (models.SoftwareHouse) {
-      Cedente.belongsTo(models.SoftwareHouse, {
-        foreignKey: 'token',
-        targetKey: 'id',
-        as: 'softwareHouse',
-        onUpdate: 'CASCADE',
-        onDelete: 'RESTRICT',
-      });
-    }
-  };
+const { Cedente, SoftwareHouse, sequelize } = db;
 
-  return Cedente;
-};
+describe('Integração do Model: Cedente', () => {
+  jest.setTimeout(15000);
+
+  beforeEach(async () => {
+   
+    await sequelize.sync({ force: true });
+
+    await SoftwareHouse.create({
+      id: 1, // ID fixo para facilitar a referência no teste
+      cnpj: '11111111000111',
+      token: 'TOKEN_DE_TESTE_SH',
+      status: 'ativo',
+    });
+  });
+
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
+  test('deve CRIAR um novo Cedente com dados válidos', async () => {
+    // Arrange
+    const payload = {
+      cnpj: '12345678000199',
+      token: 1,
+      status: 'ativo',
+    };
+
+    // Act
+    const cedenteCriado = await Cedente.create(payload);
+
+    // Assert
+    expect(cedenteCriado).toBeDefined();
+    expect(cedenteCriado.cnpj).toBe(payload.cnpj);
+    expect(cedenteCriado.token).toBe(1);
+  });
+});

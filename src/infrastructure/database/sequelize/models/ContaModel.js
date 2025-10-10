@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
         },
         status: { type: DataTypes.STRING, allowNull: false },
         configuracao_notificacao: { type: DataTypes.JSONB, allowNull: true }
-    },{
+    }, {
         sequelize,
         modelName: 'Conta',
         tableName: 'Contas',

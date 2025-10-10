@@ -18,8 +18,8 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Convenio',
-    tableName: 'Convenios', 
-    timestamps: false 
+    tableName: 'Convenios',
+    timestamps: false
   });
   return Convenio;
 };
