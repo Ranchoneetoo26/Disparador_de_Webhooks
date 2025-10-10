@@ -1,45 +1,45 @@
 'use strict'
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-    async up(queryInterface, Sequelize){
-        await queryInterface.createTable('Cedentes',{
-            id:{
-                allowNull:false,
+    async up(queryInterface, Sequelize) {
+        await queryInterface.createTable('Cedentes', {
+            id: {
+                allowNull: false,
                 autoIncrement: true,
                 primaryKey: true,
                 type: Sequelize.INTEGER
             },
-            data_criacao:{
+            data_criacao: {
                 allowNull: false,
                 type: Sequelize.DATE,
                 defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
             },
-            cnpj:{
+            cnpj: {
                 allowNull: false,
                 unique: true,
                 type: Sequelize.STRING(14)
             },
-            token:{
+            token: {
                 allowNull: false,
                 type: Sequelize.INTEGER,
-                references:{
+                references: {
                     model: 'SoftwareHouses',
-                    key:'id'
+                    key: 'id'
                 },
-                onUpdate:'CASCADE',
+                onUpdate: 'CASCADE',
                 onDelete: 'RESTRICT'
             },
-            status:{
-                allowNull:false,
+            status: {
+                allowNull: false,
                 type: Sequelize.STRING
             },
-            configuracao_notificacao:{
+            configuracao_notificacao: {
                 type: Sequelize.JSONB,
                 allowNull: true
             }
         });
     },
-    async down(queryInterface, Sequelize){
+    async down(queryInterface, Sequelize) {
         await queryInterface.dropTable('Cedentes');
     }
 };

@@ -11,7 +11,7 @@ module.exports = {
       },
       numero_convenio: {
         allowNull: false,
-        type: Sequelize.STRING 
+        type: Sequelize.STRING
       },
       data_criacao: {
         allowNull: false,
@@ -19,7 +19,7 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
       conta_id: {
-        allowNull: false, 
+        allowNull: false,
         type: Sequelize.INTEGER,
         references: {
           model: 'Contas',
