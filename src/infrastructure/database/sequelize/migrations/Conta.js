@@ -12,12 +12,6 @@ module.exports = {
             },
             data_criacao: {
                 allowNull: false,
-                autoIncrement: true,
-                primaryKey: true,
-                type: Sequelize.INTEGER
-            },
-            data_criacao: {
-                allowNull: false,
                 type: Sequelize.DATE,
                 defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
             },
