@@ -1,7 +1,7 @@
 'use strict';
-import { Model } from 'sequelize';
+const { Model } = require('sequelize');
 
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   class Convenio extends Model {
     static associate(models) {
       this.belongsTo(models.Conta, { foreignKey: 'conta_id', as: 'conta' });

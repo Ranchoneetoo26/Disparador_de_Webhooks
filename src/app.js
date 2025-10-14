@@ -1,10 +1,11 @@
-// src/app.js
-
 import express from 'express';
-// Seus arquivos de rota serão importados aqui. Exemplo:
-// import webhookRoutes from './infrastructure/web/routes/webhookRoutes';
+// CORREÇÃO: Importa o roteador CJS como um objeto namespace
+import * as webhookRouterModule from './infrastructure/http/express/routes/webhookRoutes';
 
 const app = express();
+// Acessa o roteador. Express.Router() é exportado via module.exports,
+// o que aparece como a propriedade 'default' ou diretamente o objeto em imports ESM.
+const webhookRouter = webhookRouterModule.default || webhookRouterModule; 
 
 // Middlewares essenciais
 app.use(express.json());
@@ -14,9 +15,13 @@ app.get('/', (req, res) => {
   res.status(200).json({ message: 'API is running' });
 });
 
-// Suas rotas principais seriam adicionadas aqui
-// app.use('/api', webhookRoutes);
+// ANEXANDO A ROTA DE WEBHOOKS
+app.use('/webhooks', webhookRouter);
 
-// A linha mais importante de todas:
-// Exporta a instância do app como o padrão do módulo.
+// Tratamento de erros 404 para rotas não encontradas
+app.use((req, res, next) => {
+    // Retorna 404 com a estrutura esperada pelo teste
+    res.status(404).json({ error: 'Webhook not found' });
+});
+
 export default app;

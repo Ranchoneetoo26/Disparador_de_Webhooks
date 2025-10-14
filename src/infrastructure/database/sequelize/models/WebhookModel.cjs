@@ -1,4 +1,3 @@
-// src/infrastructure/database/sequelize/models/WebhookModel.js
 
 'use strict';
 const { Model, DataTypes } = require('sequelize');

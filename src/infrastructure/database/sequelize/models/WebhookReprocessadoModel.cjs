@@ -1,7 +1,7 @@
 'use strict';
-import { Model } from 'sequelize';
+const { Model } = require('sequelize');
 
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   class WebhookReprocessado extends Model {
     static associate(models) {
       this.belongsTo(models.Cedente, { foreignKey: 'cedente_id', as: 'cedente' });
