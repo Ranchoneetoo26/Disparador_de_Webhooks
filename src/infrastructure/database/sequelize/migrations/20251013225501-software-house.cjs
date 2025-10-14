@@ -1,14 +1,18 @@
+// src/infrastructure/database/sequelize/migrations/...-software-house.cjs
+
 'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('SoftwareHouses', {
-      idSoftwareHouses: {
+      // --- CORREÇÃO APLICADA AQUI ---
+      id: { // O nome da chave primária foi padronizado para 'id'
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      // ---------------------------------
       data_criacao: {
         allowNull: false,
         type: Sequelize.DATE,
