@@ -1,19 +1,20 @@
-'use strict';
-
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import db from '@database';
 
 const { Cedente, SoftwareHouse, sequelize } = db;
 
 describe('Integração do Model: Cedente', () => {
+  let softwareHouse; // Variável para armazenar o pré-requisito
   jest.setTimeout(15000);
 
   beforeEach(async () => {
-   
+    // Recria as tabelas em cada teste
     await sequelize.sync({ force: true });
 
-    await SoftwareHouse.create({
-      id: 1, // ID fixo para facilitar a referência no teste
+    // CRIAÇÃO DO PRÉ-REQUISITO: SoftwareHouse
+    softwareHouse = await SoftwareHouse.create({
+      // Adicionado data_criacao para garantir NOT NULL
+      data_criacao: new Date(), 
       cnpj: '11111111000111',
       token: 'TOKEN_DE_TESTE_SH',
       status: 'ativo',
@@ -27,9 +28,13 @@ describe('Integração do Model: Cedente', () => {
   test('deve CRIAR um novo Cedente com dados válidos', async () => {
     // Arrange
     const payload = {
+      data_criacao: new Date(), // Adicionado data_criacao
       cnpj: '12345678000199',
-      token: 1,
+      // CORREÇÃO: token é STRING. E softwarehouse_id é a FK, não o token.
+      token: 'TOKEN_CEDENTE_TESTE', 
       status: 'ativo',
+      // CHAVE ESTRANGEIRA NECESSÁRIA:
+      softwarehouse_id: softwareHouse.id,
     };
 
     // Act
@@ -38,6 +43,7 @@ describe('Integração do Model: Cedente', () => {
     // Assert
     expect(cedenteCriado).toBeDefined();
     expect(cedenteCriado.cnpj).toBe(payload.cnpj);
-    expect(cedenteCriado.token).toBe(1);
+    expect(cedenteCriado.token).toBe(payload.token);
+    expect(cedenteCriado.softwarehouse_id).toBe(softwareHouse.id);
   });
 });
