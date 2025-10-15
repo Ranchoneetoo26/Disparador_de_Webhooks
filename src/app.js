@@ -15,12 +15,10 @@ app.get('/', (req, res) => {
   res.status(200).json({ message: 'API is running' });
 });
 
-// ANEXANDO A ROTA DE WEBHOOKS
 app.use('/webhooks', webhookRouter);
 
 // Tratamento de erros 404 para rotas não encontradas
 app.use((req, res, next) => {
-    // Retorna 404 com a estrutura esperada pelo teste
     res.status(404).json({ error: 'Webhook not found' });
 });
 

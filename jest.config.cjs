@@ -1,4 +1,3 @@
-// jest.config.cjs
 module.exports = {
   testEnvironment: 'node',
   clearMocks: true,
@@ -11,7 +10,6 @@ module.exports = {
 
   modulePaths: ['<rootDir>/src'],
 
-  // ajuda o resolver do jest a achar módulos dentro do src também
   moduleDirectories: ['node_modules', '<rootDir>/src'],
 
   moduleNameMapper: {

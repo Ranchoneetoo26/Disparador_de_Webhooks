@@ -1,13 +1,9 @@
-// tests/unit/userCases/ReenviarWebhookUseCase.spec.js
-
-// ADICIONE ESTA LINHA: Importe as funções globais do Jest
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
-// Importe a classe que você está testando
 import ReenviarWebhookUseCase from '@/application/useCases/ReenviarWebhookUseCase';
 
 describe('ReenviarWebhookUseCase', () => {
-  // Variáveis para guardar nossos mocks e a instância da classe
+
   let reenviarWebhookUseCase;
   let mockWebhookRepository;
   let mockReprocessadoRepository;
