@@ -11,18 +11,18 @@ class Webhook extends Model {
 
 const initWebhook = (sequelize) => {
   Webhook.init({
-    // Defina os campos da sua tabela de webhooks
+
     url: DataTypes.STRING,
     payload: DataTypes.JSON,
     tentativas: {
       type: DataTypes.INTEGER,
       defaultValue: 0
     },
-    // Adicione outros campos como last_status, kind, type, etc., se necessário
+
   }, {
     sequelize,
     modelName: 'Webhook',
-    tableName: 'webhooks', // Nome da tabela no banco de dados
+    tableName: 'webhooks', 
   });
   return Webhook;
 };

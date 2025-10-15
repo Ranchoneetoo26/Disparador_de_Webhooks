@@ -13,8 +13,8 @@ describe('Integração do Model: Cedente', () => {
 
     // CRIAÇÃO DO PRÉ-REQUISITO: SoftwareHouse
     softwareHouse = await SoftwareHouse.create({
-      // Adicionado data_criacao para garantir NOT NULL
-      data_criacao: new Date(), 
+
+      data_criacao: new Date(),
       cnpj: '11111111000111',
       token: 'TOKEN_DE_TESTE_SH',
       status: 'ativo',
@@ -30,8 +30,8 @@ describe('Integração do Model: Cedente', () => {
     const payload = {
       data_criacao: new Date(), // Adicionado data_criacao
       cnpj: '12345678000199',
-      // CORREÇÃO: token é STRING. E softwarehouse_id é a FK, não o token.
-      token: 'TOKEN_CEDENTE_TESTE', 
+
+      token: 'TOKEN_CEDENTE_TESTE',
       status: 'ativo',
       // CHAVE ESTRANGEIRA NECESSÁRIA:
       softwarehouse_id: softwareHouse.id,

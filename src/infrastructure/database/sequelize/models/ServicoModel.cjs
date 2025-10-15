@@ -8,24 +8,24 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Servico.init({
-    id: { 
-      type: DataTypes.INTEGER, 
-      primaryKey: true, 
-      autoIncrement: true, 
-      allowNull: false 
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false
     },
-    data_criacao: { 
-      type: DataTypes.DATE, 
-      allowNull: false, 
-      defaultValue: DataTypes.NOW 
+    data_criacao: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
     },
     convenio_id: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    status: { 
-      type: DataTypes.STRING, 
-      allowNull: false 
+    status: {
+      type: DataTypes.STRING,
+      allowNull: false
     }
   }, {
     sequelize,

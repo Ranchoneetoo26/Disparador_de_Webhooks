@@ -23,7 +23,7 @@ describe('Integration: Conta model', () => {
       data_criacao: new Date(),
       id: 1,
       cnpj: '22222222000122',
-      // CORREÇÃO: Adicionamos o softwarehouse_id e corrigimos o token para STRING
+      
       token: 'TOKEN_CEDENTE_1', 
       softwarehouse_id: softwareHouse.id,
       status: 'ativo'

@@ -34,14 +34,12 @@ export default class ReenviarWebhookUseCase {
         try {
             const resp = await this.httpClient.post(webhook.url, webhook.payload, { timeout: 5000 });
 
-            // Caso sucesso (2xx)
             if (resp && resp.status >= 200 && resp.status < 300) {
-                // exemplo: atualizar tentativas / status — adapte conforme sua model
+                
                 await this.webhookRepository.update(webhook.id, { tentativas: (webhook.tentativas || 0) + 1, last_status: resp.status });
                 return { success: true, status: resp.status, data: resp.data };
             }
 
-            // Caso resposta não-2xx -> registrar reprocessado
             await this.reprocessadoRepository.create({
                 data: webhook.payload,
                 cedente_id: webhook.cedente_id || null,

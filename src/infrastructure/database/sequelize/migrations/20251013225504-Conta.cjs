@@ -1,5 +1,5 @@
-
 'use strict';
+
 /** @type {import('sequelize-cli').Migration} */
 
 module.exports = {
@@ -36,7 +36,7 @@ module.exports = {
             },
             status: {
                 allowNull: false,
-                type: Sequelize.STRING // ativo ou não
+                type: Sequelize.STRING 
             },
             configuracao_notificacao: {
                 type: Sequelize.JSONB,

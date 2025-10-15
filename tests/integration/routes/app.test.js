@@ -1,5 +1,3 @@
-// tests/integration/app.test.js
-
 import { describe, it, expect } from '@jest/globals';
 import request from 'supertest';
 import app from '@/app';

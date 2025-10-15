@@ -1,6 +1,3 @@
-// src/infrastructure/database/sequelize/config/config.js
-
-// Garante que o .env na raiz do projeto seja carregado
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../../../../.env') });
 
 module.exports = {
@@ -9,7 +6,7 @@ module.exports = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     host: process.env.DB_HOST,
-    port: process.env.DB_PORT, // <-- ADICIONADO AQUI
+    port: process.env.DB_PORT, 
     dialect: process.env.DB_DIALECT || 'postgres',
   },
   test: {
@@ -17,7 +14,7 @@ module.exports = {
     password: process.env.DB_PASSWORD_TEST,
     database: process.env.DB_DATABASE_TEST,
     host: process.env.DB_HOST_TEST,
-    port: process.env.DB_PORT_TEST, // <-- E ADICIONADO AQUI
+    port: process.env.DB_PORT_TEST, 
     dialect: process.env.DB_DIALECT_TEST || 'postgres',
   },
   production: {
@@ -25,7 +22,7 @@ module.exports = {
     password: process.env.DB_PASSWORD_PROD,
     database: process.env.DB_DATABASE_PROD,
     host: process.env.DB_HOST_PROD,
-    port: process.env.DB_PORT_PROD, // <-- E ADICIONADO AQUI
+    port: process.env.DB_PORT_PROD, 
     dialect: process.env.DB_DIALECT_PROD || 'postgres',
   },
 };

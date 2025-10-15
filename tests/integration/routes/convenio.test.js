@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import database from '@database'; 
-// Assumindo que global.db foi definido em jest.setup.cjs
 const { Convenio, Cedente, SoftwareHouse, Conta } = global.db; 
 
 describe('Integration: Convenio model', () => {
@@ -25,13 +24,13 @@ describe('Integration: Convenio model', () => {
       cnpj: '22222222000122',
       token: 'valid_token_ced',
       status: 'ativo',
-      softwarehouse_id: softwareHouse.id, // CHAVE ESTRANGEIRA CORRETA
+      softwarehouse_id: softwareHouse.id, 
       data_criacao: new Date()
     });
     
     // 3. Cria Conta (depende de Cedente - Verifique o seu esquema para campos NOT NULL da Conta)
     conta = await Conta.create({
-        cedente_id: cedente.id, // CHAVE ESTRANGEIRA CORRETA
+        cedente_id: cedente.id, 
         produto: 'boleto',
         banco_codigo: '341',
         status: 'ativo',
@@ -48,7 +47,7 @@ describe('Integration: Convenio model', () => {
     const convenioData = {
       numero_convenio: '1234567890',
       data_criacao: new Date(),
-      conta_id: conta.id, // CHAVE ESTRANGEIRA CORRETA para Conta
+      conta_id: conta.id, 
     };
 
     // Act
@@ -57,8 +56,8 @@ describe('Integration: Convenio model', () => {
     // Assert
     expect(convenioCriado).toBeDefined();
     expect(convenioCriado.numero_convenio).toBe(convenioData.numero_convenio);
-    // ... adicione mais asserções ...
+    
   });
   
-  // Você deve incluir outros testes da suite aqui...
+
 });

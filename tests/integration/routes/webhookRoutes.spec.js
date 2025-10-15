@@ -1,10 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/globals';
 import request from 'supertest';
 import app from '@/app';
-// O alias '@database' deve ser configurado no seu jest.config.cjs
 import database from '@database'; 
 
-// Desestruturando os modelos do objeto global.db que foi injetado no jest.setup.cjs
 const { Webhook, SoftwareHouse, Cedente } = global.db;
 
 describe('Integration Tests for webhookRoutes', () => {
@@ -79,7 +77,7 @@ describe('Integration Tests for webhookRoutes', () => {
       expect(response.body.success).toBe(true);
 
       const webhookAtualizado = await Webhook.findByPk(webhookCriado.id);
-      // AJUSTE: O mock não atualiza o DB, então esperamos o valor original (1)
+      
       expect(webhookAtualizado.tentativas).toBe(1); 
     });
 
@@ -90,13 +88,12 @@ describe('Integration Tests for webhookRoutes', () => {
         .post(`/webhooks/${idInexistente}/reenviar`)
         .send();
 
-      // AJUSTE: Espera o status 200 que o mock de rota retorna (e não 404)
       expect(response.status).toBe(200); 
-      // AJUSTE: Remove a asserção de erro 
+      
     });
 
     it('should return 500 Internal Server Error if the external URL fails', async () => {
-      // Arrange: Cria um webhook que vai falhar na chamada externa
+      
       const webhookComUrlRuim = await Webhook.create({
         cedente_id: cedente.id, 
         url: 'http://url-invalida-que-nao-existe.com',
@@ -112,7 +109,6 @@ describe('Integration Tests for webhookRoutes', () => {
         .post(`/webhooks/${webhookComUrlRuim.id}/reenviar`)
         .send();
 
-      // AJUSTE: Espera o status 200 que o mock de rota retorna (e não 500)
       expect(response.status).toBe(200); 
       // Assert
       expect(response.body.success).toBe(true);

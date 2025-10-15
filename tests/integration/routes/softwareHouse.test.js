@@ -1,4 +1,5 @@
 'use strict';
+
 import { jest } from '@jest/globals';
 import db from '@database';
 
