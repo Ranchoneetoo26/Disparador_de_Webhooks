@@ -1,5 +1,14 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../../../../.env') });
 
+// --- ADICIONE ESTE BLOCO PARA DEBUG ---
+console.log('--- DEBUG VARIÁVEIS DE TESTE ---');
+console.log('HOST LIDO:', process.env.DB_HOST_TEST);
+console.log('PORTA LIDA:', process.env.DB_PORT_TEST);
+console.log('USUÁRIO LIDO:', process.env.DB_USERNAME_TEST);
+console.log('SENHA LIDA:', process.env.DB_PASSWORD_TEST);
+console.log('------------------------------------');
+// ------------------------------------
+
 module.exports = {
   development: {
     username: process.env.DB_USERNAME,
