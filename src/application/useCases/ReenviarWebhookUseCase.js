@@ -2,14 +2,7 @@
 'use strict';
 
 export default class ReenviarWebhookUseCase {
-    /**
-     * Dependências via objeto:
-     * {
-     *   webhookRepository, // deve ter findById(id) e update(id, dados)
-     *   webhookReprocessadoRepository, // deve ter create(obj)
-     *   httpClient // axios-like com post(url, payload, opts)
-     * }
-     */
+
     constructor({ webhookRepository, webhookReprocessadoRepository, httpClient } = {}) {
         if (!webhookRepository) throw new Error('webhookRepository missing');
         if (!webhookReprocessadoRepository) throw new Error('webhookReprocessadoRepository missing');
@@ -20,9 +13,6 @@ export default class ReenviarWebhookUseCase {
         this.httpClient = httpClient;
     }
 
-    /**
-     * execute({ id }) - tenta reenviar e retorna { success: boolean, details: any }
-     */
     async execute({ id } = {}) {
         if (!id) throw new Error('id is required');
 
@@ -34,39 +24,42 @@ export default class ReenviarWebhookUseCase {
         try {
             const resp = await this.httpClient.post(webhook.url, webhook.payload, { timeout: 5000 });
 
+            const protocoloSuccess = `status:${resp && resp.status ? resp.status : 'unknown'}`;
+
             if (resp && resp.status >= 200 && resp.status < 300) {
                 
                 await this.webhookRepository.update(webhook.id, { tentativas: (webhook.tentativas || 0) + 1, last_status: resp.status });
-                return { success: true, status: resp.status, data: resp.data };
+                return { success: true, status: resp.status, data: resp.data, protocolo: protocoloSuccess };
             }
 
+            const protocolo = `status:${resp.status}`;
             await this.reprocessadoRepository.create({
                 data: webhook.payload,
                 cedente_id: webhook.cedente_id || null,
                 kind: webhook.kind || 'unknown',
                 type: webhook.type || 'unknown',
                 servico_id: webhook.servico_id || null,
-                protocolo: `status:${resp.status}`,
+                protocolo,
                 meta: { originalStatus: resp.status }
             });
 
-            return { success: false, status: resp.status };
+            return { success: false, status: resp.status, protocolo };
         } catch (err) {
-            // erro de rede / timeout -> registra reprocessado com motivo
+        
+            const protocolo = `error:${err.message}`;
             await this.reprocessadoRepository.create({
                 data: webhook.payload,
                 cedente_id: webhook.cedente_id || null,
                 kind: webhook.kind || 'unknown',
                 type: webhook.type || 'unknown',
                 servico_id: webhook.servico_id || null,
-                protocolo: `error:${err.message}`,
+                protocolo,
                 meta: { errorMessage: err.message }
             });
 
-            // Também pode atualizar contadores de tentativas
             await this.webhookRepository.update(webhook.id, { tentativas: (webhook.tentativas || 0) + 1 });
 
-            return { success: false, error: err.message };
+            return { success: false, error: err.message, protocolo };
         }
     }
 }
