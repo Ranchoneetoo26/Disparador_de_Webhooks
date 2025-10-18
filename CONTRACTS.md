@@ -28,7 +28,7 @@ const middleware = createAuthMiddleware({ cedenteRepository });
 **Exemplo de uso:**
 
 ```js
-// Requisição com headers válidos
+// Requisição com headers válidos.
 req.headers = { "x-cnpj": "123", "x-token": "abc" };
 // Middleware chama repo e segue se encontrar
 ```
