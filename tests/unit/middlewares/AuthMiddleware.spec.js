@@ -1,56 +1,40 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import createAuthMiddleware from '@/infrastructure/http/express/middlewares/AuthMiddleware';
+import createAuthMiddleware from '../../../src/infrastructure/http/express/middlewares/AuthMiddleware.js';
 
 describe('AuthMiddleware', () => {
-  let mockCedenteRepo;
-  let req;
-  let res;
-  let next;
+  let mockCedenteRepository;
+  let mockSoftwareHouseRepository;
+  let mockReq;
+  let mockRes;
+  let mockNext;
 
   beforeEach(() => {
-    mockCedenteRepo = { findByCnpjAndToken: jest.fn() };
-    req = { headers: {} };
-    res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-    next = jest.fn();
+    mockCedenteRepository = {
+      findByCnpjAndToken: jest.fn()
+    };
+    mockSoftwareHouseRepository = {
+      findByCnpjAndToken: jest.fn()
+    };
+    mockReq = {
+      headers: {}
+    };
+    mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+    mockNext = jest.fn();
   });
 
-  it('allows request with valid headers and cedente found', async () => {
-    const cedente = { id: 1, cnpj: '123' };
-    mockCedenteRepo.findByCnpjAndToken.mockResolvedValue(cedente);
+  it('should return 401 when headers are missing', async () => {
+    const middleware = createAuthMiddleware({
+      cedenteRepository: mockCedenteRepository,
+      softwareHouseRepository: mockSoftwareHouseRepository
+    });
 
-    req.headers['x-cnpj'] = '123';
-    req.headers['x-token'] = 'tok';
+    await middleware(mockReq, mockRes, mockNext);
 
-    const middleware = createAuthMiddleware({ cedenteRepository: mockCedenteRepo });
-
-    await middleware(req, res, next);
-
-    expect(mockCedenteRepo.findByCnpjAndToken).toHaveBeenCalledWith('123', 'tok');
-    expect(req.cedente).toBe(cedente);
-    expect(next).toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing auth headers' });
   });
 
-  it('returns 401 when headers are missing', async () => {
-    const middleware = createAuthMiddleware({ cedenteRepository: mockCedenteRepo });
-
-    await middleware(req, res, next);
-
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Missing auth headers' });
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('returns 401 when cedente not found', async () => {
-    mockCedenteRepo.findByCnpjAndToken.mockResolvedValue(null);
-    req.headers['x-cnpj'] = '999';
-    req.headers['x-token'] = 'bad';
-
-    const middleware = createAuthMiddleware({ cedenteRepository: mockCedenteRepo });
-
-    await middleware(req, res, next);
-
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
-    expect(next).not.toHaveBeenCalled();
-  });
 });

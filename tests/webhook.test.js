@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import request from 'supertest';
-import app from '@/app';
+import app from '../src/app.js';
 import database from '@database';
 const { Webhook } = global.db || database;
 

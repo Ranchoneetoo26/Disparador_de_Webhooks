@@ -1,7 +1,20 @@
-export function resolveNotificationConfig({ conta = null, cedente = null, defaultConfig = null } = {}) {
-  const fallback = defaultConfig || { retries: 3, timeout: 5000 };
-
-  if (conta && conta.configuracao_notificacao) return conta.configuracao_notificacao;
-  if (cedente && cedente.configuracao_notificacao) return cedente.configuracao_notificacao;
-  return fallback;
+function _normalizeConfigValue(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value === 'object') return value;
+  if (typeof value === 'string') {
+    try { return JSON.parse(value); } catch (err) { return value; }
+  }
+  return value;
 }
+
+function resolveNotificationConfig({ conta, cedente, defaultConfig = { retries: 3, timeout: 5000 } } = {}) {
+  const contaCfg = conta ? _normalizeConfigValue(conta.configuracao_notificacao) : null;
+  if (contaCfg) return contaCfg;
+
+  const cedenteCfg = cedente ? _normalizeConfigValue(cedente.configuracao_notificacao) : null;
+  if (cedenteCfg) return cedenteCfg;
+
+  return defaultConfig;
+}
+
+module.exports = { resolveNotificationConfig };

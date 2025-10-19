@@ -1,17 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import database from '@database'; 
+import database from '../../../src/infrastructure/database'; 
 const { Convenio, Cedente, SoftwareHouse, Conta } = global.db; 
 
 describe('Integration: Convenio model', () => {
   let softwareHouse;
-  let conta; // Será necessário criar uma Conta antes de criar o Convênio
+  let conta;
   let cedente;
 
-  // Cria pré-requisitos: SoftwareHouse, Cedente e Conta
   beforeAll(async () => {
-    await database.sequelize.sync({ force: true }); // Limpa o DB
+    await database.sequelize.sync({ force: true });
     
-    // 1. Cria SoftwareHouse
     softwareHouse = await SoftwareHouse.create({
       cnpj: '11111111000111',
       token: 'valid_token_sh', 
@@ -19,7 +17,6 @@ describe('Integration: Convenio model', () => {
       data_criacao: new Date()
     });
 
-    // 2. Cria Cedente (depende de SoftwareHouse)
     cedente = await Cedente.create({
       cnpj: '22222222000122',
       token: 'valid_token_ced',
@@ -28,7 +25,6 @@ describe('Integration: Convenio model', () => {
       data_criacao: new Date()
     });
     
-    // 3. Cria Conta (depende de Cedente - Verifique o seu esquema para campos NOT NULL da Conta)
     conta = await Conta.create({
         cedente_id: cedente.id, 
         produto: 'boleto',
@@ -39,21 +35,18 @@ describe('Integration: Convenio model', () => {
   });
 
   afterAll(async () => {
-    await database.sequelize.close(); // Fecha a conexão
+    await database.sequelize.close();
   });
 
   it('deve criar um novo Convenio', async () => {
-    // Arrange:
     const convenioData = {
       numero_convenio: '1234567890',
       data_criacao: new Date(),
       conta_id: conta.id, 
     };
 
-    // Act
     const convenioCriado = await Convenio.create(convenioData);
 
-    // Assert
     expect(convenioCriado).toBeDefined();
     expect(convenioCriado.numero_convenio).toBe(convenioData.numero_convenio);
     

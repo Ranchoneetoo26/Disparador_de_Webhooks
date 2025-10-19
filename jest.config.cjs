@@ -1,23 +1,35 @@
-module.exports = {
-  testEnvironment: 'node',
-  clearMocks: true,
+const models = require('./sequelize/models/index.cjs');
+module.exports = models;
 
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
+module.exports = {
+  rootDir: '.',
+  testEnvironment: 'node',
+  verbose: true,
 
   transform: {
-    '^.+\\.[tj]s$': 'babel-jest',
+    '^.+\\.js$': ['babel-jest', { configFile: './babel.config.cjs' }]
   },
 
-  modulePaths: ['<rootDir>/src'],
-
-  moduleDirectories: ['node_modules', '<rootDir>/src'],
+  moduleFileExtensions: ['js', 'cjs', 'json', 'node'],
 
   moduleNameMapper: {
-    '^@database$': '<rootDir>/src/infrastructure/database/sequelize/models/index.cjs',
-    '^@database/(.*)$': '<rootDir>/src/infrastructure/database/sequelize/models/$1',
-
-    '^@/(.*)$': '<rootDir>/src/$1'
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@database$': '<rootDir>/src/infrastructure/database',
+    '^@infrastructure/(.*)$': '<rootDir>/src/infrastructure/$1',
+    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^@application/(.*)$': '<rootDir>/src/application/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@tests/(.*)$': '<rootDir>/tests/$1'
   },
 
-  moduleFileExtensions: ['js', 'ts', 'json', 'node'],
+  moduleDirectories: ['node_modules', 'src'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
+  
+  testMatch: [
+    '<rootDir>/tests/**/*.test.js',
+    '<rootDir>/tests/**/*.spec.js'
+  ],
+
+  transformIgnorePatterns: ['/node_modules/'],
+  clearMocks: true
 };
