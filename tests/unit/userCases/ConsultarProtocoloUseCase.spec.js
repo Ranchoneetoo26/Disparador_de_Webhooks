@@ -27,7 +27,6 @@ describe('ConsultarProtocoloUseCase', () => {
   it('retorna dados do protocolo quando o uuid existe', async () => {
     const uuid = 'uuid-1234';
 
-    // cache miss
     mockCacheRepository.get.mockResolvedValue(null);
 
     const fakeRecord = { protocolo: uuid, data: { a: 1 } };

@@ -4,8 +4,7 @@ const { Model, DataTypes } = require('sequelize');
 
 class Webhook extends Model {
   static associate(models) {
-    // Defina associações aqui, se houver.
-    // Ex: this.belongsTo(models.Cedente, { foreignKey: 'cedente_id' });
+
   }
 }
 
@@ -22,7 +21,7 @@ const initWebhook = (sequelize) => {
   }, {
     sequelize,
     modelName: 'Webhook',
-    tableName: 'webhooks', 
+    tableName: 'webhooks',
   });
   return Webhook;
 };

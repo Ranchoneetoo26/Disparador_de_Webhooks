@@ -1,5 +1,7 @@
 import { subDays, differenceInDays } from 'date-fns';
 
+import InvalidRequestException from '@/domain/exceptions/InvalidRequestException';
+
 export default class ListarProtocolosUseCase {
     constructor({ webhookReprocessadoRepository, cacheRepository }) {
         if (!webhookReprocessadoRepository) {
@@ -16,30 +18,50 @@ export default class ListarProtocolosUseCase {
         const { start_date, end_date } = filters;
 
         if (!start_date || !end_date) {
-            return { success: false, status: 400, error: 'Os filtros "start_date" e "end_date" são obrigatórios.' };
+            throw new InvalidRequestException('Os filtros "start_date" e "end_date" são obrigatórios.');
         }
 
         const startDate = new Date(start_date);
         const endDate = new Date(end_date);
 
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            return { success: false, status: 400, error: 'As datas fornecidas são inválidas.' };
+            throw new InvalidRequestException('As datas fornecidas são inválidas.');
         }
 
-        if (differenceInDays(endDate, startDate) > 31) {
-            return { success: false, status: 400, error: 'O intervalo entre as datas não pode ser maior que 31 dias.' };
+        if (startDate > endDate) {
+            throw new InvalidRequestException('start_date não pode ser maior que end_date.');
         }
+
+        if (differenceInDays(endDate, startDate) + 1 > 31) {
+            throw new InvalidRequestException('O intervalo entre as datas não pode ser maior que 31 dias.');
+        }
+
 
         const cacheKey = `protocolos:${JSON.stringify(filters)}`;
-        const cachedData = await this.cacheRepository.get(cacheKey);
-
-        if (cachedData) {
-            return { success: true, data: JSON.parse(cachedData), source: 'cache' };
+        try {
+            const cachedData = await this.cacheRepository.get(cacheKey);
+            if (cachedData) {
+                 try {
+                     return { success: true, data: JSON.parse(cachedData), source: 'cache' };
+                 } catch (parseError) {
+                    console.error('Erro ao fazer parse dos dados do cache:', parseError);
+                 }
+            }
+        } catch (cacheError) {
+             console.error('Erro ao acessar o cache:', cacheError);
         }
 
-        const protocolos = await this.webhookReprocessadoRepository.findByFilters(filters);
+        const protocolos = await this.webhookReprocessadoRepository.findByFilters({
+            ...filters,
+            startDate,
+            endDate
+        });
 
-        await this.cacheRepository.set(cacheKey, JSON.stringify(protocolos), 86400);
+        try {
+           await this.cacheRepository.set(cacheKey, JSON.stringify(protocolos), { ttl: 86400 });
+        } catch (cacheSetError) {
+            console.error('Erro ao salvar dados no cache:', cacheSetError);
+        }
 
         return { success: true, data: protocolos, source: 'database' };
     }
