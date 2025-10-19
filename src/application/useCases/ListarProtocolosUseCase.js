@@ -1,5 +1,7 @@
 import { subDays, differenceInDays } from 'date-fns';
+
 import InvalidRequestException from '@/domain/exceptions/InvalidRequestException';
+
 export default class ListarProtocolosUseCase {
     constructor({ webhookReprocessadoRepository, cacheRepository }) {
         if (!webhookReprocessadoRepository) {
@@ -16,7 +18,6 @@ export default class ListarProtocolosUseCase {
         const { start_date, end_date } = filters;
 
         if (!start_date || !end_date) {
-
             throw new InvalidRequestException('Os filtros "start_date" e "end_date" são obrigatórios.');
         }
 
@@ -24,7 +25,6 @@ export default class ListarProtocolosUseCase {
         const endDate = new Date(end_date);
 
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-
             throw new InvalidRequestException('As datas fornecidas são inválidas.');
         }
 
