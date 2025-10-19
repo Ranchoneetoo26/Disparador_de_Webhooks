@@ -1,14 +1,17 @@
 'use strict';
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('SoftwareHouses', {
-      idSoftwareHouses: {
+      
+      id: { 
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+    
       data_criacao: {
         allowNull: false,
         type: Sequelize.DATE,

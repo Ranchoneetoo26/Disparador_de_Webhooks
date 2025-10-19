@@ -1,1 +1,8 @@
-.sequelizerc: Arquivo de configuração para o Sequelize CLI, indicando os caminhos para migrations, models, etc
+const path = require('path');
+
+module.exports = {
+  'config': path.resolve('src/infrastructure/database/sequelize/config', 'config.cjs'), 
+  'models-path': path.resolve('src/infrastructure/database/sequelize', 'models'),
+  'seeders-path': path.resolve('src/infrastructure/database/sequelize', 'seeders'),
+  'migrations-path': path.resolve('src/infrastructure/database/sequelize', 'migrations'),
+};

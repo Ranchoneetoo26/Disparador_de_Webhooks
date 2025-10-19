@@ -1,44 +1,57 @@
-'use strict';
-import { jest } from '@jest/globals';
-import db from '@database';
-
-const { Convenio, Conta, Cedente, SoftwareHouse, sequelize } = db;
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import database from '@database';
+const { Convenio, Cedente, SoftwareHouse, Conta } = global.db;
 
 describe('Integration: Convenio model', () => {
-  jest.setTimeout(10000);
+  let softwareHouse;
+  let conta;
+  let cedente;
 
-  beforeEach(async () => {
-    await sequelize.sync({ force: true });
-    const softwareHouse = await SoftwareHouse.create({
+  beforeAll(async () => {
+    await database.sequelize.sync({ force: true });
+
+    softwareHouse = await SoftwareHouse.create({
       cnpj: '11111111000111',
-      token: 'TOKEN_SH_TESTE',
-      status: 'ativo'
+      token: 'valid_token_sh',
+      status: 'ativo',
+      data_criacao: new Date()
     });
-    const cedente = await Cedente.create({
+
+    cedente = await Cedente.create({
       cnpj: '22222222000122',
-      token: softwareHouse.id,
-      status: 'ativo'
+      token: 'valid_token_ced',
+      status: 'ativo',
+      softwarehouse_id: softwareHouse.id,
+      data_criacao: new Date()
     });
-    await Conta.create({
-      id: 1,
+
+    conta = await Conta.create({
+      cedente_id: cedente.id,
       produto: 'boleto',
       banco_codigo: '341',
-      cedente_id: cedente.id,
-      status: 'ativa'
+      status: 'ativo',
+      data_criacao: new Date()
     });
   });
 
   afterAll(async () => {
-    await sequelize.close();
+    await database.sequelize.close();
   });
 
-  test('deve criar um novo Convenio', async () => {
-    const payloadConvenio = {
-      numero_convenio: '1234567',
-      conta_id: 1,
+  it('deve criar um novo Convenio', async () => {
+
+    const convenioData = {
+      numero_convenio: '1234567890',
+      data_criacao: new Date(),
+      conta_id: conta.id,
     };
-    const convenioCriado = await Convenio.create(payloadConvenio);
+
+    const convenioCriado = await Convenio.create(convenioData);
+
     expect(convenioCriado).toBeDefined();
-    expect(convenioCriado.numero_convenio).toBe(payloadConvenio.numero_convenio);
+    expect(convenioCriado.numero_convenio).toBe(convenioData.numero_convenio);
+
   });
+
+
 });

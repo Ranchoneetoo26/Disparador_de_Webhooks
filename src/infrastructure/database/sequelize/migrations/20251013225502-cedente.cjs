@@ -1,4 +1,5 @@
-'use strict'
+'use strict';
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
@@ -19,16 +20,18 @@ module.exports = {
                 unique: true,
                 type: Sequelize.STRING(14)
             },
-            token: {
+            
+            software_house_id: { 
                 allowNull: false,
                 type: Sequelize.INTEGER,
                 references: {
-                    model: 'SoftwareHouses',
-                    key: 'id'
+                    model: 'SoftwareHouses', 
+                    key: 'id'            
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'RESTRICT'
             },
+            
             status: {
                 allowNull: false,
                 type: Sequelize.STRING
