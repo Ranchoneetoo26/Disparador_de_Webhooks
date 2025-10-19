@@ -24,10 +24,9 @@ describe('ConsultarProtocoloUseCase', () => {
     });
   });
 
-  it('returns protocol data when uuid exists (cache miss -> db hit)', async () => {
+  it('retorna dados do protocolo quando o uuid existe', async () => {
     const uuid = 'uuid-1234';
 
-    // cache miss
     mockCacheRepository.get.mockResolvedValue(null);
 
     const fakeRecord = { protocolo: uuid, data: { a: 1 } };
@@ -41,7 +40,7 @@ describe('ConsultarProtocoloUseCase', () => {
     expect(mockCacheRepository.set).toHaveBeenCalledWith(`protocolo:${uuid}`, fakeRecord, { ttl: 3600 });
   });
 
-  it('returns cached data when cache hit', async () => {
+  it('retorna dados em cache quando estiver certo no cache', async () => {
     const uuid = 'uuid-cache';
     const cached = { protocolo: uuid, data: { b: 2 } };
 
@@ -54,8 +53,8 @@ describe('ConsultarProtocoloUseCase', () => {
     expect(mockWebhookReprocessadoRepository.findByProtocolo).not.toHaveBeenCalled();
   });
 
-  it('throws ProtocoloNaoEncontradoException when not found', async () => {
-    const uuid = 'does-not-exist';
+  it('lança ProtocoloNaoEncontradoException quando não encontrado', async () => {
+    const uuid = 'não existe';
     mockCacheRepository.get.mockResolvedValue(null);
     mockWebhookReprocessadoRepository.findByProtocolo.mockResolvedValue(null);
 

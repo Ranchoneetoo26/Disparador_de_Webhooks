@@ -3,7 +3,8 @@ import * as webhookRouterModule from './infrastructure/http/express/routes/webho
 import protocoloRouter from './infrastructure/http/express/routes/protocoloRoutes';
 
 const app = express();
-const webhookRouter = webhookRouterModule.default || webhookRouterModule; 
+
+const webhookRouter = webhookRouterModule.default || webhookRouterModule;
 
 app.use(express.json());
 
