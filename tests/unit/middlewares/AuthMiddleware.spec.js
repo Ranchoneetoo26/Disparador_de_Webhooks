@@ -1,72 +1,117 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import createAuthMiddleware from '@/infrastructure/http/express/middlewares/AuthMiddleware';
+import { describe, it, expect, jest } from "@jest/globals";
+import createAuthMiddleware from "@/infrastructure/http/express/middlewares/AuthMiddleware";
 
-describe('AuthMiddleware', () => {
-    let mockCedenteRepo;
-    let req;
-    let res;
-    let next;
+describe("AuthMiddleware", () => {
+  let mockCedenteRepository;
+  let authMiddleware;
+  let mockReq;
+  let mockRes;
+  let mockNext;
 
-    beforeEach(() => {
-        mockCedenteRepo = { findByCnpjAndToken: jest.fn() };
-        req = { headers: {} };
-        res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-        next = jest.fn();
+  beforeEach(() => {
+    mockCedenteRepository = {
+      findByCnpjAndToken: jest.fn(),
+    };
+
+    authMiddleware = createAuthMiddleware({
+      cedenteRepository: mockCedenteRepository,
     });
 
-    it('deve permitir a requisição com headers válidos e cedente encontrado', async () => {
-        const cedente = { id: 1, cnpj: '123' };
-        mockCedenteRepo.findByCnpjAndToken.mockResolvedValue(cedente);
+    mockReq = {
+      headers: {},
+    };
 
-        req.headers['x-cnpj'] = '123';
-        req.headers['x-token'] = 'tok';
+    mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
 
-        const middleware = createAuthMiddleware({ cedenteRepository: mockCedenteRepo });
+    mockNext = jest.fn();
+  });
 
-        await middleware(req, res, next);
+  it("deve retornar erro 401 quando não houver CNPJ no header", async () => {
+    mockReq.headers["x-token"] = "token-valido";
 
-        expect(mockCedenteRepo.findByCnpjAndToken).toHaveBeenCalledWith('123', 'tok');
-        expect(req.cedente).toBe(cedente);
-        expect(next).toHaveBeenCalled();
+    await authMiddleware(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Missing auth headers",
     });
+    expect(mockNext).not.toHaveBeenCalled();
+  });
 
-    it('deve retornar 401 quando os headers estiverem faltando', async () => {
-        const middleware = createAuthMiddleware({ cedenteRepository: mockCedenteRepo });
+  it("deve retornar erro 401 quando não houver token no header", async () => {
+    mockReq.headers["x-cnpj"] = "12345678000190";
 
-        await middleware(req, res, next);
+    await authMiddleware(mockReq, mockRes, mockNext);
 
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith({ error: 'Missing auth headers' });
-        expect(next).not.toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: "Missing auth headers",
     });
+    expect(mockNext).not.toHaveBeenCalled();
+  });
 
-    it('deve retornar 401 quando o cedente não for encontrado', async () => {
-        mockCedenteRepo.findByCnpjAndToken.mockResolvedValue(null);
-        req.headers['x-cnpj'] = '999';
-        req.headers['x-token'] = 'bad';
+  it("deve aceitar headers com underscore no lugar de hífen", async () => {
+    mockReq.headers["x_cnpj"] = "12345678000190";
+    mockReq.headers["x_token"] = "token-valido";
+    const mockCedente = { id: 1, cnpj: "12345678000190" };
+    mockCedenteRepository.findByCnpjAndToken.mockResolvedValue(mockCedente);
 
-        const middleware = createAuthMiddleware({ cedenteRepository: mockCedenteRepo });
+    await authMiddleware(mockReq, mockRes, mockNext);
 
-        await middleware(req, res, next);
+    expect(mockCedenteRepository.findByCnpjAndToken).toHaveBeenCalledWith(
+      "12345678000190",
+      "token-valido"
+    );
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockReq.cedente).toBe(mockCedente);
+  });
 
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
-        expect(next).not.toHaveBeenCalled();
-    });
+  it("deve retornar erro 401 quando cedente não for encontrado", async () => {
+    mockReq.headers["x-cnpj"] = "12345678000190";
+    mockReq.headers["x-token"] = "token-invalido";
+    mockCedenteRepository.findByCnpjAndToken.mockResolvedValue(null);
 
-    it('deve retornar 500 se o repositório lançar um erro', async () => {
-        const repoError = new Error('Database error');
-        mockCedenteRepo.findByCnpjAndToken.mockRejectedValue(repoError);
+    await authMiddleware(mockReq, mockRes, mockNext);
 
-        req.headers['x-cnpj'] = '123';
-        req.headers['x-token'] = 'tok';
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+    expect(mockNext).not.toHaveBeenCalled();
+  });
 
-        const middleware = createAuthMiddleware({ cedenteRepository: mockCedenteRepo });
+  it("deve retornar erro 500 quando ocorrer erro no repositório", async () => {
+    mockReq.headers["x-cnpj"] = "12345678000190";
+    mockReq.headers["x-token"] = "token-valido";
+    mockCedenteRepository.findByCnpjAndToken.mockRejectedValue(
+      new Error("DB Error")
+    );
 
-        await middleware(req, res, next);
+    await authMiddleware(mockReq, mockRes, mockNext);
 
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith({ error: 'Internal auth error' });
-        expect(next).not.toHaveBeenCalled();
-    });
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: "Internal auth error" });
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it("deve chamar next() e adicionar cedente ao req quando autenticação for bem sucedida", async () => {
+    mockReq.headers["x-cnpj"] = "12345678000190";
+    mockReq.headers["x-token"] = "token-valido";
+    const mockCedente = { id: 1, cnpj: "12345678000190" };
+    mockCedenteRepository.findByCnpjAndToken.mockResolvedValue(mockCedente);
+
+    await authMiddleware(mockReq, mockRes, mockNext);
+
+    expect(mockCedenteRepository.findByCnpjAndToken).toHaveBeenCalledWith(
+      "12345678000190",
+      "token-valido"
+    );
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockReq.cedente).toBe(mockCedente);
+  });
+
+  it("deve lançar erro quando cedenteRepository não for fornecido", () => {
+    expect(() => createAuthMiddleware()).toThrow("cedenteRepository missing");
+  });
 });
