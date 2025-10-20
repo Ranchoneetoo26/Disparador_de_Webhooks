@@ -1,4 +1,4 @@
-// src/application/controllers/ReenviarWebhookController.js
+
 'use strict';
 
 import ReenviarWebhookUseCase from '../useCases/ReenviarWebhookUseCase.js';

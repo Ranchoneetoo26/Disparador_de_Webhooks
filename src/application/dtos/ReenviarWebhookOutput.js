@@ -1,4 +1,4 @@
-// src/application/dtos/ReenviarWebhookOutput.js
+
 'use strict';
 
 export default class ReenviarWebhookOutput {

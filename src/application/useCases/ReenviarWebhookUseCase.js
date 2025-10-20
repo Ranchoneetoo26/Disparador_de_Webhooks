@@ -1,4 +1,4 @@
-// src/useCases/ReenviarWebhookUseCase.js
+
 'use strict';
 
 import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
@@ -21,20 +21,17 @@ export default class ReenviarWebhookUseCase {
     const input = ReenviarWebhookInput.validate(payload);
     const { product, id, kind, type } = input;
 
-    // Cache Redis
     const cacheKey = `reenviar:${product}:${id.join(',')}`;
     const existeCache = await this.redisClient.get(cacheKey);
     if (existeCache) {
       throw Object.assign(new Error('Requisição duplicada. Tente novamente em 1 hora.'), { status: 400 });
     }
 
-    // Buscar registros no banco
     const registros = await this.webhookRepository.findByIds(product, id);
     if (!registros || registros.length === 0) {
       throw Object.assign(new Error('Nenhum registro encontrado para os IDs informados.'), { status: 400 });
     }
 
-    // Mapeamento de situações
     const situacoesEsperadas = {
       boleto: { disponivel: 'REGISTRADO', cancelado: 'BAIXADO', pago: 'LIQUIDADO' },
       pagamento: { disponivel: 'SCHEDULED', cancelado: 'CANCELLED', pago: 'PAID' },
@@ -43,7 +40,6 @@ export default class ReenviarWebhookUseCase {
 
     const situacaoEsperada = situacoesEsperadas[product][type];
 
-    // Validação de divergência
     const divergentes = registros.filter((r) => r.status !== situacaoEsperada);
     if (divergentes.length > 0) {
       throw Object.assign(
@@ -53,7 +49,6 @@ export default class ReenviarWebhookUseCase {
     }
 
     try {
-      // Envio do webhook
       const response = await this.httpClient.post(
         'https://webhook.site/SEU_ENDPOINT_TESTE',
         { product, id, kind, type },
@@ -62,10 +57,8 @@ export default class ReenviarWebhookUseCase {
 
       const protocolo = response.data?.protocolo || randomUUID();
 
-      // Cachear 1h
       await this.redisClient.setEx(cacheKey, 3600, JSON.stringify({ product, id, kind, type }));
 
-      // Salvar na tabela WebhookReprocessado
       await this.reprocessadoRepository.create({
         data: { product, id, kind, type },
         kind,
@@ -78,7 +71,6 @@ export default class ReenviarWebhookUseCase {
     } catch (error) {
       console.error('Erro no reenvio do webhook:', error?.message || error);
 
-      // registra tentativa falha em WebhookReprocessado com protocolo de erro
       const protocoloErro = `error:${error?.message || 'unknown'}`;
       try {
         await this.reprocessadoRepository.create({
@@ -90,11 +82,10 @@ export default class ReenviarWebhookUseCase {
           meta: { errorMessage: error?.message || String(error) },
         });
       } catch (e) {
-        // não falhar o fluxo principal caso o registro de reprocessado falhe
+
         console.error('Falha ao registrar reprocessado:', e?.message || e);
       }
 
-      // opcional: incrementar tentativas nos registros originais (se aplicável)
       try {
         for (const r of registros) {
           await this.webhookRepository.update(r.id, { tentativas: (r.tentativas || 0) + 1 });

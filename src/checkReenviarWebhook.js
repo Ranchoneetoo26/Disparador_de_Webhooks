@@ -1,4 +1,4 @@
-// checkReenviarWebhook.js
+
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
@@ -13,7 +13,6 @@ const filesToCheck = [
   'src/app.js',
 ];
 
-// Função auxiliar
 function checkFile(filePath) {
   const absPath = path.join(__dirname, filePath);
   if (!fs.existsSync(absPath)) {
@@ -24,7 +23,6 @@ function checkFile(filePath) {
   const content = fs.readFileSync(absPath, 'utf-8');
   console.log(`✅ Encontrado: ${filePath}`);
 
-  // Checagens básicas de estrutura
   if (filePath.includes('ReenviarWebhookInput.js') && !content.includes('Joi')) {
     console.log('⚠️  Input sem validação Joi.');
   }
@@ -44,7 +42,6 @@ function checkFile(filePath) {
   return true;
 }
 
-// Executa as verificações
 console.log('\n🔍 Verificando estrutura do endpoint /reenviar...\n');
 
 let allOk = true;
