@@ -16,31 +16,46 @@ export default class ListarProtocolosUseCase {
         const { start_date, end_date } = filters;
 
         if (!start_date || !end_date) {
-            return { success: false, status: 400, error: 'Os filtros "start_date" e "end_date" são obrigatórios.' };
+            throw new Error('start_date e end_date são obrigatórios.');
         }
 
         const startDate = new Date(start_date);
         const endDate = new Date(end_date);
 
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            return { success: false, status: 400, error: 'As datas fornecidas são inválidas.' };
+            throw new Error('Datas inválidas');
         }
 
-        if (differenceInDays(endDate, startDate) > 31) {
-            return { success: false, status: 400, error: 'O intervalo entre as datas não pode ser maior que 31 dias.' };
+        if (startDate > endDate) {
+            throw new Error('start_date não pode ser maior que end_date.');
         }
 
-        const cacheKey = `protocolos:${JSON.stringify(filters)}`;
+        const daysDiff = differenceInDays(endDate, startDate);
+        if (daysDiff > 31) {
+            throw new Error('O intervalo entre as datas não pode ser maior que 31 dias.');
+        }
+
+        const restFilters = Object.fromEntries(
+            Object.entries(filters).filter(([key]) => !['start_date', 'end_date'].includes(key))
+        );
+        const cacheKey = `protocolos:${start_date}:${end_date}:${JSON.stringify(restFilters)}`;
         const cachedData = await this.cacheRepository.get(cacheKey);
 
         if (cachedData) {
-            return { success: true, data: JSON.parse(cachedData), source: 'cache' };
+            if (typeof cachedData === 'string') {
+                return JSON.parse(cachedData);
+            }
+            return cachedData;
         }
 
-        const protocolos = await this.webhookReprocessadoRepository.findByFilters(filters);
+        const protocolos = await this.webhookReprocessadoRepository.listByDateRangeAndFilters({
+            startDate,
+            endDate,
+            filters: restFilters
+        });
 
-        await this.cacheRepository.set(cacheKey, JSON.stringify(protocolos), 86400);
+        await this.cacheRepository.set(cacheKey, protocolos, { ttl: 86400 });
 
-        return { success: true, data: protocolos, source: 'database' };
+        return protocolos;
     }
 }
