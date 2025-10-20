@@ -1,4 +1,3 @@
-// src/useCases/ReenviarWebhookUseCase.js
 'use strict';
 
 export default class ReenviarWebhookUseCase {
@@ -35,7 +34,7 @@ export default class ReenviarWebhookUseCase {
             const resp = await this.httpClient.post(webhook.url, webhook.payload, { timeout: 5000 });
 
             if (resp && resp.status >= 200 && resp.status < 300) {
-                
+
                 await this.webhookRepository.update(webhook.id, { tentativas: (webhook.tentativas || 0) + 1, last_status: resp.status });
                 return { success: true, status: resp.status, data: resp.data };
             }
@@ -52,7 +51,6 @@ export default class ReenviarWebhookUseCase {
 
             return { success: false, status: resp.status };
         } catch (err) {
-            // erro de rede / timeout -> registra reprocessado com motivo
             await this.reprocessadoRepository.create({
                 data: webhook.payload,
                 cedente_id: webhook.cedente_id || null,
@@ -63,7 +61,6 @@ export default class ReenviarWebhookUseCase {
                 meta: { errorMessage: err.message }
             });
 
-            // Também pode atualizar contadores de tentativas
             await this.webhookRepository.update(webhook.id, { tentativas: (webhook.tentativas || 0) + 1 });
 
             return { success: false, error: err.message };

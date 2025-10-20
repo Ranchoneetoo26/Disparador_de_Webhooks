@@ -1,7 +1,5 @@
 import ListarProtocolosUseCase from '../../../../application/useCases/ListarProtocolosUseCase';
-import { webhookReprocessadoRepository, redisCacheRepository } from '../../../repositories';
-
-const listarProtocolosUseCase = new ListarProtocolosUseCase({
+import { webhookReprocessadoRepository, redisCacheRepository } from '../../../database/sequelize/repositories'; const listarProtocolosUseCase = new ListarProtocolosUseCase({
     webhookReprocessadoRepository,
     cacheRepository: redisCacheRepository
 });

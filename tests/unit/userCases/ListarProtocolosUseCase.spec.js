@@ -1,13 +1,5 @@
 import ListarProtocolosUseCase from "@/application/useCases/ListarProtocolosUseCase";
-
-class InvalidRequestException extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "InvalidRequestException";
-  }
-}
-
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { jest, describe, beforeEach, it, expect } from "@jest/globals";
 
 let mockWebhookReprocessadoRepository;
 let mockCacheRepository;
@@ -18,12 +10,10 @@ describe("ListarProtocolosUseCase", () => {
     mockWebhookReprocessadoRepository = {
       listByDateRangeAndFilters: jest.fn(),
     };
-
     mockCacheRepository = {
       get: jest.fn(),
       set: jest.fn(),
     };
-
     listarProtocolosUseCase = new ListarProtocolosUseCase({
       webhookReprocessadoRepository: mockWebhookReprocessadoRepository,
       cacheRepository: mockCacheRepository,
@@ -33,21 +23,21 @@ describe("ListarProtocolosUseCase", () => {
   it("deve lançar InvalidRequestException se start_date estiver faltando", async () => {
     const input = { end_date: "2025-10-18" };
     await expect(listarProtocolosUseCase.execute(input)).rejects.toThrow(
-      "start_date e end_date são obrigatórios."
+      'Os filtros "start_date" e "end_date" são obrigatórios.'
     );
   });
 
   it("deve lançar InvalidRequestException se end_date estiver faltando", async () => {
     const input = { start_date: "2025-10-01" };
     await expect(listarProtocolosUseCase.execute(input)).rejects.toThrow(
-      "start_date e end_date são obrigatórios."
+      'Os filtros "start_date" e "end_date" são obrigatórios.'
     );
   });
 
   it("deve lançar InvalidRequestException se as datas tiverem formato inválido", async () => {
     const input = { start_date: "data-invalida", end_date: "2025-10-18" };
     await expect(listarProtocolosUseCase.execute(input)).rejects.toThrow(
-      /Datas inválidas|Invalid date/
+      "As datas fornecidas são inválidas."
     );
   });
 
@@ -60,7 +50,7 @@ describe("ListarProtocolosUseCase", () => {
 
   it("deve lançar InvalidRequestException se o intervalo de datas for maior que 31 dias", async () => {
     const input = { start_date: "2025-09-01", end_date: "2025-10-02" };
-    expect(() => listarProtocolosUseCase.execute(input)).rejects.toThrow(
+    await expect(listarProtocolosUseCase.execute(input)).rejects.toThrow(
       "O intervalo entre as datas não pode ser maior que 31 dias."
     );
   });
@@ -72,20 +62,18 @@ describe("ListarProtocolosUseCase", () => {
       mockResult
     );
     mockCacheRepository.get.mockResolvedValue(null);
-
     await expect(listarProtocolosUseCase.execute(input)).resolves.toEqual(
       mockResult
     );
   });
 
   it("NÃO deve lançar erro para um intervalo de datas válido (menos de 31 dias)", async () => {
-    const input = { start_date: "2025-10-01", end_date: "2025-10-15" }; // 15 dias
+    const input = { start_date: "2025-10-01", end_date: "2025-10-15" };
     const mockResult = [{ id: "proto2" }];
     mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue(
       mockResult
     );
     mockCacheRepository.get.mockResolvedValue(null);
-
     await expect(listarProtocolosUseCase.execute(input)).resolves.toEqual(
       mockResult
     );
@@ -98,9 +86,7 @@ describe("ListarProtocolosUseCase", () => {
       mockResult
     );
     mockCacheRepository.get.mockResolvedValue(null);
-
     await listarProtocolosUseCase.execute(input);
-
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters
     ).toHaveBeenCalledWith(
@@ -110,7 +96,6 @@ describe("ListarProtocolosUseCase", () => {
         filters: {},
       })
     );
-
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock.calls[0][0].startDate
         .toISOString()
@@ -121,7 +106,6 @@ describe("ListarProtocolosUseCase", () => {
         .toISOString()
         .split("T")[0]
     ).toBe("2025-10-15");
-
     expect(mockCacheRepository.set).toHaveBeenCalled();
   });
 
@@ -139,9 +123,7 @@ describe("ListarProtocolosUseCase", () => {
       mockResult
     );
     mockCacheRepository.get.mockResolvedValue(null);
-
     await listarProtocolosUseCase.execute(input);
-
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters
     ).toHaveBeenCalledWith(
@@ -165,14 +147,11 @@ describe("ListarProtocolosUseCase", () => {
     const expectedCacheKey = `protocolos:${input.start_date}:${
       input.end_date
     }:${JSON.stringify({})}`;
-
     mockCacheRepository.get.mockResolvedValue(null);
     mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue(
       expectedResult
     );
-
     const result = await listarProtocolosUseCase.execute(input);
-
     expect(result).toEqual(expectedResult);
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
     expect(
@@ -191,11 +170,8 @@ describe("ListarProtocolosUseCase", () => {
     const expectedCacheKey = `protocolos:${input.start_date}:${
       input.end_date
     }:${JSON.stringify({})}`;
-
     mockCacheRepository.get.mockResolvedValue(cachedResult);
-
     const result = await listarProtocolosUseCase.execute(input);
-
     expect(result).toEqual(cachedResult);
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
     expect(
