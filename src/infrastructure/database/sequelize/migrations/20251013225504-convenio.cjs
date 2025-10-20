@@ -27,7 +27,7 @@ module.exports = {
           key: 'id'
         },
         onUpdate: 'CASCADE',
-        onDelete: 'RESTRICT' // não deixa apagar a conta se tiver um convenio
+        onDelete: 'RESTRICT'
       }
     });
   },
