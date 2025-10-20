@@ -1,21 +1,30 @@
-import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
+// src/application/controllers/ReenviarWebhookController.js
+'use strict';
+
+import ReenviarWebhookUseCase from '../useCases/ReenviarWebhookUseCase.js';
 import ReenviarWebhookOutput from '../dtos/ReenviarWebhookOutput.js';
+import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
 
+export default class ReenviarWebhookController {
+  constructor({ webhookRepository, webhookReprocessadoRepository, httpClient, redisClient }) {
+    this.useCase = new ReenviarWebhookUseCase({
+      webhookRepository,
+      webhookReprocessadoRepository,
+      httpClient,
+      redisClient,
+    });
+  }
 
-export default function makeReenviarWebhookController({ reenviarWebhookUseCase } = {}) {
-  if (!reenviarWebhookUseCase) throw new Error('reenviarWebhookUseCase missing');
-
-  return async function reenviarWebhookController(req, res) {
+  async handle(req, res) {
     try {
-      const input = ReenviarWebhookInput ? ReenviarWebhookInput.validate(req.body) : req.body;
-
-      const result = await reenviarWebhookUseCase.execute(input);
+      const input = ReenviarWebhookInput.validate(req.body);
+      const result = await this.useCase.execute(input);
       return res.status(200).json(ReenviarWebhookOutput.success(result.protocolo));
     } catch (err) {
-      console.error('Erro no reenvio de webhook:', err.message);
+      console.error('Erro no reenvio:', err.message);
       const status = err.status || 400;
       const detalhes = err.ids_invalidos || null;
       return res.status(status).json(ReenviarWebhookOutput.error(status, err.message, detalhes));
     }
-  };
+  }
 }
