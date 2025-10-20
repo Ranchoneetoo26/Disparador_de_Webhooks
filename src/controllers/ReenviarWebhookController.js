@@ -1,9 +1,9 @@
 
 'use strict';
 
-import ReenviarWebhookUseCase from '../useCases/ReenviarWebhookUseCase.js';
-import ReenviarWebhookOutput from '../dtos/ReenviarWebhookOutput.js';
-import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
+import ReenviarWebhookUseCase from '../application/useCases/ReenviarWebhookUseCase.js';
+import ReenviarWebhookOutput from '../application/dtos/ReenviarWebhookOutput.js';
+import ReenviarWebhookInput from '../application/dtos/ReenviarWebhookInput.js';
 
 export default class ReenviarWebhookController {
   constructor({ webhookRepository, webhookReprocessadoRepository, httpClient, redisClient }) {

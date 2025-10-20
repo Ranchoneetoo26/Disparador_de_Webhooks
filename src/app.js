@@ -1,8 +1,9 @@
 import express from 'express';
 import * as webhookRouterModule from './infrastructure/http/express/routes/webhookRoutes';
-import ReenviarWebhookController from './controllers/ReenviarWebhookController.js';
-import { webhookRepository, webhookReprocessadoRepository } from './infra/repositories/index.js';
-import { httpClient, redisClient } from './infra/config/index.js';
+import ReenviarWebhookController from './infrastructure/http/express/controllers/ReenviarWebhookController.js';
+import { webhookRepository, webhookReprocessadoRepository } from './infrastructure/database/sequelize/repositories/index.js'; 
+import { httpClient, redisClient } from './infrastructure/providers/index.js';
+
  
 const app = express();
 

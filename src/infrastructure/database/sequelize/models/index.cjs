@@ -24,18 +24,16 @@ const DB_DATABASE = isTest ? process.env.DB_DATABASE_TEST : process.env.DB_DATAB
 const DB_PORT = isTest ? process.env.DB_PORT_TEST : process.env.DB_PORT;
 const DB_DIALECT = isTest ? process.env.DB_DIALECT_TEST : process.env.DB_DIALECT;
 
-const sequelize = new Sequelize(
+const sequelize = new Sequelize({
+  database: DB_DATABASE,
+  username: DB_USERNAME,
+  password: DB_PASSWORD,
+  host: DB_HOST,
+  port: parseInt(DB_PORT, 10),
+  dialect: DB_DIALECT,
+  logging: false,
+});
 
-  DB_DATABASE,
-  DB_USERNAME,
-  DB_PASSWORD,
-  {
-    host: DB_HOST,
-    port: parseInt(DB_PORT, 10),
-    dialect: DB_DIALECT,
-    logging: false,
-  }
-);
 const models = {
 
   Cedente: CedenteModel(sequelize, DataTypes),
