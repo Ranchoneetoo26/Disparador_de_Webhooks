@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9732f9d91227b3c2dd336eb73a277dda7748c2fb
 'use strict';
 
 import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
@@ -27,6 +30,7 @@ export default class ReenviarWebhookUseCase {
       throw Object.assign(new Error('Requisição duplicada. Tente novamente em 1 hora.'), { status: 400 });
     }
 
+<<<<<<< HEAD
     const registros = await this.webhookRepository.findByIds(product, id);
     if (!registros || registros.length === 0) {
       throw Object.assign(new Error('Nenhum registro encontrado para os IDs informados.'), { status: 400 });
@@ -101,3 +105,53 @@ export default class ReenviarWebhookUseCase {
     }
   }
 }
+=======
+    /**
+     * execute({ id }) - tenta reenviar e retorna { success: boolean, details: any }
+     */
+    async execute({ id } = {}) {
+        if (!id) throw new Error('id is required');
+
+        const webhook = await this.webhookRepository.findById(id);
+        if (!webhook) {
+            return { success: false, error: 'Webhook not found' };
+        }
+
+        try {
+            const resp = await this.httpClient.post(webhook.url, webhook.payload, { timeout: 5000 });
+
+            if (resp && resp.status >= 200 && resp.status < 300) {
+
+                await this.webhookRepository.update(webhook.id, { tentativas: (webhook.tentativas || 0) + 1, last_status: resp.status });
+                return { success: true, status: resp.status, data: resp.data };
+            }
+
+            await this.reprocessadoRepository.create({
+                data: webhook.payload,
+                cedente_id: webhook.cedente_id || null,
+                kind: webhook.kind || 'unknown',
+                type: webhook.type || 'unknown',
+                servico_id: webhook.servico_id || null,
+                protocolo: `status:${resp.status}`,
+                meta: { originalStatus: resp.status }
+            });
+
+            return { success: false, status: resp.status };
+        } catch (err) {
+            await this.reprocessadoRepository.create({
+                data: webhook.payload,
+                cedente_id: webhook.cedente_id || null,
+                kind: webhook.kind || 'unknown',
+                type: webhook.type || 'unknown',
+                servico_id: webhook.servico_id || null,
+                protocolo: `error:${err.message}`,
+                meta: { errorMessage: err.message }
+            });
+
+            await this.webhookRepository.update(webhook.id, { tentativas: (webhook.tentativas || 0) + 1 });
+
+            return { success: false, error: err.message };
+        }
+    }
+}
+>>>>>>> 9732f9d91227b3c2dd336eb73a277dda7748c2fb

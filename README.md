@@ -6,7 +6,7 @@
 
 | Nome Completo        | Função / Responsabilidade Principal |
 |----------------------|------------------------------------|
-| Antonio Neto         | Product owner 
+| Antonio Neto         | Analista de projeto 
 | Matheus Moreira      | QA Engineer 
 | Lucas Arruma         | Database Engineer
 | Thiago Cezario       | Backend Developer 
@@ -305,4 +305,5 @@ Este projeto foi desenvolvido para fins educacionais e acadêmicos.
 ├── package.json
 └── README.md
 ```
+
 
