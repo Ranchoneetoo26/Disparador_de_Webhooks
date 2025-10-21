@@ -10,7 +10,6 @@ describe('ReenviarWebhookUseCase', () => {
   let mockHttpClient;
 
   beforeEach(() => {
-    // Criamos os mocks para cada dependência
     mockWebhookRepository = {
       findById: jest.fn(),
       update: jest.fn(),
@@ -24,7 +23,6 @@ describe('ReenviarWebhookUseCase', () => {
       post: jest.fn(),
     };
 
-    // Instanciamos a classe que vamos testar, injetando os mocks
     reenviarWebhookUseCase = new ReenviarWebhookUseCase({
       webhookRepository: mockWebhookRepository,
       webhookReprocessadoRepository: mockReprocessadoRepository,

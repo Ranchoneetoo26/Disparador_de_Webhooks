@@ -1,20 +1,21 @@
-function _normalizeConfigValue(value) {
-  if (value === undefined || value === null) return null;
-  if (typeof value === 'object') return value;
-  if (typeof value === 'string') {
-    try { return JSON.parse(value); } catch (err) { return value; }
-  }
-  return value;
+export function resolveNotificationConfig(product) {
+  const configs = {
+    boleto: {
+      url: 'https://meusistema.com/webhook/boleto',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    },
+    pix: {
+      url: 'https://meusistema.com/webhook/pix',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    },
+    default: {
+      url: 'https://meusistema.com/webhook/default',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    },
+  };
+
+  return configs[product] || configs.default;
 }
-
-function resolveNotificationConfig({ conta, cedente, defaultConfig = { retries: 3, timeout: 5000 } } = {}) {
-  const contaCfg = conta ? _normalizeConfigValue(conta.configuracao_notificacao) : null;
-  if (contaCfg) return contaCfg;
-
-  const cedenteCfg = cedente ? _normalizeConfigValue(cedente.configuracao_notificacao) : null;
-  if (cedenteCfg) return cedenteCfg;
-
-  return defaultConfig;
-}
-
-module.exports = { resolveNotificationConfig };

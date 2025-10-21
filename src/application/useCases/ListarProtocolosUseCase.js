@@ -1,110 +1,74 @@
-import { subDays, differenceInDays } from 'date-fns';
-import InvalidRequestException from '../../domain/exceptions/InvalidRequestException.js';
+import { subDays, differenceInDays } from "date-fns";
 
-export class ListarProtocolosUseCase {
-  constructor({ webhookReprocessadoRepository, cacheRepository } = {}) {
+import InvalidRequestException from "@/domain/exceptions/InvalidRequestException";
+
+export default class ListarProtocolosUseCase {
+  constructor({ webhookReprocessadoRepository, cacheRepository }) {
     if (!webhookReprocessadoRepository) {
-      throw new Error('webhookReprocessadoRepository is required');
+      throw new Error("webhookReprocessadoRepository is required");
+    }
+    if (!cacheRepository) {
+      throw new Error("cacheRepository is required");
     }
     this.webhookReprocessadoRepository = webhookReprocessadoRepository;
     this.cacheRepository = cacheRepository;
   }
 
-  async execute({ start_date, end_date, ...filters } = {}) {
-    if (!start_date) throw new InvalidRequestException('start_date is required');
-    if (!end_date) throw new InvalidRequestException('end_date is required');
+  async execute(filters) {
+    const { start_date, end_date } = filters;
 
-    const start = new Date(start_date);
-    const end = new Date(end_date);
-
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      throw new InvalidRequestException('Invalid date format');
+    if (!start_date || !end_date) {
+      throw new InvalidRequestException(
+        'Os filtros "start_date" e "end_date" são obrigatórios.'
+      );
     }
 
-    if (start > end) {
-      throw new InvalidRequestException('start_date must be before or equal to end_date');
+    const startDate = new Date(start_date);
+    const endDate = new Date(end_date);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw new InvalidRequestException("As datas fornecidas são inválidas.");
     }
 
-    const diffMs = end - start;
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays > 31) {
-      throw new InvalidRequestException('Date range must be at most 31 days');
+    if (startDate > endDate) {
+      throw new InvalidRequestException(
+        "start_date não pode ser maior que end_date."
+      );
     }
 
-    const cacheKey = `listar:${start_date}:${end_date}:${JSON.stringify(filters)}`;
+    const daysDiff = differenceInDays(endDate, startDate);
+    if (daysDiff >= 31) {
+      throw new InvalidRequestException(
+        "O intervalo entre as datas não pode ser maior que 31 dias."
+      );
+    }
 
-    if (this.cacheRepository && typeof this.cacheRepository.get === 'function') {
-      try {
-        const cached = await this.cacheRepository.get(cacheKey);
-        if (cached) return cached;
-      } catch (e) {
+    const restFilters = Object.fromEntries(
+      Object.entries(filters).filter(
+        ([key]) => !["start_date", "end_date"].includes(key)
+      )
+    );
+    const cacheKey = `protocolos:${start_date}:${end_date}:${JSON.stringify(
+      restFilters
+    )}`;
+    const cachedData = await this.cacheRepository.get(cacheKey);
+
+    if (cachedData) {
+      if (typeof cachedData === "string") {
+        return JSON.parse(cachedData);
       }
+      return cachedData;
     }
 
-    const repo = this.webhookReprocessadoRepository;
-    const candidates = [
-      'findBetweenDates',
-      'listByDateRange',
-      'findByDateRange',
-      'find',
-      'list',
-      'findAll',
-      'getAll'
-    ];
+    const protocolos =
+      await this.webhookReprocessadoRepository.listByDateRangeAndFilters({
+        startDate,
+        endDate,
+        filters: restFilters,
+      });
 
-    let result = null;
-    for (const name of candidates) {
-      if (typeof repo[name] === 'function') {
-        result = await repo[name]({ start_date, end_date, ...filters });
-        break;
-      }
-    }
+    await this.cacheRepository.set(cacheKey, protocolos, { ttl: 86400 });
 
-    if (result === null && typeof repo.findAll === 'function') {
-      result = await repo.findAll({ start_date, end_date, ...filters });
-    }
-
-    if (this.cacheRepository && typeof this.cacheRepository.set === 'function') {
-      try {
-        await this.cacheRepository.set(cacheKey, result);
-      } catch (e) {}
-    }
-
-    return result;
+    return protocolos;
   }
 }
-
-export default ListarProtocolosUseCase;
-module.exports = {
-  rootDir: '.',
-  testEnvironment: 'node',
-
-  transform: {
-    '^.+\\.jsx?$': 'babel-jest'
-  },
-
-  moduleFileExtensions: ['js', 'cjs', 'json', 'node'],
-
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^@database$': '<rootDir>/src/infrastructure/database/index.cjs',
-    '^@database/(.*)$': '<rootDir>/src/infrastructure/database/$1',
-    '^@infrastructure/(.*)$': '<rootDir>/src/infrastructure/$1',
-    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
-    '^@application/(.*)$': '<rootDir>/src/application/$1',
-    '^@services/(.*)$': '<rootDir>/src/services/$1',
-    '^@tests/(.*)$': '<rootDir>/tests/$1'
-  },
-
-  moduleDirectories: ['node_modules', 'src'],
-
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
-
-  testMatch: [
-    '<rootDir>/tests/**/*.test.js',
-    '<rootDir>/tests/**/*.spec.js'
-  ],
-
-  transformIgnorePatterns: ['/node_modules/'],
-  clearMocks: true
-};

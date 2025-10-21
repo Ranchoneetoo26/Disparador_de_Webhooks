@@ -1,10 +1,10 @@
-const { SoftwareHouse } = require('./models'); // Voltamos a usar as chaves {}
+const { SoftwareHouse } = require('./models');
 
 async function testarConexao() {
   try {
     console.log('Iniciando teste...');
 
-    const novaSoftwareHouse = await SoftwareHouse.create({ // Usamos SoftwareHouse diretamente
+    const novaSoftwareHouse = await SoftwareHouse.create({
       cnpj: '12345678901235',
       token: 'um-token-secreto-aqui-123',
       status: 'ativo',

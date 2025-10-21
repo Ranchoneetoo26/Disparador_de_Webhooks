@@ -12,7 +12,7 @@ describe('Integration: Convenio model', () => {
     
     softwareHouse = await SoftwareHouse.create({
       cnpj: '11111111000111',
-      token: 'valid_token_sh', 
+      token: 'valid_token_sh',
       status: 'ativo',
       data_criacao: new Date()
     });
@@ -21,16 +21,16 @@ describe('Integration: Convenio model', () => {
       cnpj: '22222222000122',
       token: 'valid_token_ced',
       status: 'ativo',
-      softwarehouse_id: softwareHouse.id, 
+      softwarehouse_id: softwareHouse.id,
       data_criacao: new Date()
     });
     
     conta = await Conta.create({
-        cedente_id: cedente.id, 
-        produto: 'boleto',
-        banco_codigo: '341',
-        status: 'ativo',
-        data_criacao: new Date()
+      cedente_id: cedente.id,
+      produto: 'boleto',
+      banco_codigo: '341',
+      status: 'ativo',
+      data_criacao: new Date()
     });
   });
 
@@ -42,15 +42,15 @@ describe('Integration: Convenio model', () => {
     const convenioData = {
       numero_convenio: '1234567890',
       data_criacao: new Date(),
-      conta_id: conta.id, 
+      conta_id: conta.id,
     };
 
     const convenioCriado = await Convenio.create(convenioData);
 
     expect(convenioCriado).toBeDefined();
     expect(convenioCriado.numero_convenio).toBe(convenioData.numero_convenio);
-    
+
   });
-  
+
 
 });
