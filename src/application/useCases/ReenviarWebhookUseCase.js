@@ -1,11 +1,16 @@
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 
 =======
 >>>>>>> 9732f9d91227b3c2dd336eb73a277dda7748c2fb
+=======
+
+>>>>>>> Stashed changes
 'use strict';
 
 import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
 import { randomUUID } from 'crypto';
+<<<<<<< Updated upstream
 
 export default class ReenviarWebhookUseCase {
   constructor({ webhookRepository, webhookReprocessadoRepository, httpClient, redisClient } = {}) {
@@ -14,6 +19,16 @@ export default class ReenviarWebhookUseCase {
     if (!httpClient) throw new Error('httpClient missing');
     if (!redisClient) throw new Error('redisClient missing');
 
+=======
+
+export default class ReenviarWebhookUseCase {
+  constructor({ webhookRepository, webhookReprocessadoRepository, httpClient, redisClient } = {}) {
+    if (!webhookRepository) throw new Error('webhookRepository missing');
+    if (!webhookReprocessadoRepository) throw new Error('webhookReprocessadoRepository missing');
+    if (!httpClient) throw new Error('httpClient missing');
+    if (!redisClient) throw new Error('redisClient missing');
+
+>>>>>>> Stashed changes
     this.webhookRepository = webhookRepository;
     this.reprocessadoRepository = webhookReprocessadoRepository;
     this.httpClient = httpClient;
@@ -30,6 +45,7 @@ export default class ReenviarWebhookUseCase {
       throw Object.assign(new Error('Requisição duplicada. Tente novamente em 1 hora.'), { status: 400 });
     }
 
+<<<<<<< Updated upstream
 <<<<<<< HEAD
     const registros = await this.webhookRepository.findByIds(product, id);
     if (!registros || registros.length === 0) {
@@ -155,3 +171,79 @@ export default class ReenviarWebhookUseCase {
     }
 }
 >>>>>>> 9732f9d91227b3c2dd336eb73a277dda7748c2fb
+=======
+    const registros = await this.webhookRepository.findByIds(product, id);
+    if (!registros || registros.length === 0) {
+      throw Object.assign(new Error('Nenhum registro encontrado para os IDs informados.'), { status: 400 });
+    }
+
+    const situacoesEsperadas = {
+      boleto: { disponivel: 'REGISTRADO', cancelado: 'BAIXADO', pago: 'LIQUIDADO' },
+      pagamento: { disponivel: 'SCHEDULED', cancelado: 'CANCELLED', pago: 'PAID' },
+      pix: { disponivel: 'ACTIVE', cancelado: 'REJECTED', pago: 'LIQUIDATED' },
+    };
+
+    const situacaoEsperada = situacoesEsperadas[product][type];
+
+    const divergentes = registros.filter((r) => r.status !== situacaoEsperada);
+    if (divergentes.length > 0) {
+      throw Object.assign(
+        new Error(`Não foi possível gerar a notificação. A situação do ${product} diverge do tipo de notificação solicitado.`),
+        { status: 422, ids_invalidos: divergentes.map((d) => d.id) }
+      );
+    }
+
+    try {
+      const response = await this.httpClient.post(
+        'https://webhook.site/SEU_ENDPOINT_TESTE',
+        { product, id, kind, type },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      const protocolo = response.data?.protocolo || randomUUID();
+
+      await this.redisClient.setEx(cacheKey, 3600, JSON.stringify({ product, id, kind, type }));
+
+      await this.reprocessadoRepository.create({
+        data: { product, id, kind, type },
+        kind,
+        type,
+        servico_id: JSON.stringify(id),
+        protocolo,
+      });
+
+      return { success: true, protocolo };
+    } catch (error) {
+      console.error('Erro no reenvio do webhook:', error?.message || error);
+
+      const protocoloErro = `error:${error?.message || 'unknown'}`;
+      try {
+        await this.reprocessadoRepository.create({
+          data: { product, id, kind, type },
+          kind,
+          type,
+          servico_id: JSON.stringify(id),
+          protocolo: protocoloErro,
+          meta: { errorMessage: error?.message || String(error) },
+        });
+      } catch (e) {
+
+        console.error('Falha ao registrar reprocessado:', e?.message || e);
+      }
+
+      try {
+        for (const r of registros) {
+          await this.webhookRepository.update(r.id, { tentativas: (r.tentativas || 0) + 1 });
+        }
+      } catch (e) {
+        console.error('Falha ao atualizar tentativas:', e?.message || e);
+      }
+
+      throw Object.assign(new Error('Não foi possível gerar a notificação. Tente novamente mais tarde.'), {
+        status: 400,
+        protocolo: protocoloErro,
+      });
+    }
+  }
+}
+>>>>>>> Stashed changes
