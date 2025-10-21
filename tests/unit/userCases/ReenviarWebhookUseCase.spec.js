@@ -22,14 +22,11 @@ describe('ReenviarWebhookUseCase', () => {
       post: jest.fn(),
     };
 
-<<<<<<< HEAD
     mockRedisClient = {
       get: jest.fn(),
       setEx: jest.fn(),
     };
 
-=======
->>>>>>> c0863978c9428b9f79e93829b4ccbe950281acc9
     reenviarWebhookUseCase = new ReenviarWebhookUseCase({
       webhookRepository: mockWebhookRepository,
       webhookReprocessadoRepository: mockReprocessadoRepository,

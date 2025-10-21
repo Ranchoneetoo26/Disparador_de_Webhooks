@@ -1,14 +1,5 @@
 import express from 'express';
 import * as webhookRouterModule from './infrastructure/http/express/routes/webhookRoutes';
-<<<<<<< HEAD
-import ReenviarWebhookController from './infrastructure/http/express/controllers/ReenviarWebhookController.js';
-import { webhookRepository, webhookReprocessadoRepository } from './infrastructure/database/sequelize/repositories/index.js'; 
-import { httpClient, redisClient } from './infrastructure/providers/index.js';
-
- 
-const app = express();
-=======
->>>>>>> c0863978c9428b9f79e93829b4ccbe950281acc9
 
 const app = express();
 // Acessa o roteador. Express.Router() é exportado via module.exports,
