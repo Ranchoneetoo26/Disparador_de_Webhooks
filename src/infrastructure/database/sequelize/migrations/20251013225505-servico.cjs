@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('SoftwareHouses', {
+    await queryInterface.createTable('Servicos', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -14,32 +14,21 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-      cnpj: {
+      convenio_id: {
         allowNull: false,
-        unique: true,
-        type: Sequelize.STRING(14)
-      },
-      token: {
-        allowNull: false,
-        type: Sequelize.STRING
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Convenios',
+          key: 'id'
+        }
       },
       status: {
         allowNull: false,
         type: Sequelize.STRING
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('SoftwareHouses');
+    await queryInterface.dropTable('Servicos');
   }
 };

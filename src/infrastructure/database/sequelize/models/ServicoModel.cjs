@@ -1,16 +1,13 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class SoftwareHouse extends Model {
+  class Servico extends Model {
     static associate(models) {
-      // Associações serão definidas aqui no futuro.
+      this.belongsTo(models.Convenio, { foreignKey: 'convenio_id', as: 'convenio' });
     }
   }
-  SoftwareHouse.init({
-    // DEFINIÇÃO CORRETA E EXPLÍCITA DO ID
+  Servico.init({
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -22,13 +19,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
-    cnpj: {
-      type: DataTypes.STRING(14),
-      allowNull: false,
-      unique: true
-    },
-    token: {
-      type: DataTypes.STRING,
+    convenio_id: {
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     status: {
@@ -37,7 +29,9 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     sequelize,
-    modelName: 'SoftwareHouse',
+    modelName: 'Servico',
+    tableName: 'Servicos',
+    timestamps: false
   });
-  return SoftwareHouse;
+  return Servico;
 };
