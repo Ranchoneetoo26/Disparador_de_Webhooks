@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/glob
 import request from 'supertest';
 
 import app from '../../../src/app.js';
-import database from '../../../src/infrastructure/database/sequelize/index.js';
+import database from '../../../src/infrastructure/database/sequelize/models/index.cjs';
 
 
 const { Webhook, SoftwareHouse, Cedente } = global.db;

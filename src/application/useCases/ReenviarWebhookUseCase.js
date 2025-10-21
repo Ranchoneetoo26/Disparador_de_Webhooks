@@ -76,6 +76,25 @@ export default class ReenviarWebhookUseCase {
       return { success: true, protocolo };
     } catch (error) {
       console.error('Erro no reenvio do webhook:', error.message);
+
+      // Create error protocol
+      const errorProtocol = `error:${randomUUID()}`;
+
+      // Save failed attempt
+      await this.reprocessadoRepository.create({
+        data: payload,
+        kind: payload.kind,
+        type: payload.type,
+        servico_id: JSON.stringify(payload.id),
+        protocolo: errorProtocol,
+      });
+
+      // Increment retry count
+      const registro = registros[0];
+      await this.webhookRepository.update(registro.id, {
+        tentativas: (registro.tentativas || 0) + 1,
+      });
+
       throw Object.assign(new Error('Não foi possível gerar a notificação. Tente novamente mais tarde.'), {
         status: 400,
       });

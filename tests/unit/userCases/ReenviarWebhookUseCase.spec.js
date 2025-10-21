@@ -43,7 +43,12 @@ describe('ReenviarWebhookUseCase', () => {
     mockRedisClient.get.mockResolvedValue(null);
     mockWebhookRepository.findByIds.mockResolvedValue([]);
 
-    const payload = { product: 'boleto', id: [999], kind: 'k', type: 'disponivel' };
+    const payload = { 
+      product: 'boleto', 
+      id: ['999'],  // Changed from [999] to ['999']
+      kind: 'webhook', // Changed from 'k' to 'webhook'
+      type: 'disponivel' 
+    };
 
     await expect(reenviarWebhookUseCase.execute(payload)).rejects.toMatchObject({
       message: expect.stringContaining('Nenhum registro encontrado'),
@@ -53,13 +58,18 @@ describe('ReenviarWebhookUseCase', () => {
   it('should re-send successfully and persist reprocessado', async () => {
     mockRedisClient.get.mockResolvedValue(null);
 
-    const registros = [{ id: 1, status: 'REGISTRADO', tentativas: 0 }];
+    const registros = [{ id: '1', status: 'REGISTRADO', tentativas: 0 }];  // Changed id to string
     mockWebhookRepository.findByIds.mockResolvedValue(registros);
 
     const protocoloMock = 'protocolo-123';
     mockHttpClient.post.mockResolvedValue({ data: { protocolo: protocoloMock } });
 
-    const payload = { product: 'boleto', id: [1], kind: 'k', type: 'disponivel' };
+    const payload = { 
+      product: 'boleto', 
+      id: ['1'],  // Changed from [1] to ['1']
+      kind: 'webhook', // Changed from 'k' to 'webhook'
+      type: 'disponivel' 
+    };
 
     const result = await reenviarWebhookUseCase.execute(payload);
 
@@ -73,21 +83,35 @@ describe('ReenviarWebhookUseCase', () => {
   it('should register reprocessado and increment tentativas on network error', async () => {
     mockRedisClient.get.mockResolvedValue(null);
 
-    const registros = [{ id: 3, status: 'REGISTRADO', tentativas: 1 }];
+    const registros = [{ id: '3', status: 'REGISTRADO', tentativas: 1 }];  // Changed id to string
     mockWebhookRepository.findByIds.mockResolvedValue(registros);
 
     const networkError = new Error('Network timeout');
     mockHttpClient.post.mockRejectedValue(networkError);
 
-    const payload = { product: 'boleto', id: [3], kind: 'k', type: 'disponivel' };
+    const payload = { 
+      product: 'boleto', 
+      id: ['3'],  // Changed from [3] to ['3']
+      kind: 'webhook', // Changed from 'k' to 'webhook'
+      type: 'disponivel' 
+    };
 
     await expect(reenviarWebhookUseCase.execute(payload)).rejects.toMatchObject({
       message: expect.stringContaining('Não foi possível gerar a notificação'),
     });
 
-    expect(mockReprocessadoRepository.create).toHaveBeenCalledWith(expect.objectContaining({
-      protocolo: expect.stringContaining('error:'),
-    }));
-    expect(mockWebhookRepository.update).toHaveBeenCalledWith(3, { tentativas: 2 });
+    expect(mockReprocessadoRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: payload,
+        kind: 'webhook',
+        type: 'disponivel',
+        servico_id: '["3"]',
+        protocolo: expect.stringContaining('error:')
+      })
+    );
+
+    expect(mockWebhookRepository.update).toHaveBeenCalledWith('3', { 
+      tentativas: 2 
+    });
   });
 });

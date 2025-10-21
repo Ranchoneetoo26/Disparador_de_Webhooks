@@ -1,10 +1,14 @@
 try {
-  require('dotenv').config({ path: './.env' });
-} catch (err) { }
+
+  require('dotenv').config({ path: './.env' }); 
+
+  require('dotenv').config({ path: './.env.test', override: true });
+} catch (err) { 
+}
 
 try {
   const dbModule = require('./src/infrastructure/database/sequelize/models/index.cjs');
-
+  
   const db = dbModule.default || dbModule;
 
   console.log("--- DEBUG START ---");
