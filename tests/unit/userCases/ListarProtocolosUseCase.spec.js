@@ -48,15 +48,17 @@ describe("ListarProtocolosUseCase", () => {
     );
   });
 
-  it("deve lançar InvalidRequestException se o intervalo de datas for maior que 31 dias", async () => {
-    const input = { start_date: "2025-09-01", end_date: "2025-10-02" };
+  // *** CORREÇÃO 1: AJUSTE NA MENSAGEM ESPERADA E NA DESCRIÇÃO ***
+  it("deve lançar InvalidRequestException se o intervalo de datas for maior que 30 dias", async () => {
+    const input = { start_date: "2025-09-01", end_date: "2025-10-02" }; // Intervalo de 31 dias
     await expect(listarProtocolosUseCase.execute(input)).rejects.toThrow(
-      "O intervalo entre as datas não pode ser maior que 31 dias."
+      "O intervalo entre as datas não pode ser maior que 30 dias." // <-- MENSAGEM CORRIGIDA
     );
   });
+  // *** FIM DA CORREÇÃO 1 ***
 
-  it("NÃO deve lançar erro para um intervalo de datas válido (exatamente 31 dias)", async () => {
-    const input = { start_date: "2025-09-01", end_date: "2025-10-01" };
+  it("NÃO deve lançar erro para um intervalo de datas válido (exatamente 30 dias de diferença)", async () => { // Descrição ajustada
+    const input = { start_date: "2025-09-01", end_date: "2025-10-01" }; // 30 dias de diferença
     const mockResult = [{ id: "proto1" }];
     mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue(
       mockResult
@@ -67,7 +69,7 @@ describe("ListarProtocolosUseCase", () => {
     );
   });
 
-  it("NÃO deve lançar erro para um intervalo de datas válido (menos de 31 dias)", async () => {
+  it("NÃO deve lançar erro para um intervalo de datas válido (menos de 30 dias)", async () => { // Descrição ajustada
     const input = { start_date: "2025-10-01", end_date: "2025-10-15" };
     const mockResult = [{ id: "proto2" }];
     mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue(
@@ -96,16 +98,13 @@ describe("ListarProtocolosUseCase", () => {
         filters: {},
       })
     );
+    // Verificações das datas convertidas
     expect(
-      mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock.calls[0][0].startDate
-        .toISOString()
-        .split("T")[0]
-    ).toBe("2025-10-01");
+        mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock.calls[0][0].startDate.toISOString().split("T")[0]
+      ).toBe("2025-10-01");
     expect(
-      mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock.calls[0][0].endDate
-        .toISOString()
-        .split("T")[0]
-    ).toBe("2025-10-15");
+        mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock.calls[0][0].endDate.toISOString().split("T")[0]
+      ).toBe("2025-10-15");
     expect(mockCacheRepository.set).toHaveBeenCalled();
   });
 
@@ -114,7 +113,7 @@ describe("ListarProtocolosUseCase", () => {
       start_date: "2025-10-01",
       end_date: "2025-10-15",
       product: "boleto",
-      id: "specific-id",
+      id: "specific-id", // Lembrete: A lógica real de como 'id' filtra precisa ser validada
       kind: "notification",
       type: "payment",
     };
@@ -141,42 +140,69 @@ describe("ListarProtocolosUseCase", () => {
     expect(mockCacheRepository.set).toHaveBeenCalled();
   });
 
-  it("deve retornar dados do repositório em cache miss e armazená-los no cache", async () => {
+  it("deve retornar dados do repositório em cache miss e armazená-los no cache como string JSON", async () => { // Descrição ajustada
     const input = { start_date: "2025-10-10", end_date: "2025-10-20" };
     const expectedResult = [{ id: "abc", data: "some data" }];
-    const expectedCacheKey = `protocolos:${input.start_date}:${
-      input.end_date
-    }:${JSON.stringify({})}`;
-    mockCacheRepository.get.mockResolvedValue(null);
+    // Chave de cache agora usa JSON.stringify({}) para filtros vazios ordenados
+    const expectedCacheKey = `protocolos:${input.start_date}:${input.end_date}:{}`;
+    mockCacheRepository.get.mockResolvedValue(null); // Simula cache miss
     mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue(
       expectedResult
     );
+
     const result = await listarProtocolosUseCase.execute(input);
-    expect(result).toEqual(expectedResult);
+
+    expect(result).toEqual(expectedResult); // O UseCase retorna o objeto original
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters
     ).toHaveBeenCalledTimes(1);
+
+    // *** CORREÇÃO 2: VERIFICAR SE O VALOR SALVO É A STRING JSON ***
     expect(mockCacheRepository.set).toHaveBeenCalledWith(
       expectedCacheKey,
-      expectedResult,
+      JSON.stringify(expectedResult), // <-- VALOR CORRIGIDO (string JSON)
       { ttl: 86400 }
     );
+    // *** FIM DA CORREÇÃO 2 ***
   });
 
-  it("deve retornar dados do cache em cache hit e não chamar o repositório", async () => {
+  it("deve retornar dados do cache (parseados) em cache hit e não chamar o repositório", async () => { // Descrição ajustada
     const input = { start_date: "2025-10-10", end_date: "2025-10-20" };
-    const cachedResult = [{ id: "cached-abc", data: "cached data" }];
-    const expectedCacheKey = `protocolos:${input.start_date}:${
-      input.end_date
-    }:${JSON.stringify({})}`;
-    mockCacheRepository.get.mockResolvedValue(cachedResult);
+    const cachedResultObject = [{ id: "cached-abc", data: "cached data" }];
+    const cachedResultString = JSON.stringify(cachedResultObject); // Simula o valor armazenado como string
+    // Chave de cache agora usa JSON.stringify({}) para filtros vazios ordenados
+    const expectedCacheKey = `protocolos:${input.start_date}:${input.end_date}:{}`;
+    mockCacheRepository.get.mockResolvedValue(cachedResultString); // Simula cache hit com a string
+
     const result = await listarProtocolosUseCase.execute(input);
-    expect(result).toEqual(cachedResult);
+
+    // O UseCase deve parsear a string antes de retornar
+    expect(result).toEqual(cachedResultObject);
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters
     ).not.toHaveBeenCalled();
     expect(mockCacheRepository.set).not.toHaveBeenCalled();
   });
+
+  // Teste adicional para verificar a ordenação da chave de cache com filtros
+  it("deve gerar a mesma chave de cache para filtros em ordens diferentes", async () => {
+    const input1 = { start_date: "2025-11-01", end_date: "2025-11-10", type: "A", kind: "B"};
+    const input2 = { start_date: "2025-11-01", end_date: "2025-11-10", kind: "B", type: "A"}; // Mesmos filtros, ordem diferente
+    const expectedFiltersString = JSON.stringify({ kind: "B", type: "A" }); // Ordem alfabética
+    const expectedCacheKey = `protocolos:2025-11-01:2025-11-10:${expectedFiltersString}`;
+
+    mockCacheRepository.get.mockResolvedValue(null);
+    mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue([]);
+
+    await listarProtocolosUseCase.execute(input1);
+    expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
+    // Limpa a chamada anterior para verificar a próxima
+    mockCacheRepository.get.mockClear();
+
+    await listarProtocolosUseCase.execute(input2);
+    expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
+  });
+
 });
