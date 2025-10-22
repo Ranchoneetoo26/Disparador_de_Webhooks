@@ -156,7 +156,7 @@ npx sequelize-cli db:migrate --env test
         ```
 ---
 
-## 📂 Estrutura do Projeto
+## 📂 Estrutura do Projeto - Clean Architecture
 
 ```
 Disparador_de_Webhooks/
@@ -229,96 +229,5 @@ Disparador_de_Webhooks/
 Este projeto foi desenvolvido para fins educacionais e acadêmicos.  
 © 2025 - Todos os direitos reservados à equipe de desenvolvimento.
 
-
-
 ```
-.
-├── config/
-│   ├── config.js
-│   └── index.js
-├── src/
-│   ├── app.js
-│   ├── server.js
-│   ├── application/
-│   │   ├── dtos/
-│   │   │   ├── ReenviarWebhookInput.js
-│   │   │   ├── ReenviarWebhookOutput.js
-│   │   │   ├── ConsultarProtocoloInput.js
-│   │   │   └── ConsultarProtocoloOutput.js
-│   │   └── useCases/
-│   │       ├── ReenviarWebhookUseCase.js
-│   │       ├── ListarProtocolosUseCase.js
-│   │       └── ConsultarProtocoloUseCase.js
-│   ├── domain/
-│   │   ├── entities/
-│   │   │   ├── SoftwareHouse.js
-│   │   │   ├── Cedente.js
-│   │   │   ├── Conta.js
-│   │   │   ├── Convenio.js
-│   │   │   ├── Servico.js
-│   │   │   └── WebhookReprocessado.js
-│   │   ├── exceptions/
-│   │   │   ├── InvalidRequestException.js
-│   │   │   ├── UnprocessableEntityException.js
-│   │   │   └── ProtocoloNaoEncontradoException.js
-│   │   └── repositories/
-│   │       ├── ISoftwareHouseRepository.js
-│   │       ├── ICedenteRepository.js
-│   │       ├── IContaRepository.js
-│   │       ├── IConvenioRepository.js
-│   │       ├── IServicoRepository.js
-│   │       ├── IWebhookReprocessadoRepository.js
-│   │       └── ICacheRepository.js
-│   └── infrastructure/
-│       ├── database/
-│       │   ├── sequelize/
-│       │   │   ├── config/
-│       │   │   │   └── database.js
-│       │   │   ├── migrations/
-│       │   │   ├── models/
-│       │   │   │   ├── index.js
-│       │   │   │   ├── SoftwareHouseModel.js
-│       │   │   │   ├── CedenteModel.js
-│       │   │   │   ├── ContaModel.js
-│       │   │   │   ├── ConvenioModel.js
-│       │   │   │   ├── ServicoModel.js
-│       │   │   │   └── WebhookReprocessadoModel.js
-│       │   │   └── repositories/
-│       │   │       ├── SequelizeSoftwareHouseRepository.js
-│       │   │       ├── SequelizeCedenteRepository.js
-│       │   │       └── SequelizeWebhookReprocessadoRepository.js
-│       ├── cache/
-│       │   ├── redis/
-│       │   │   ├── RedisClient.js
-│       │   │   └── RedisCacheRepository.js
-│       ├── http/
-│       │   ├── express/
-│       │   │   ├── controllers/
-│       │   │   │   └── WebhookController.js
-│       │   │   ├── middlewares/
-│       │   │   │   ├── AuthMiddleware.js
-│       │   │   │   ├── ErrorHandler.js
-│       │   │   │   └── ValidationMiddleware.js
-│       │   │   ├── routes/
-│       │   │   │   ├── index.js
-│       │   │   │   └── webhookRoutes.js
-│       │   │   └── validationSchemas/
-│       │   │       └── webhookSchemas.js
-│       │   └── providers/
-│       │       └── AxiosProvider.js
-├── tests/
-│   ├── unit/
-│   │   └── useCases/
-│   │       └── ReenviarWebhookUseCase.spec.js
-│   └── integration/
-│       └── routes/
-│           └── webhookRoutes.spec.js
-├── .env
-├── .sequelizerc
-├── docker-compose.yml
-├── package.json
-└── README.md
-```
-
-
 
