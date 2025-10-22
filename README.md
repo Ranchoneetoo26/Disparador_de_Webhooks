@@ -156,7 +156,7 @@ npx sequelize-cli db:migrate --env test
         ```
 ---
 
-## 📂 Estrutura do Projeto
+## 📂 Estrutura do Projeto - Clean Architecture
 
 ```
 Disparador_de_Webhooks/
@@ -230,3 +230,4 @@ Este projeto foi desenvolvido para fins educacionais e acadêmicos.
 © 2025 - Todos os direitos reservados à equipe de desenvolvimento.
 
 ```
+
