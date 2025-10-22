@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import ReenviarWebhookUseCase from '../../../src/application/useCases/ReenviarWebhookUseCase.js';
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 
-describe('ReenviarWebhookUseCase', () => {
+import ReenviarWebhookUseCase from "@/application/useCases/ReenviarWebhookUseCase";
+
+describe("ReenviarWebhookUseCase", () => {
   let reenviarWebhookUseCase;
   let mockWebhookRepository;
   let mockReprocessadoRepository;
   let mockHttpClient;
-  let mockRedisClient;
 
   beforeEach(() => {
     mockWebhookRepository = {
-      findByIds: jest.fn(),
+      findById: jest.fn(),
       update: jest.fn(),
     };
 
@@ -22,96 +22,94 @@ describe('ReenviarWebhookUseCase', () => {
       post: jest.fn(),
     };
 
-    mockRedisClient = {
-      get: jest.fn(),
-      setEx: jest.fn(),
-    };
-
     reenviarWebhookUseCase = new ReenviarWebhookUseCase({
       webhookRepository: mockWebhookRepository,
       webhookReprocessadoRepository: mockReprocessadoRepository,
       httpClient: mockHttpClient,
-      redisClient: mockRedisClient,
     });
   });
 
-  it('should throw if payload is missing or invalid', async () => {
-    await expect(reenviarWebhookUseCase.execute()).rejects.toThrow();
+  it("should throw an error if id is not provided", async () => {
+    await expect(reenviarWebhookUseCase.execute()).rejects.toThrow(
+      "id is required"
+    );
   });
 
-  it('should throw when no registros found', async () => {
-    mockRedisClient.get.mockResolvedValue(null);
-    mockWebhookRepository.findByIds.mockResolvedValue([]);
+  it("should return success false if webhook is not found", async () => {
+    mockWebhookRepository.findById.mockResolvedValue(null);
 
-    const payload = { 
-      product: 'boleto', 
-      id: ['999'],  // Changed from [999] to ['999']
-      kind: 'webhook', // Changed from 'k' to 'webhook'
-      type: 'disponivel' 
+    const result = await reenviarWebhookUseCase.execute({ id: 999 });
+
+    expect(result).toEqual({ success: false, error: "Webhook not found" });
+    expect(mockWebhookRepository.findById).toHaveBeenCalledWith(999);
+    expect(mockHttpClient.post).not.toHaveBeenCalled();
+  });
+
+  it("should re-send the webhook successfully on a 2xx response", async () => {
+    const fakeWebhook = {
+      id: 1,
+      url: "http://example.com/hook",
+      payload: { data: "test" },
+      tentativas: 0,
     };
+    mockWebhookRepository.findById.mockResolvedValue(fakeWebhook);
+    mockHttpClient.post.mockResolvedValue({ status: 200, data: "OK" });
 
-    await expect(reenviarWebhookUseCase.execute(payload)).rejects.toMatchObject({
-      message: expect.stringContaining('Nenhum registro encontrado'),
+    const result = await reenviarWebhookUseCase.execute({ id: 1 });
+
+    expect(result.success).toBe(true);
+    expect(result.status).toBe(200);
+    expect(mockHttpClient.post).toHaveBeenCalledWith(
+      fakeWebhook.url,
+      fakeWebhook.payload,
+      { timeout: 5000 }
+    );
+    expect(mockWebhookRepository.update).toHaveBeenCalledWith(fakeWebhook.id, {
+      tentativas: 1,
+      last_status: 200,
     });
+    expect(mockReprocessadoRepository.create).not.toHaveBeenCalled();
   });
 
-  it('should re-send successfully and persist reprocessado', async () => {
-    mockRedisClient.get.mockResolvedValue(null);
-
-    const registros = [{ id: '1', status: 'REGISTRADO', tentativas: 0 }];  // Changed id to string
-    mockWebhookRepository.findByIds.mockResolvedValue(registros);
-
-    const protocoloMock = 'protocolo-123';
-    mockHttpClient.post.mockResolvedValue({ data: { protocolo: protocoloMock } });
-
-    const payload = { 
-      product: 'boleto', 
-      id: ['1'],  // Changed from [1] to ['1']
-      kind: 'webhook', // Changed from 'k' to 'webhook'
-      type: 'disponivel' 
+  it("should save to reprocessado on a non-2xx response", async () => {
+    const fakeWebhook = {
+      id: 2,
+      url: "http://example.com/hook",
+      payload: { data: "failed" },
     };
+    mockWebhookRepository.findById.mockResolvedValue(fakeWebhook);
+    mockHttpClient.post.mockResolvedValue({ status: 500 });
 
-    const result = await reenviarWebhookUseCase.execute(payload);
+    const result = await reenviarWebhookUseCase.execute({ id: 2 });
 
-    expect(result).toEqual({ success: true, protocolo: protocoloMock });
-    expect(mockRedisClient.setEx).toHaveBeenCalled();
-    expect(mockReprocessadoRepository.create).toHaveBeenCalledWith(expect.objectContaining({
-      protocolo: protocoloMock,
-    }));
+    expect(result.success).toBe(false);
+    expect(result.status).toBe(500);
+    expect(mockReprocessadoRepository.create).toHaveBeenCalled();
   });
 
-  it('should register reprocessado and increment tentativas on network error', async () => {
-    mockRedisClient.get.mockResolvedValue(null);
+  it("should save to reprocessado on a network error", async () => {
+    const fakeWebhook = {
+      id: 3,
+      url: "http://bad-url.com",
+      payload: { data: "network-error" },
+      tentativas: 1,
+    };
+    const networkError = new Error("Network timeout");
 
-    const registros = [{ id: '3', status: 'REGISTRADO', tentativas: 1 }];  // Changed id to string
-    mockWebhookRepository.findByIds.mockResolvedValue(registros);
-
-    const networkError = new Error('Network timeout');
+    mockWebhookRepository.findById.mockResolvedValue(fakeWebhook);
     mockHttpClient.post.mockRejectedValue(networkError);
 
-    const payload = { 
-      product: 'boleto', 
-      id: ['3'],  // Changed from [3] to ['3']
-      kind: 'webhook', // Changed from 'k' to 'webhook'
-      type: 'disponivel' 
-    };
+    const result = await reenviarWebhookUseCase.execute({ id: 3 });
 
-    await expect(reenviarWebhookUseCase.execute(payload)).rejects.toMatchObject({
-      message: expect.stringContaining('Não foi possível gerar a notificação'),
-    });
-
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Network timeout");
     expect(mockReprocessadoRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: payload,
-        kind: 'webhook',
-        type: 'disponivel',
-        servico_id: '["3"]',
-        protocolo: expect.stringContaining('error:')
+        protocolo: `error:${networkError.message}`,
       })
     );
-
-    expect(mockWebhookRepository.update).toHaveBeenCalledWith('3', { 
-      tentativas: 2 
+    expect(mockWebhookRepository.update).toHaveBeenCalledWith(fakeWebhook.id, {
+      tentativas: 2,
     });
   });
 });
