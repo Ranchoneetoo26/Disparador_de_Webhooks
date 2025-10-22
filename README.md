@@ -230,7 +230,3 @@ Este projeto foi desenvolvido para fins educacionais e acadêmicos.
 © 2025 - Todos os direitos reservados à equipe de desenvolvimento.
 
 ```
-
-
-
-
