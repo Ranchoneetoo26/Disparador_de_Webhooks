@@ -1,3 +1,4 @@
+// src/infrastructure/database/sequelize/repositories/SequelizeWebhookRepository.js
 import { Op } from 'sequelize';
 
 export default class SequelizeWebhookRepository {
@@ -8,9 +9,7 @@ export default class SequelizeWebhookRepository {
         this.webhookModel = WebhookModel;
     }
 
-    // Usado pelo ReenviarWebhookUseCase para buscar os registros originais
     async findByIds(product, ids) {
-        // Implementação para buscar os registros na tabela Webhooks
         return this.webhookModel.findAll({
             where: {
                 id: {
@@ -20,7 +19,6 @@ export default class SequelizeWebhookRepository {
         });
     }
 
-    // Usado pelo ReenviarWebhookUseCase em caso de falha para incrementar tentativas
     async update(id, data) {
         return this.webhookModel.update(data, {
             where: { id: id }

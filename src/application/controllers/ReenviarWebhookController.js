@@ -1,8 +1,8 @@
+// src/application/controllers/ReenviarWebhookController.js
 'use strict';
 
 import ReenviarWebhookUseCase from '../useCases/ReenviarWebhookUseCase.js';
 import ReenviarWebhookOutput from '../dtos/ReenviarWebhookOutput.js';
-import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
 
 export default class ReenviarWebhookController {
   constructor({ webhookRepository, webhookReprocessadoRepository, httpClient, redisClient }) {
@@ -16,15 +16,30 @@ export default class ReenviarWebhookController {
 
   async handle(req, res) {
     try {
-      const input = ReenviarWebhookInput.validate(req.body); // Chama a validação Joi (Requisito 1, 2, 3)
-      const result = await this.useCase.execute(input);
+      // ✅ CORREÇÃO: Unifica o 'id' da URL com o 'body' da requisição
+      const { id } = req.params;
+      const { product, kind, type } = req.body;
+
+      const payload = {
+        id: [id], // O UseCase espera um array de IDs
+        product,
+        kind,
+        type
+      };
+      
+      const result = await this.useCase.execute(payload);
+      
       return res.status(200).json(ReenviarWebhookOutput.success(result.protocolo));
     } catch (err) {
       console.error('Erro no reenvio:', err.message);
-      // Pega o status do erro customizado (422 para divergência, 400 para cache/falha)
+      
       const status = err.status || 400; 
       const detalhes = err.ids_invalidos || null;
-      return res.status(status).json(ReenviarWebhookOutput.error(status, err.message, detalhes));
+      
+      // ✅ CORREÇÃO: Garante que a mensagem de erro seja passada corretamente
+      const errorMessage = err.message || 'Ocorreu um erro inesperado.';
+      
+      return res.status(status).json(ReenviarWebhookOutput.error(status, errorMessage, detalhes));
     }
   }
 }

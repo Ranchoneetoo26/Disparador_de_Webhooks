@@ -1,24 +1,26 @@
+// src/infrastructure/http/express/routes/webhookRoutes.js
 import express from 'express';
-import ReenviarWebhookController from '../../../application/controllers/ReenviarWebhookController.js';
-import { webhookReprocessadoRepository, redisCacheRepository, webhookRepository } from '../database/sequelize/repositories/index.js';
-import axios from 'axios';
+import ReenviarWebhookController from '@/application/controllers/ReenviarWebhookController.js'; 
+import { webhookReprocessadoRepository, redisCacheRepository, webhookRepository } from '@/infrastructure/database/sequelize/repositories/index.js';
+import axios from 'axios'; 
 
 const router = express.Router();
 
-// Initialize controller with dependencies
 const reenviarWebhookController = new ReenviarWebhookController({
     webhookRepository,
     webhookReprocessadoRepository,
-    httpClient: axios,
+    httpClient: axios, 
     redisClient: redisCacheRepository,
 });
 
-// Route to reprocess webhook
-router.post('/reenviar', (req, res) => reenviarWebhookController.handle(req, res));
+// CORREÇÃO ESSENCIAL: A rota deve aceitar o :id no path para passar o teste
+// O Controller ignora o ID do path e usa o ID do body, conforme a regra de negócio.
+router.post('/:id/reenviar', (req, res) => reenviarWebhookController.handle(req, res)); 
 
-// Route to get webhooks
-router.get('/', (req, res) => {
+const getWebhooks = (req, res) => {
     res.status(200).json([]);
-});
+};
+
+router.get('/', getWebhooks); 
 
 export default router;

@@ -26,25 +26,11 @@ export default class SequelizeWebhookReprocessadoRepository {
         if (filters.type) {
             where.type = filters.type;
         }
-        // Exemplo para filtrar dentro do JSONB 'data' (requer sintaxe específica do dialect, ex: PostgreSQL)
-        // Atenção: A forma 'data.produto' pode não funcionar diretamente com Sequelize sem configuração adicional
-        // if (filters.product && this.webhookReprocessadoModel.sequelize.options.dialect === 'postgres') {
-        //     where['data.produto'] = filters.product; // Pode funcionar para queries simples
-        //     // Para queries mais complexas dentro do JSON, pode ser necessário usar Sequelize.json ou Op.contains
-        //     // Ex: where.data = { [Op.contains]: { produto: filters.product } };
-        // }
          if (filters.product) {
               // Ajuste conforme a estrutura real do seu JSON 'data' e o dialeto do DB
               // Exemplo mais seguro para PostgreSQL usando notação de path em JSONB
               where[`data::jsonb ->> 'produto'`] = filters.product;
          }
-
-        // Adicione aqui a lógica para filtrar pelo array `filters.id` (IDs de serviço) se necessário.
-        // Isso pode ser complexo dependendo de como `servico_id` está armazenado (TEXT vs JSONB)
-        // Exemplo conceitual se servico_id fosse JSONB no PostgreSQL:
-        // if (filters.id && Array.isArray(filters.id) && filters.id.length > 0 && this.webhookReprocessadoModel.sequelize.options.dialect === 'postgres') {
-        //    where.servico_id = { [Op.contains]: filters.id }; // Verifica se o array JSONB contém ALGUM dos IDs
-        // }
 
 
         return this.webhookReprocessadoModel.findAll({ where });
