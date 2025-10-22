@@ -2,13 +2,13 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/glob
 import request from 'supertest';
 
 import app from '../../../src/app.js';
+// A importação do banco de dados está correta
 import database from '../../../src/infrastructure/database/sequelize/models/index.cjs';
 
-
-const { Webhook, SoftwareHouse, Cedente } = global.db;
-
+// Esta linha global estava incorreta e foi removida, pois 'db' não estava definido aqui.
 
 describe('Integration Tests for webhookRoutes', () => {
+  // Variáveis declaradas no escopo do describe
   let Webhook;
   let SoftwareHouse;
   let Cedente;
@@ -19,17 +19,15 @@ describe('Integration Tests for webhookRoutes', () => {
     if (!database || !database.sequelize) throw new Error('Database not available for tests');
     await database.sequelize.sync({ force: true });
 
-    // obtém models a partir do objeto exportado pelo sequelize
-    Webhook = database.models?.Webhook;
-    SoftwareHouse = database.models?.SoftwareHouse;
-    Cedente = database.models?.Cedente;
+    // --- CORREÇÃO PRINCIPAL AQUI ---
+    // Os models são extraídos diretamente do objeto 'database', e não de 'database.models'.
+    // Usamos parênteses na desestruturação para atribuir às variáveis já declaradas com 'let'.
+    ({ Webhook, SoftwareHouse, Cedente } = database);
 
+    // Esta verificação agora vai passar, pois os models serão encontrados.
     if (!Webhook || !SoftwareHouse || !Cedente) {
-      throw new Error('Models Webhook/SoftwareHouse/Cedente não encontrados em database.models');
+      throw new Error('Models Webhook/SoftwareHouse/Cedente não foram encontrados no objeto database');
     }
-
-
-    await database.sequelize.sync({ force: true });
 
     try {
       softwareHouse = await SoftwareHouse.create({
@@ -68,10 +66,9 @@ describe('Integration Tests for webhookRoutes', () => {
     try {
       await Webhook.destroy({ where: {} });
     } catch (error) {
-      // Ignora erros de limpeza
+      // Ignora erros de limpeza se não houver nada para limpar
     }
   });
-
 
   describe('POST /webhooks/:id/reenviar', () => {
     it('should return 200 OK and success:true when resending a valid webhook', async () => {
@@ -93,9 +90,6 @@ describe('Integration Tests for webhookRoutes', () => {
       expect(response.body?.success).toBe(true);
 
       const webhookAtualizado = await Webhook.findByPk(webhookCriado.id);
-
-      // dependendo da implementação, tentativas pode ou não ter sido incrementado.
-      // aqui garantimos que o campo existe e é um número
       expect(typeof webhookAtualizado.tentativas).toBe('number');
     });
 
@@ -106,7 +100,6 @@ describe('Integration Tests for webhookRoutes', () => {
         .post(`/webhooks/${idInexistente}/reenviar`)
         .send();
 
-      // UseCase lança erro com status 400 quando não encontra registros
       expect(response.status).toBe(400);
       expect(response.body?.success).not.toBe(true);
     });
@@ -114,8 +107,7 @@ describe('Integration Tests for webhookRoutes', () => {
     it('should return an error when the external URL fails', async () => {
       const webhookComUrlRuim = await Webhook.create({
         cedente_id: cedente.id,
-        // usar porta alta ou domínio inválido que cause falha rápida
-        url: 'http://127.0.0.1:9', 
+        url: 'http://127.0.0.1:9',
         payload: { message: 'vai falhar' },
         tentativas: 1,
         kind: 'webhook',
@@ -127,7 +119,6 @@ describe('Integration Tests for webhookRoutes', () => {
         .post(`/webhooks/${webhookComUrlRuim.id}/reenviar`)
         .send();
 
-      // Espera resposta de erro (UseCase lança 400 em falhas de envio)
       expect(response.status).not.toBe(200);
       expect(response.body?.success).toBeFalsy();
     });

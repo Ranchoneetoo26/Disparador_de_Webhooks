@@ -139,7 +139,21 @@ npx sequelize-cli db:migrate --env test
   ```bash
   npm test
   ```
+  
+* **Rodando Testes Unitários Específicos:**
 
+    * Para testar o `UseCase` de consulta individual de protocolo (`GET /protocolo/:uuid`):
+        ```bash
+        npm test -- tests/unit/userCases/ConsultarProtocoloUseCase.spec.js
+        ```
+    * Para testar o `Middleware` de autenticação:
+        ```bash
+        npm test -- tests/unit/middlewares/AuthMiddleware.spec.js
+        ```
+    * Para testar a lógica de prioridade de configuração (Conta vs. Cedente):
+        ```bash
+        npm test -- tests/unit/services/notificationConfigResolver.spec.js
+        ```
 ---
 
 ## 📂 Estrutura do Projeto
@@ -305,5 +319,6 @@ Este projeto foi desenvolvido para fins educacionais e acadêmicos.
 ├── package.json
 └── README.md
 ```
+
 
 
