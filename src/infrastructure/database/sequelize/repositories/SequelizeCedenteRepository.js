@@ -1,36 +1,28 @@
-import { sequelize } from '../models/index.cjs';
+import { models, sequelize } from '../models/index.cjs';
 
 export default class SequelizeCedenteRepository {
   constructor() {
     this.db = sequelize;
   }
 
+  async findByCnpjAndToken(cnpj, token) {
+    if (!cnpj || !token) return null;
+    return models.Cedente.findOne({ where: { cnpj, token } });
+  }
+
   async findByToken(token) {
     if (!token) return null;
 
-    return {
-      id: 1,
-      nome: 'Cedente de Teste',
-      token,
-      ativo: true,
-    };
+    return models.Cedente.findOne({ where: { token } });
   }
 
   async findById(id) {
     if (!id) return null;
 
-    return {
-      id,
-      nome: 'Cedente Mock',
-      cnpj: '00.000.000/0001-00',
-      ativo: true,
-    };
+    return models.Cedente.findByPk(id);
   }
 
   async listarTodos() {
-    return [
-      { id: 1, nome: 'Cedente 1', ativo: true },
-      { id: 2, nome: 'Cedente 2', ativo: false },
-    ];
+    return models.Cedente.findAll();
   }
 }

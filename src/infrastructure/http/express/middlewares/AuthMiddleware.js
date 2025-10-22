@@ -45,7 +45,7 @@ export default function createAuthMiddleware({ cedenteRepository, softwareHouseR
       const tokenSh = headers['token-sh'] || headers['x-token-sh'] || headers['token_sh'] || headers['x-token'];
       const cnpjCedente = headers['cnpj-cedente'] || headers['x-cnpj-cedente'] || headers['cnpj_cedente'];
       const tokenCedente = headers['token-cedente'] || headers['x-token-cedente'] || headers['token_cedente'];
-
+      
       if (!cnpjSh || !tokenSh || !cnpjCedente || !tokenCedente) {
         return res.status(401).json({ error: 'Missing auth headers' });
       }
@@ -54,16 +54,16 @@ export default function createAuthMiddleware({ cedenteRepository, softwareHouseR
         tryFindByCnpjAndToken(softwareHouseRepository, cnpjSh, tokenSh),
         tryFindByCnpjAndToken(cedenteRepository, cnpjCedente, tokenCedente)
       ]);
-
+      
       if (!softwareHouse || !cedente) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-
       req.softwareHouse = softwareHouse;
       req.cedente = cedente;
 
       return next();
     } catch (err) {
+      console.log('AuthMiddleware error:', err);
       return next(err);
     }
   };

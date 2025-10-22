@@ -19,8 +19,6 @@ export default class ReenvioService {
       status: 'reenviado',
     });
 
-    console.log(`[ReenvioService] Webhook reenviado com sucesso. Protocolo: ${protocolo}`);
-
     return { protocolo };
   }
 

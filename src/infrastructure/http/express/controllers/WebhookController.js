@@ -8,7 +8,6 @@ export default class WebhookController {
   async reenviar(req, res) {
     try {
       const { product, id, kind, type } = req.body;
-
       const resultado = await this.reenvioService.reenviarWebhook(
         { product, id, kind, type },
         req

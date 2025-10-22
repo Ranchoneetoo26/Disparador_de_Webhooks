@@ -11,7 +11,7 @@ module.exports = {
 
   moduleNameMapper: {
   '^@/(.*)$': '<rootDir>/src/$1',
-  '^@database$': '<rootDir>/src/infrastructure/database',
+  "^@database$": "<rootDir>/src/infrastructure/database/sequelize/repositories/index.js",
   '^@infrastructure/(.*)$': '<rootDir>/src/infrastructure/$1',
   '^@domain/(.*)$': '<rootDir>/src/domain/$1',
   '^@application/(.*)$': '<rootDir>/src/application/$1',

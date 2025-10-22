@@ -1,36 +1,28 @@
-import { sequelize } from '../models/index.cjs';
+import { models, sequelize } from '../models/index.cjs';
 
 export default class SequelizeSoftwareHouseRepository {
   constructor() {
     this.db = sequelize;
   }
 
+  async findByCnpjAndToken(cnpj, token) {
+    if (!cnpj || !token) return null;
+    return models.SoftwareHouse.findOne({ where: { cnpj, token } });
+  }
+
   async findByToken(token) {
     if (!token) return null;
 
-    return {
-      id: 1,
-      nome: 'Software House Mock',
-      token,
-      ativo: true,
-    };
+    return models.SoftwareHouse.findOne({ where: { token } });
   }
 
   async findById(id) {
     if (!id) return null;
 
-    return {
-      id,
-      nome: 'Software House de Teste',
-      cnpj: '11.111.111/0001-11',
-      ativo: true,
-    };
+    return models.SoftwareHouse.findByPk(id);
   }
 
   async listarTodas() {
-    return [
-      { id: 1, nome: 'Software House 1', ativo: true },
-      { id: 2, nome: 'Software House 2', ativo: false },
-    ];
+    return models.SoftwareHouse.findAll();
   }
 }

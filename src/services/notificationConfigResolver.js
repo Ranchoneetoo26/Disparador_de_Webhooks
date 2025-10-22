@@ -1,21 +1,19 @@
-export function resolveNotificationConfig(product) {
-  const configs = {
-    boleto: {
-      url: 'https://meusistema.com/webhook/boleto',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    },
-    pix: {
-      url: 'https://meusistema.com/webhook/pix',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    },
-    default: {
-      url: 'https://meusistema.com/webhook/default',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    },
-  };
+const DEFAULT_CONFIG = {
+    retries: 3,
+    timeout: 5000
+    };
 
-  return configs[product] || configs.default;
+export function resolveNotificationConfig({ conta, cedente, defaultConfig } = {}) {
+  
+  const fallback = defaultConfig || DEFAULT_CONFIG;
+
+  if (conta && conta.configuracao_notificacao) {
+        return conta.configuracao_notificacao;
+    }
+
+  if (cedente && cedente.configuracao_notificacao) {
+      return cedente.configuracao_notificacao;
+  }
+
+  return fallback;
 }

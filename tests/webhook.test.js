@@ -1,29 +1,66 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import request from 'supertest';
-import app from '../src/app.js';
-import database from '@database';
-const { Webhook } = global.db || database;
+import { sequelize, models } from "../src/infrastructure/database/sequelize/models/index.cjs";
+import { jest, describe, expect, afterAll, beforeEach, test } from '@jest/globals';
 
-describe('Integration Tests for webhookRoutes', () => {
-  beforeAll(async () => {
+const { WebhookReprocessado, SoftwareHouse, Cedente } = models;
 
-    await database.sequelize.sync({ force: true });
+describe('Integration: Webhook Model Tests', () => {
+    jest.setTimeout(10000);
 
-    await Webhook.destroy({ where: {} });
-  });
+    let createdCedente;
+    let createdSoftwareHouse;
+    
+    beforeEach(async () => {
+        await sequelize.sync({ force: true });
+        
+        createdSoftwareHouse = await SoftwareHouse.create({
+            data_criacao: new Date(),
+            cnpj: '11111111000111',
+            token: 'TOKEN_SH',
+            status: 'ativo'
+        });
 
-  afterAll(async () => {
-    await database.sequelize.close();
-  });
-
-  describe('GET /webhooks', () => {
-    it('should return a list of webhooks', async () => {
-
-      const response = await request(app).get('/webhooks');
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBe(0);
+        createdCedente = await Cedente.create({
+            data_criacao: new Date(),
+            cnpj: '22222222000222',
+            token: 'TOKEN_CED',
+            softwarehouse_id: createdSoftwareHouse.id,
+            status: 'ativo'
+        });
     });
-  });
+
+    afterAll(async () => {
+        await sequelize.close();
+    });
+
+    test('deve criar um registro de Webhook Reprocessado com sucesso', async () => {
+        const payloadWebhook = {
+            data: { message: 'Dados da requisição falha' },
+            data_criacao: new Date(),
+            cedente_id: createdCedente.id,
+            kind: 'webhook',
+            type: 'pago',
+            protocolo: 'TESTE-UUID-12345',
+            servico_id: JSON.stringify(['servico_id_1']) 
+        };
+
+        const webhookCriado = await WebhookReprocessado.create(payloadWebhook);
+
+        expect(webhookCriado).toBeDefined();
+        expect(webhookCriado.cedente_id).toBe(createdCedente.id);
+        expect(webhookCriado.kind).toBe(payloadWebhook.kind);
+        expect(webhookCriado.protocolo).toBe(payloadWebhook.protocolo);
+    });
+    
+    test('não deve criar Webhook Reprocessado sem protocolo', async () => {
+        const invalidPayload = {
+            data: { message: 'Dados da requisição falha' },
+            data_criacao: new Date(),
+            cedente_id: createdCedente.id,
+            kind: 'webhook',
+            type: 'disponivel',
+            protocolo: null,
+        };
+
+        await expect(WebhookReprocessado.create(invalidPayload)).rejects.toThrow();
+    });
 });

@@ -1,6 +1,6 @@
+import { sequelize, models } from "../../../src/infrastructure/database/sequelize/models/index.cjs";
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import database from '../../../src/infrastructure/database'; 
-const { Convenio, Cedente, SoftwareHouse, Conta } = global.db; 
+const { Convenio, Conta, Cedente, SoftwareHouse } = models;
 
 describe('Integration: Convenio model', () => {
   let softwareHouse;
@@ -8,7 +8,7 @@ describe('Integration: Convenio model', () => {
   let cedente;
 
   beforeAll(async () => {
-    await database.sequelize.sync({ force: true });
+    await sequelize.sync({ force: true });
     
     softwareHouse = await SoftwareHouse.create({
       cnpj: '11111111000111',
@@ -35,7 +35,7 @@ describe('Integration: Convenio model', () => {
   });
 
   afterAll(async () => {
-    await database.sequelize.close();
+    await sequelize.close();
   });
 
   it('deve criar um novo Convenio', async () => {

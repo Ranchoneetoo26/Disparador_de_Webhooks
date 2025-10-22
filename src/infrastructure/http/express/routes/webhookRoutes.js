@@ -25,13 +25,20 @@ const authMiddleware = createAuthMiddleware({ cedenteRepository, softwareHouseRe
 router.use(authMiddleware);
 
 const safeHandler = (ctrl, method) => {
+  try {
   if (!ctrl) return (req, res) => res.status(204).end();
   const fn = ctrl[method] || ctrl;
   if (typeof fn === 'function') return fn.bind(ctrl);
   return (req, res) => res.status(204).end();
+  } catch (error) {
+    console.error('Error in safeHandler:', error);
+    return (req, res) => res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
-router.post('/', safeHandler(WebhookController, 'create'));
-router.get('/', safeHandler(WebhookController, 'list'));
+const webhookController = new WebhookController();
+
+router.post('/', safeHandler(webhookController, 'reenviar'));
+router.get('/', safeHandler(webhookController, 'list'));
 
 export default router;
