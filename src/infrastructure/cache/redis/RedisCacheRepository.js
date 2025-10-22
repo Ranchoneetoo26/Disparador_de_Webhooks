@@ -13,7 +13,8 @@ const redisConfig = {
     connectTimeout: 5000,
 };
 
-let redisClient = null;
+// CORREÇÃO: Removendo 'let' para permitir a exportação direta no final.
+let redisClient = null; 
 
 function getClient() {
     if (!redisClient || redisClient.status === 'end') {
@@ -33,7 +34,6 @@ function getClient() {
         });
 
         redisClient.on('close', () => {
-
         });
 
         redisClient.on('reconnecting', (delay) => {
@@ -79,7 +79,6 @@ async function ensureReadyClient() {
 
 export default class RedisCacheRepository {
     constructor() {
-
         getClient();
     }
 
@@ -109,16 +108,13 @@ export default class RedisCacheRepository {
 
         const { ttl } = options;
         try {
-
             const valueToStore = (typeof value === 'string') ? value : JSON.stringify(value);
 
             console.log(`[Cache] SET ${key} (TTL: ${ttl && Number.isInteger(ttl) && ttl > 0 ? ttl + 's' : 'Nenhum'})`);
 
             if (ttl && Number.isInteger(ttl) && ttl > 0) {
-
-                await client.set(key, valueToStore, 'EX', ttl);
+                await client.set(key, valueToStore, 'EX', ttl); 
             } else {
-
                 await client.set(key, valueToStore);
             }
             return true;
@@ -131,11 +127,9 @@ export default class RedisCacheRepository {
     async disconnect() {
         const client = redisClient;
         if (client && client.status !== 'end') {
-            console.log('[Cache] Desconectando do Redis...'); //
+            console.log('[Cache] Desconectando do Redis...');
             try {
-
                 client.removeAllListeners();
-
                 await client.quit();
                 console.log('[Cache] Conexão Redis fechada via quit().');
             } catch (err) {
@@ -148,3 +142,6 @@ export default class RedisCacheRepository {
         }
     }
 }
+
+// CRÍTICO: Exporta a variável redisClient existente e a função getClient para que o teste possa usá-los.
+export { redisClient, getClient };
