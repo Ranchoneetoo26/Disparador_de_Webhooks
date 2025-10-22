@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     data: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSONB, // Mantém JSONB para os dados gerais
       allowNull: false
     },
     data_criacao: {
@@ -36,21 +36,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
+    // --- TIPO ALTERADO ABAIXO ---
     servico_id: {
-      type: DataTypes.TEXT, // Considerar se JSONB seria melhor se precisar consultar os IDs individualmente
-      allowNull: false
+      type: DataTypes.JSONB, // <-- ALTERADO DE TEXT PARA JSONB
+      allowNull: false      // Agora pode armazenar o array diretamente
     },
+    // --- FIM DA ALTERAÇÃO ---
     protocolo: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    // --- CAMPO ADICIONADO ABAIXO ---
     status: {
       type: DataTypes.STRING, // Ex: 'pending', 'sent', 'error'
-      allowNull: true // Defina como false e adicione defaultValue se necessário
-      // defaultValue: 'pending' // Exemplo se sempre iniciar como pendente
+      allowNull: true
     }
-    // --- FIM DO CAMPO ADICIONADO ---
   }, {
     sequelize,
     modelName: 'WebhookReprocessado',
