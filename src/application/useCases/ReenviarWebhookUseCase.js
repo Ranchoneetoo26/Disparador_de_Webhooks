@@ -36,14 +36,14 @@ export default class ReenviarWebhookUseCase {
     // Mapeamento de situações
     const situacoesEsperadas = {
       boleto: { disponivel: 'REGISTRADO', cancelado: 'BAIXADO', pago: 'LIQUIDADO' },
-      pagamento: { disponivel: 'SCHEDULED', cancelado: 'CANCELLED', pago: 'PAID' },
+      pagamento: { disponivel: 'SCHEDULED ACTIVE', cancelado: 'CANCELLED', pago: 'PAID' },
       pix: { disponivel: 'ACTIVE', cancelado: 'REJECTED', pago: 'LIQUIDATED' },
     };
 
-    const situacaoEsperada = situacoesEsperadas[product][type];
+    const situacaoEsperada = situacoesEsperadas[product]?.[type];
 
     // Validação de divergência
-    const divergentes = registros.filter((r) => r.status !== situacaoEsperada);
+    const divergentes = registros.filter((r) => r.status_servico !== situacaoEsperada);
     if (divergentes.length > 0) {
       throw Object.assign(
         new Error(`Não foi possível gerar a notificação. A situação do ${product} diverge do tipo de notificação solicitado.`),
@@ -51,10 +51,14 @@ export default class ReenviarWebhookUseCase {
       );
     }
 
+    // CRÍTICO: Definindo cedenteId antes do try/catch
+    const registroOriginal = registros[0];
+    const cedenteId = registroOriginal.cedente_id; // Lê o ID do registro original para uso posterior
+
     try {
       // Envio do webhook
       const response = await this.httpClient.post(
-        'https://webhook.site/SEU_ENDPOINT_TESTE',
+        'https://httpbin.org/post',
         { product, id, kind, type },
         { headers: { 'Content-Type': 'application/json' } }
       );
@@ -62,15 +66,15 @@ export default class ReenviarWebhookUseCase {
       const protocolo = response.data?.protocolo || randomUUID();
 
       // Cachear 1h
-      await this.redisClient.setEx(cacheKey, 3600, JSON.stringify({ product, id, kind, type }));
-
-      // Salvar na tabela WebhookReprocessado
+      await this.redisClient.set(cacheKey, JSON.stringify({ product, id, kind, type }), 'EX', 3600);
+      // Salvar na tabela WebhookReprocessado - Sucesso
       await this.reprocessadoRepository.create({
         data: { product, id, kind, type },
         kind,
         type,
         servico_id: JSON.stringify(id),
         protocolo,
+        cedente_id: cedenteId, // <-- CORREÇÃO AQUI (Sucesso)
       });
 
       return { success: true, protocolo };
@@ -87,12 +91,12 @@ export default class ReenviarWebhookUseCase {
         type: payload.type,
         servico_id: JSON.stringify(payload.id),
         protocolo: errorProtocol,
+        cedente_id: cedenteId, // <-- CORREÇÃO AQUI (Falha)
       });
 
       // Increment retry count
-      const registro = registros[0];
-      await this.webhookRepository.update(registro.id, {
-        tentativas: (registro.tentativas || 0) + 1,
+      await this.webhookRepository.update(registroOriginal.id, {
+        tentativas: (registroOriginal.tentativas || 0) + 1,
       });
 
       throw Object.assign(new Error('Não foi possível gerar a notificação. Tente novamente mais tarde.'), {

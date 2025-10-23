@@ -1,51 +1,60 @@
 'use strict';
 const { Model, DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => { // Alterado para receber sequelize diretamente
+module.exports = (sequelize) => { 
   class Webhook extends Model {
     static associate(models) {
-      // Defina associações aqui se necessário no futuro
-      // Exemplo: this.belongsTo(models.Cedente, { foreignKey: 'cedente_id', as: 'cedente' });
+      // Associações definidas em outro lugar
     }
   }
 
   Webhook.init({
-    // ID já é adicionado por padrão pelo Sequelize como primary key
     url: {
       type: DataTypes.STRING,
-      allowNull: true // Ou false, dependendo da regra
+      allowNull: true 
     },
     payload: {
       type: DataTypes.JSON,
-      allowNull: true // Ou false
+      allowNull: true 
     },
     tentativas: {
       type: DataTypes.INTEGER,
-      allowNull: false, // Garantir que não seja nulo
+      allowNull: false, 
       defaultValue: 0
     },
-    // Adicionado cedente_id se for necessário associar
-    // cedente_id: {
-    //   type: DataTypes.INTEGER,
-    //   allowNull: true, // Ou false, dependendo se todo webhook tem cedente
-    //   references: {
-    //     model: 'Cedentes',
-    //     key: 'id'
-    //   }
-    // },
-     // Adicionados campos da migration que faltavam na definição original
-     createdAt: {
-       allowNull: false,
-       type: DataTypes.DATE
-     },
-     updatedAt: {
-       allowNull: false,
-       type: DataTypes.DATE
-     }
+    kind: { // Adicionando o campo 'kind' que o Use Case usa
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    type: { // Adicionando o campo 'type' que o Use Case usa
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    status_servico: { // <--- CAMPO CRÍTICO ADICIONADO (Status real do boleto)
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    cedente_id: { // Adicionando a foreign key que faltava
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    // Removendo data_criacao, que será tratado pelo Sequelize
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      field: 'data_criacao' // Mantendo o nome da coluna do DB consistente com seu teste
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      field: 'data_atualizacao'
+    }
   }, {
     sequelize,
     modelName: 'Webhook',
     tableName: 'Webhooks', 
+    // Usamos underscored: true em modelos Sequelize se as colunas forem snake_case (cedente_id, data_criacao)
+    underscored: true
   });
   return Webhook;
 };
