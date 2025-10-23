@@ -29,7 +29,8 @@ describe('ConsultarProtocoloUseCase', () => {
 
     mockCacheRepository.get.mockResolvedValue(null);
 
-    const fakeRecord = { protocolo: uuid, data: { a: 1 } };
+    // CORREÇÃO 1: Adicionar a propriedade status: 'sent'
+    const fakeRecord = { protocolo: uuid, data: { a: 1 }, status: 'sent' };
     mockWebhookReprocessadoRepository.findByProtocolo.mockResolvedValue(fakeRecord);
 
     const result = await useCase.execute({ protocolo: uuid });
@@ -37,7 +38,13 @@ describe('ConsultarProtocoloUseCase', () => {
     expect(result).toEqual(fakeRecord);
     expect(mockCacheRepository.get).toHaveBeenCalledWith(`protocolo:${uuid}`);
     expect(mockWebhookReprocessadoRepository.findByProtocolo).toHaveBeenCalledWith(uuid);
-    expect(mockCacheRepository.set).toHaveBeenCalledWith(`protocolo:${uuid}`, fakeRecord, { ttl: 3600 });
+
+    // CORREÇÃO 2: Esperar a string JSON, e não o objeto
+    expect(mockCacheRepository.set).toHaveBeenCalledWith(
+      `protocolo:${uuid}`,
+      JSON.stringify(fakeRecord), // O Use Case salva a string
+      { ttl: 3600 }
+    );
   });
 
   it('retorna dados em cache quando estiver certo no cache', async () => {

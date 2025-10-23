@@ -1,16 +1,25 @@
 services:
   db:
+    # ... sua configuração do postgres ...
     image: postgres:latest
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: disparador_test
+      POSTGRES_DB: disparador_test # Docker compose cria o banco de teste
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis: # <<< Adicione ou ajuste este serviço
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6379:6379" # <<< Exponha a porta
+    volumes:
+      - redis_data:/data # <<< Opcional: Para persistir dados do Redis
+
 volumes:
   postgres_data:
-  
+  redis_data: # <<< Adicione se usar o volume acima

@@ -1,23 +1,26 @@
+// src/infrastructure/database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js
 import { Op } from 'sequelize';
+import db from '../models/index.cjs'; // <<< Importa o 'db' que contém os models
 
 export default class SequelizeWebhookReprocessadoRepository {
-    constructor({ WebhookReprocessadoModel }) {
-        if (!WebhookReprocessadoModel) {
-            throw new Error('WebhookReprocessadoModel is required in constructor');
+    constructor() { // <<< Ajustado para não precisar receber o model, pega direto do db importado
+        // Pega o model diretamente do objeto db importado
+        this.webhookReprocessadoModel = db.WebhookReprocessado;
+        if (!this.webhookReprocessadoModel) {
+            throw new Error('WebhookReprocessadoModel não encontrado. Verifique a exportação em models/index.cjs.');
         }
-        this.webhookReprocessadoModel = WebhookReprocessadoModel;
     }
 
     // Método para listar protocolos com filtros (usado por ListarProtocolosUseCase)
     async listByDateRangeAndFilters({ startDate, endDate, filters }) {
         const where = {
             data_criacao: {
-                [Op.between]: [startDate, endDate] // Usa as datas já convertidas
+                [Op.between]: [startDate, endDate]
             }
         };
 
         // Aplica filtros opcionais
-        if (filters.protocolo) { // Assumindo que o filtro 'id' na query string se refere ao 'protocolo'
+        if (filters.protocolo) {
             where.protocolo = filters.protocolo;
         }
         if (filters.kind) {
@@ -26,25 +29,22 @@ export default class SequelizeWebhookReprocessadoRepository {
         if (filters.type) {
             where.type = filters.type;
         }
-        // Exemplo para filtrar dentro do JSONB 'data' (requer sintaxe específica do dialect, ex: PostgreSQL)
-        // Atenção: A forma 'data.produto' pode não funcionar diretamente com Sequelize sem configuração adicional
-        // if (filters.product && this.webhookReprocessadoModel.sequelize.options.dialect === 'postgres') {
-        //     where['data.produto'] = filters.product; // Pode funcionar para queries simples
-        //     // Para queries mais complexas dentro do JSON, pode ser necessário usar Sequelize.json ou Op.contains
-        //     // Ex: where.data = { [Op.contains]: { produto: filters.product } };
-        // }
-         if (filters.product) {
-              // Ajuste conforme a estrutura real do seu JSON 'data' e o dialeto do DB
-              // Exemplo mais seguro para PostgreSQL usando notação de path em JSONB
-              where[`data::jsonb ->> 'produto'`] = filters.product;
-         }
+        if (filters.product) {
+            // Assume PostgreSQL e JSONB no campo 'data'
+            // Acessa a propriedade 'product' dentro do JSON 'data'
+             where[Op.and] = where[Op.and] || []; // Garante que where[Op.and] seja um array
+             where[Op.and].push(
+                 // Use db.sequelize.json para acessar campos JSON de forma segura
+                 // db.sequelize.json('data.product', filters.product) // Sintaxe mais antiga
+                  db.sequelize.where(db.sequelize.json('data.product'), filters.product) // Sintaxe preferida
+             );
 
-        // Adicione aqui a lógica para filtrar pelo array `filters.id` (IDs de serviço) se necessário.
-        // Isso pode ser complexo dependendo de como `servico_id` está armazenado (TEXT vs JSONB)
-        // Exemplo conceitual se servico_id fosse JSONB no PostgreSQL:
-        // if (filters.id && Array.isArray(filters.id) && filters.id.length > 0 && this.webhookReprocessadoModel.sequelize.options.dialect === 'postgres') {
-        //    where.servico_id = { [Op.contains]: filters.id }; // Verifica se o array JSONB contém ALGUM dos IDs
-        // }
+             // Alternativa (menos segura ou específica do dialect):
+             // where['data.product'] = filters.product; // Pode funcionar em alguns casos simples
+             // where[`data::jsonb ->> 'product'`] = filters.product; // Específico do PostgreSQL
+        }
+
+        // TODO: Adicionar lógica para filtrar por filters.id (array de servico_id) se necessário
 
 
         return this.webhookReprocessadoModel.findAll({ where });
@@ -60,14 +60,34 @@ export default class SequelizeWebhookReprocessadoRepository {
         });
     }
 
-    // Método para criar um registro (usado por ReenviarWebhookUseCase)
+    // Método para criar um registro (usado por CriarReprocessamentoUseCase)
     async create(data) {
        if (!data) {
            throw new Error('Data is required for creation');
        }
+       // Garante que o ID seja o protocolo se não for passado explicitamente
+       if (!data.id && data.protocolo) {
+           data.id = data.protocolo;
+       }
        return this.webhookReprocessadoModel.create(data);
     }
 
-    // Deprecado: Renomeado para listByDateRangeAndFilters para clareza
-    // async findByFilters(filters) { ... }
+    /**
+     * Atualiza o status de um registro WebhookReprocessado pelo protocolo.
+     * @param {string} protocolo - O UUID do protocolo a ser atualizado.
+     * @param {string} novoStatus - O novo status (ex: 'SENT', 'FAILED').
+     * @returns {Promise<[number]>} Retorna um array com o número de linhas afetadas.
+     */
+    async updateStatus(protocolo, novoStatus) {
+        if (!protocolo || !novoStatus) {
+            throw new Error('Protocolo e novoStatus são obrigatórios para updateStatus.');
+        }
+        return this.webhookReprocessadoModel.update(
+            { status: novoStatus }, // Objeto com os campos a serem atualizados
+            {
+                where: { protocolo: protocolo } // Condição para encontrar o registro
+            }
+        );
+    }
+
 }
