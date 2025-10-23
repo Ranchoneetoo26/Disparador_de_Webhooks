@@ -34,7 +34,6 @@ describe("Integration Tests for webhookRoutes", () => {
         data_criacao: new Date(),
       });
 
-      // Criação de pré-requisitos Cedente
       cedente = await Cedente.create({
         cnpj: "22222222000222",
         token: "valid_token_ced",

@@ -2,8 +2,6 @@ try {
   require('dotenv').config({ path: './.env' });
 } catch (err) { }
 
-// REMOVE a importação do redisCacheRepository daqui
-
 try {
   const dbModule = require('./src/infrastructure/database/sequelize/models/index.cjs');
   const db = dbModule.default || dbModule;
@@ -54,7 +52,7 @@ async function tryCloseSequelize() {
 
     if (sequelize && typeof sequelize.close === 'function') { 
       console.log('Fechando conexão Sequelize...'); 
-      await sequelize.close(); //
+      await sequelize.close(); 
       console.log('Conexão Sequelize fechada.'); 
     }
   } catch (err) {
@@ -74,7 +72,7 @@ afterAll(async () => {
   }
 
  
-  await tryCloseSequelize(); //
+  await tryCloseSequelize(); 
 
 
 
@@ -96,7 +94,7 @@ afterAll(async () => {
   }
 
 
-  if (typeof globalThis !== 'undefined' && typeof globalThis.jest !== 'undefined' && typeof globalThis.jest.useRealTimers === 'function') { //
+  if (typeof globalThis !== 'undefined' && typeof globalThis.jest !== 'undefined' && typeof globalThis.jest.useRealTimers === 'function') { 
     globalThis.jest.useRealTimers(); 
   }
   console.log('afterAll concluído.'); 

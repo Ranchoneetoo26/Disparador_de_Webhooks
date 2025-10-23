@@ -1,4 +1,3 @@
-// src/infrastructure/http/express/routes/webhookRoutes.js
 import express from 'express';
 import createAuthMiddleware from '../middlewares/AuthMiddleware.js';
 import SequelizeCedenteRepository from '../../../database/sequelize/repositories/SequelizeCedenteRepository.js';

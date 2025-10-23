@@ -66,14 +66,12 @@ export default class ListarProtocolosUseCase {
           return JSON.parse(cachedData);
         } catch (e) {
           console.error("Erro ao parsear dados do cache:", e);
-          // Se não conseguir parsear, busca novamente (cache inválido)
         }
       } else {
-        return cachedData; // Retorna se já for objeto/array
+        return cachedData; 
       }
     }
 
-    // Busca no repositório se não houver cache válido
     const protocolos =
       await this.webhookReprocessadoRepository.listByDateRangeAndFilters({
         startDate,

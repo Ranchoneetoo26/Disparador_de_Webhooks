@@ -13,7 +13,6 @@ const redisConfig = {
   connectTimeout: 5000,
 };
 
-// CORREÇÃO: Removendo 'let' para permitir a exportação direta no final.
 let redisClient = null; 
 
 function getClient() {
@@ -65,7 +64,6 @@ async function ensureReadyClient() {
   if (client.status === "connecting" || client.status === "reconnecting") {
     console.log("[Cache] Aguardando cliente Redis ficar pronto...");
     try {
-      // Espera pelo evento 'ready' ou 'error' por um tempo limitado
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(
           () =>
@@ -157,7 +155,7 @@ export default class RedisCacheRepository {
     async disconnect() {
         const client = redisClient;
         if (client && client.status !== 'end') {
-            console.log('[Cache] Desconectando do Redis...'); //
+            console.log('[Cache] Desconectando do Redis...'); 
             try {
 
                 client.removeAllListeners();

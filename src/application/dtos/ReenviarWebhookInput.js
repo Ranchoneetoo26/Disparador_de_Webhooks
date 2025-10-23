@@ -1,10 +1,9 @@
-// src/application/dtos/ReenviarWebhookInput.js
 'use strict';
 
 import Joi from 'joi';
 
 export default class ReenviarWebhookInput {
-  constructor({ product, id, kind, type }) {
+  constructor({ product, id, kind, type } = {}) {
     this.product = product;
     this.id = id;
     this.kind = kind;
