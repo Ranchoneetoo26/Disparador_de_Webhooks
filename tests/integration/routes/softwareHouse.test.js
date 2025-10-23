@@ -1,30 +1,45 @@
-'use strict';
+import { sequelize, models } from "../../../src/infrastructure/database/sequelize/models/index.cjs";
+import { describe, expect, afterAll, jest } from '@jest/globals';
+const { SoftwareHouse } = models;
 
-import { jest } from '@jest/globals';
-import db from '@database';
+describe('Integration: SoftwareHouse Model Tests', () => {
+    let createdSoftwareHouse;
+    
+    jest.setTimeout(10000);
 
-const { SoftwareHouse, sequelize } = db;
+    beforeEach(async () => {
+        await sequelize.sync({ force: true });
+        
+        createdSoftwareHouse = await SoftwareHouse.create({
+            data_criacao: new Date(),
+            cnpj: '11111111000111',
+            token: 'TOKEN_DE_TESTE_SH',
+            status: 'ativo'
+        });
+        
+    });
 
-describe('Integration: SoftwareHouse model', () => {
-  jest.setTimeout(10000);
+    afterAll(async () => {
+        await sequelize.close();
+    });
 
-  beforeEach(async () => {
-    await sequelize.sync({ force: true });
-  });
+    test('deve criar e recuperar uma SoftwareHouse com dados válidos', async () => {
+        const foundSoftwareHouse = await SoftwareHouse.findByPk(createdSoftwareHouse.id);
+        
+        expect(foundSoftwareHouse).toBeDefined();
+        expect(foundSoftwareHouse.cnpj).toBe('11111111000111');
+        expect(foundSoftwareHouse.token).toBe('TOKEN_DE_TESTE_SH');
+        expect(foundSoftwareHouse.status).toBe('ativo');
+    });
 
-  afterAll(async () => {
-    await sequelize.close();
-  });
+    test('não deve permitir a criação de duas SoftwareHouses com o mesmo CNPJ', async () => {
+        const invalidPayload = {
+            data_criacao: new Date(),
+            cnpj: '11111111000111',
+            token: 'TOKEN_DUPLICADO',
+            status: 'ativo'
+        };
 
-  test('deve criar e recuperar uma SoftwareHouse', async () => {
-    const payload = {
-      cnpj: '11111111000111',
-      token: 'TOKEN_DE_TESTE_SH',
-      status: 'ativo'
-    };
-    const softwareHouseCriada = await SoftwareHouse.create(payload);
-    const softwareHouseEncontrada = await SoftwareHouse.findByPk(softwareHouseCriada.id);
-    expect(softwareHouseEncontrada).toBeDefined();
-    expect(softwareHouseEncontrada.cnpj).toBe(payload.cnpj);
-  });
+        await expect(SoftwareHouse.create(invalidPayload)).rejects.toThrow();
+    });
 });

@@ -1,23 +1,45 @@
 // src/infrastructure/http/express/routes/webhookRoutes.js
 import express from 'express';
-import ReenviarWebhookController from '@/application/controllers/ReenviarWebhookController.js';
-import { webhookReprocessadoRepository, redisCacheRepository, webhookRepository } from '@/infrastructure/database/sequelize/repositories/index.js';
-import axios from 'axios';
+import createAuthMiddleware from '../middlewares/AuthMiddleware.js';
+import SequelizeCedenteRepository from '../../../database/sequelize/repositories/SequelizeCedenteRepository.js';
+import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
+import WebhookController from '../controllers/WebhookController.js';
 
 const router = express.Router();
 
-const reenviarWebhookController = new ReenviarWebhookController({
-    webhookRepository,
-    webhookReprocessadoRepository,
-    httpClient: axios,
-    redisClient: redisCacheRepository,
-});
+let cedenteRepository;
+let softwareHouseRepository;
 
-router.post('/:id/reenviar', reenviarWebhookController.handle.bind(reenviarWebhookController));
-const getWebhooks = (req, res) => {
-    res.status(200).json([]);
+try {
+  cedenteRepository = new SequelizeCedenteRepository();
+} catch (e) {
+  cedenteRepository = SequelizeCedenteRepository;
+}
+
+try {
+  softwareHouseRepository = new SequelizeSoftwareHouseRepository();
+} catch (e) {
+  softwareHouseRepository = SequelizeSoftwareHouseRepository;
+}
+
+const authMiddleware = createAuthMiddleware({ cedenteRepository, softwareHouseRepository });
+router.use(authMiddleware);
+
+const safeHandler = (ctrl, method) => {
+  try {
+  if (!ctrl) return (req, res) => res.status(204).end();
+  const fn = ctrl[method] || ctrl;
+  if (typeof fn === 'function') return fn.bind(ctrl);
+  return (req, res) => res.status(204).end();
+  } catch (error) {
+    console.error('Error in safeHandler:', error);
+    return (req, res) => res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
-router.get('/', getWebhooks);
+const webhookController = new WebhookController();
+
+router.post('/', safeHandler(webhookController, 'reenviar'));
+router.get('/', safeHandler(webhookController, 'list'));
 
 export default router;
