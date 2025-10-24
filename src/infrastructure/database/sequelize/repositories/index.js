@@ -1,10 +1,10 @@
-import db from "../models/index.cjs";
+import { models } from "../models/index.cjs";
 import SequelizeWebhookReprocessadoRepository from "./SequelizeWebhookReprocessadoRepository.js";
 import RedisCacheRepository from "../../../cache/redis/RedisCacheRepository.js";
 
 const webhookReprocessadoRepository =
   new SequelizeWebhookReprocessadoRepository({
-    WebhookReprocessadoModel: db.WebhookReprocessado,
+    WebhookReprocessadoModel: models.WebhookReprocessado,
   });
 
 const redisCacheRepository = new RedisCacheRepository();
