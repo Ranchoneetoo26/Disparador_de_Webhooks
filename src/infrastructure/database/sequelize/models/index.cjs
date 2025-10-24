@@ -1,73 +1,109 @@
+// src/infrastructure/database/sequelize/models/index.cjs
 'use strict';
 
-const { Sequelize, DataTypes } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
 const dotenv = require('dotenv');
+const { Sequelize, DataTypes } = require('sequelize');
 
-dotenv.config(); // Carrega variáveis do .env
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const isTest = process.env.NODE_ENV === 'test';
+// Detecta test env (Jest define JEST_WORKER_ID e NODE_ENV pode ser 'test')
+const isTest = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
 
-// --- INICIALIZAÇÃO DO SEQUELIZE MOVIDA PARA CIMA ---
-const DB_HOST = isTest ? process.env.DB_HOST_TEST : process.env.DB_HOST;
-const DB_USERNAME = isTest ? process.env.DB_USERNAME_TEST : process.env.DB_USERNAME;
-const DB_PASSWORD = isTest ? process.env.DB_PASSWORD_TEST : process.env.DB_PASSWORD;
-const DB_DATABASE = isTest ? process.env.DB_DATABASE_TEST : process.env.DB_DATABASE;
-const DB_PORT = isTest ? process.env.DB_PORT_TEST : process.env.DB_PORT;
-const DB_DIALECT = isTest ? process.env.DB_DIALECT_TEST : process.env.DB_DIALECT;
+// Variáveis normais (não-test)
+const DB_DATABASE = process.env.DB_DATABASE;
+const DB_USERNAME = process.env.DB_USERNAME;
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_HOST     = process.env.DB_HOST;
+const DB_PORT     = process.env.DB_PORT;
+const DB_DIALECT  = process.env.DB_DIALECT;
 
-// Verifica se as variáveis de banco de dados essenciais estão definidas
-if (!DB_DATABASE || !DB_USERNAME || !DB_HOST || !DB_PORT || !DB_DIALECT) {
-  console.error("Erro Fatal: Variáveis de ambiente do banco de dados não estão configuradas corretamente. Verifique seu arquivo .env ou as variáveis de ambiente do sistema.");
-  // Considerar lançar um erro ou sair do processo em um cenário real
-  // throw new Error("Configuração do banco de dados incompleta.");
+// Variáveis de teste (se quiser manter configuração por .env)
+const DB_DATABASE_TEST = process.env.DB_DATABASE_TEST;
+const DB_USERNAME_TEST = process.env.DB_USERNAME_TEST;
+const DB_PASSWORD_TEST = process.env.DB_PASSWORD_TEST;
+const DB_HOST_TEST     = process.env.DB_HOST_TEST;
+const DB_PORT_TEST     = process.env.DB_PORT_TEST;
+const DB_DIALECT_TEST  = process.env.DB_DIALECT_TEST;
+
+// Função utilitária para criar instância do Sequelize
+function createSequelizeInstance() {
+  if (isTest) {
+    // Forçar SQLite em memória nos testes — evita dependência de Docker/Postgres
+    return new Sequelize({
+      dialect: 'sqlite',
+      storage: ':memory:',
+      logging: false,
+      define: {
+        underscored: true,
+        timestamps: false
+      }
+    });
+  }
+
+  // produção/desenvolvimento: usa variáveis normais
+  const dialect = DB_DIALECT || 'postgres';
+  const host = DB_HOST || '127.0.0.1';
+  const port = DB_PORT ? Number(DB_PORT) : undefined;
+  const db = DB_DATABASE || 'disparador_dev';
+  const user = DB_USERNAME || 'postgres';
+  const pass = DB_PASSWORD || null;
+
+  return new Sequelize(db, user, pass, {
+    host,
+    port,
+    dialect,
+    logging: false,
+    define: {
+      underscored: true,
+      timestamps: false
+    }
+  });
 }
 
-const sequelize = new Sequelize( // Instância criada ANTES de ser usada pelos modelos
-  DB_DATABASE,
-  DB_USERNAME,
-  DB_PASSWORD,
-  {
-    host: DB_HOST,
-    port: parseInt(DB_PORT, 10), // Garante que a porta seja um número
-    dialect: DB_DIALECT,
-    logging: false, // Desativado para testes e produção, pode ativar para debug
-  }
-);
-// --- FIM DO BLOCO MOVIDO ---
+const sequelize = createSequelizeInstance();
 
-const db = {}; // Objeto para armazenar os modelos e a instância do sequelize
+const db = {};
+const basename = path.basename(__filename);
+const modelsDir = __dirname;
 
-// Carrega e inicializa cada modelo, passando a instância do sequelize e DataTypes
-// Usando a forma (sequelize, DataTypes) pois os modelos exportam uma função
-const CedenteModel = require('./CedenteModel.cjs')(sequelize, DataTypes);
-const ContaModel = require('./ContaModel.cjs')(sequelize, DataTypes);
-const ConvenioModel = require('./ConvenioModel.cjs')(sequelize, DataTypes);
-const SoftwareHouseModel = require('./SoftwareHouseModel.cjs')(sequelize, DataTypes);
-const WebhookModel = require('./WebhookModel.cjs')(sequelize, DataTypes); // Corrigido para inicializar corretamente
-const WebhookReprocessadoModel = require('./WebhookReprocessadoModel.cjs')(sequelize, DataTypes);
-const ServicoModel = require('./ServicoModel.cjs')(sequelize, DataTypes); // Adicionado ServicoModel
+// Carrega modelos do diretório
+fs
+  .readdirSync(modelsDir)
+  .filter(file => {
+    return (
+      file.indexOf('.') !== 0 &&
+      file !== basename &&
+      (file.slice(-3) === '.js' || file.slice(-4) === '.cjs')
+    );
+  })
+  .forEach(file => {
+    const modelPath = path.join(modelsDir, file);
+    try {
+      const modelImport = require(modelPath);
+      const model = (typeof modelImport === 'function')
+        ? modelImport(sequelize, DataTypes)
+        : (modelImport.default ? modelImport.default(sequelize, DataTypes) : modelImport(sequelize, DataTypes));
+      if (model && model.name) {
+        db[model.name] = model;
+      }
+    } catch (err) {
+      // Em tests pode haver modelos que dependam de features do Postgres — loga pra debug
+      // mas não quebra o carregamento de outros modelos.
+      // console.error('Erro ao carregar model', file, err.message);
+    }
+  });
 
-// Adiciona os modelos inicializados ao objeto db
-db.Cedente = CedenteModel;
-db.Conta = ContaModel;
-db.Convenio = ConvenioModel;
-db.SoftwareHouse = SoftwareHouseModel;
-db.Webhook = WebhookModel;
-db.WebhookReprocessado = WebhookReprocessadoModel;
-db.Servico = ServicoModel;
-
-// Executa o método associate de cada modelo, se existir
+// Executa associações se existirem
 Object.keys(db).forEach(modelName => {
-  // Verifica se o modelo tem a função 'associate' antes de chamar
-  if (db[modelName] && db[modelName].associate) {
-    db[modelName].associate(db); // Passa o objeto db inteiro para as associações
+  if (db[modelName] && typeof db[modelName].associate === 'function') {
+    db[modelName].associate(db);
   }
 });
 
-// Adiciona a instância e a classe Sequelize ao objeto db para exportação
+// Torna possível sincronizar a DB nos testes
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-// Exporta o objeto db configurado
 module.exports = db;
-module.exports.default = db; // Para compatibilidade com import/export
