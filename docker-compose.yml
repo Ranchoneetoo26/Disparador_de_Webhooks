@@ -10,16 +10,16 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./pgdata:/var/lib/postgresql
 
-  redis: # <<< Adicione ou ajuste este serviço
+  redis:
     image: redis:alpine
     restart: always
     ports:
-      - "6379:6379" # <<< Exponha a porta
+      - "6379:6379"
     volumes:
-      - redis_data:/data # <<< Opcional: Para persistir dados do Redis
+      - redis_data:/data
 
 volumes:
   postgres_data:
-  redis_data: # <<< Adicione se usar o volume acima
+  redis_data:

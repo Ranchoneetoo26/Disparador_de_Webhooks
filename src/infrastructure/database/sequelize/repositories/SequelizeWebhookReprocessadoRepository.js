@@ -20,7 +20,7 @@ export default class SequelizeWebhookReprocessadoRepository {
         };
 
         // Aplica filtros opcionais
-        if (filters.protocolo) {
+        if (filters.protocolo) { // Assumindo que o filtro 'id' na query string se refere ao 'protocolo' nos filtros internos
             where.protocolo = filters.protocolo;
         }
         if (filters.kind) {
@@ -30,22 +30,22 @@ export default class SequelizeWebhookReprocessadoRepository {
             where.type = filters.type;
         }
         if (filters.product) {
-            // Assume PostgreSQL e JSONB no campo 'data'
-            // Acessa a propriedade 'product' dentro do JSON 'data'
-             where[Op.and] = where[Op.and] || []; // Garante que where[Op.and] seja um array
-             where[Op.and].push(
-                 // Use db.sequelize.json para acessar campos JSON de forma segura
-                 // db.sequelize.json('data.product', filters.product) // Sintaxe mais antiga
-                  db.sequelize.where(db.sequelize.json('data.product'), filters.product) // Sintaxe preferida
-             );
-
-             // Alternativa (menos segura ou específica do dialect):
-             // where['data.product'] = filters.product; // Pode funcionar em alguns casos simples
-             // where[`data::jsonb ->> 'product'`] = filters.product; // Específico do PostgreSQL
+             // Exemplo para PostgreSQL (ajuste se a chave 'produto' estiver em outro nível no JSON 'data')
+             // Esta sintaxe busca a chave 'produto' na raiz do JSONB 'data'
+             where[`data::jsonb ->> 'produto'`] = filters.product;
         }
 
-        // TODO: Adicionar lógica para filtrar por filters.id (array de servico_id) se necessário
-
+        // --- LÓGICA DO FILTRO DE ID (ARRAY) ATIVADA ---
+        // Assume que filters.id é um array de strings vindo da query
+        // E que a coluna 'servico_id' no banco de dados é do tipo JSONB (PostgreSQL)
+        if (filters.id && Array.isArray(filters.id) && filters.id.length > 0) {
+            // Op.contains (PostgreSQL): Verifica se o campo JSONB 'servico_id'
+            // contém PELO MENOS UM dos elementos do array 'filters.id'.
+            where.servico_id = {
+                [Op.contains]: filters.id // Filtro ativado!
+            };
+        }
+        // --- FIM DA LÓGICA ATIVADA ---
 
         return this.webhookReprocessadoModel.findAll({ where });
     }
@@ -71,23 +71,4 @@ export default class SequelizeWebhookReprocessadoRepository {
        }
        return this.webhookReprocessadoModel.create(data);
     }
-
-    /**
-     * Atualiza o status de um registro WebhookReprocessado pelo protocolo.
-     * @param {string} protocolo - O UUID do protocolo a ser atualizado.
-     * @param {string} novoStatus - O novo status (ex: 'SENT', 'FAILED').
-     * @returns {Promise<[number]>} Retorna um array com o número de linhas afetadas.
-     */
-    async updateStatus(protocolo, novoStatus) {
-        if (!protocolo || !novoStatus) {
-            throw new Error('Protocolo e novoStatus são obrigatórios para updateStatus.');
-        }
-        return this.webhookReprocessadoModel.update(
-            { status: novoStatus }, // Objeto com os campos a serem atualizados
-            {
-                where: { protocolo: protocolo } // Condição para encontrar o registro
-            }
-        );
-    }
-
 }

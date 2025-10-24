@@ -1,42 +1,28 @@
-// src/infrastructure/database/sequelize/repositories/SequelizeSoftwareHouseRepository.js
-import db from '../models/index.cjs';
+import { models, sequelize } from '../models/index.cjs';
 
-class SequelizeSoftwareHouseRepository {
-    constructor() {
-        this.softwareHouseModel = db.SoftwareHouse;
-        if (!this.softwareHouseModel) {
-            throw new Error('SoftwareHouseModel não encontrado.');
-        }
-    }
+export default class SequelizeSoftwareHouseRepository {
+  constructor() {
+    this.db = sequelize;
+  }
 
-    /**
-     * Encontra uma SoftwareHouse ativa pelo CNPJ e Token.
-     */
-    async findByCnpjAndToken(cnpj, token) {
-        if (!cnpj || !token) {
-            return null;
-        }
-        return this.softwareHouseModel.findOne({
-            where: {
-                cnpj: cnpj,
-                token: token,
-                // status: 'ativo' // Descomente se quiser validar status na query
-            }
-        });
-    }
+  async findByCnpjAndToken(cnpj, token) {
+    if (!cnpj || !token) return null;
+    return models.SoftwareHouse.findOne({ where: { cnpj, token } });
+  }
 
-    /**
-     * Encontra uma SoftwareHouse pela sua chave primária (ID).
-     * @param {number | string} id - O ID da SoftwareHouse.
-     * @returns {Promise<SoftwareHouse|null>}
-     */
-    async findById(id) {
-        const numericId = parseInt(id, 10);
-        if (isNaN(numericId)) return null;
-        return this.softwareHouseModel.findByPk(numericId); // findByPk busca pela Primary Key
-    }
+  async findByToken(token) {
+    if (!token) return null;
 
-    // Outros métodos do repositório...
+    return models.SoftwareHouse.findOne({ where: { token } });
+  }
+
+  async findById(id) {
+    if (!id) return null;
+
+    return models.SoftwareHouse.findByPk(id);
+  }
+
+  async listarTodas() {
+    return models.SoftwareHouse.findAll();
+  }
 }
-
-export default new SequelizeSoftwareHouseRepository();

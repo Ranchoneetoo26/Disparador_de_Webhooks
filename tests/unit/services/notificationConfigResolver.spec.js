@@ -2,7 +2,7 @@ import { describe, it, expect } from "@jest/globals";
 import { resolveNotificationConfig } from "@/services/notificationConfigResolver";
 
 describe("notificationConfigResolver", () => {
-  it("Retorna a configuração da conta quando encontrado.", () => {
+  it("Retorna a configuração da conta quando presente.", () => {
     const conta = { configuracao_notificacao: { retries: 1 } };
     const cedente = { configuracao_notificacao: { retries: 5 } };
 
