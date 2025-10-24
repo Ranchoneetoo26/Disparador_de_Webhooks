@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "type": "module",
-  "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
-  },
+ "scripts": {
+  "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+  "start": "node src/app.js",
+  "dev": "nodemon src/app.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
