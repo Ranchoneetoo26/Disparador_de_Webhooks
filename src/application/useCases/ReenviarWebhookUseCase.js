@@ -1,7 +1,5 @@
 "use strict";
 
-import ReenviarWebhookInput from "../dtos/ReenviarWebhookInput.js";
-
 export default class ReenviarWebhookUseCase {
   constructor({
     webhookRepository,
@@ -21,65 +19,54 @@ export default class ReenviarWebhookUseCase {
     this.redisClient = redisClient;
   }
 
-  async execute(payload) {
-    if (!payload) {
-      const validationError = new Error('Payload é obrigatório');
-      validationError.status = 400; 
-      throw validationError;
+  async execute(payload = {}) {
+    // ✅ Verificação de id
+    if (!payload?.id) {
+      throw new Error("id is required");
     }
 
-    const input = ReenviarWebhookInput.validate(payload);
-    const { product, id, kind, type } = input;
-
-    if (!id || !Array.isArray(id)) {
-      const validationError = new Error('O campo "id" deve ser um array.');
-      validationError.status = 400;
-      throw validationError;
-    }
-
-    const cacheKey = `reenviar:${product}:${id.join(",")}`;
-    const existeCache = await this.redisClient.get(cacheKey);
-    if (existeCache) {
-      throw Object.assign(
-        new Error("Requisição duplicada. Tente novamente em 1 hora."),
-        { status: 400 }
-      );
-    }
-
-
-    if (!webhookIdParaBuscar) throw new Error("id is required after validation");
-
-    const webhook = await this.webhookRepository.findById(webhookIdParaBuscar);
+    // ✅ Busca o webhook
+    const webhook = await this.webhookRepository.findById(payload.id);
     if (!webhook) {
       return { success: false, error: "Webhook not found" };
     }
 
     try {
-      const resp = await this.httpClient.post(webhook.url, webhook.payload, {
-        timeout: 5000,
-      });
+      // ✅ Faz o POST do webhook
+      const response = await this.httpClient.post(
+        webhook.url,
+        webhook.payload,
+        { timeout: 5000 }
+      );
 
-      if (resp && resp.status >= 200 && resp.status < 300) {
+      // ✅ Caso sucesso (2xx)
+      if (response && response.status >= 200 && response.status < 300) {
         await this.webhookRepository.update(webhook.id, {
           tentativas: (webhook.tentativas || 0) + 1,
-          last_status: resp.status,
+          last_status: response.status,
         });
 
-        return { success: true, status: resp.status, data: resp.data };
-      } else {
-        const status = resp ? resp.status : 'no_status';
-        await this.reprocessadoRepository.create({
-          data: webhook.payload,
-          cedente_id: webhook.cedente_id || null,
-          kind: webhook.kind || kind || "unknown",
-          type: webhook.type || type || "unknown",
-          servico_id: webhook.servico_id || JSON.stringify(id) || null,
-          protocolo: `status:${status}`,
-          meta: { originalStatus: status },
-        });
-        return { success: false, status: status };
+        return {
+          success: true,
+          status: response.status,
+          data: response.data,
+        };
       }
+
+      // ✅ Caso erro de status (não 2xx)
+      await this.reprocessadoRepository.create({
+        data: webhook.payload,
+        cedente_id: webhook.cedente_id || null,
+        kind: webhook.kind || "unknown",
+        type: webhook.type || "unknown",
+        servico_id: webhook.servico_id || null,
+        protocolo: `status:${response.status}`,
+        meta: { originalStatus: response.status },
+      });
+
+      return { success: false, status: response.status };
     } catch (err) {
+      // ✅ Caso erro de rede ou exceção
       await this.reprocessadoRepository.create({
         data: webhook.payload,
         cedente_id: webhook.cedente_id || null,

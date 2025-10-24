@@ -1,9 +1,9 @@
+import { jest, describe, expect, afterAll, beforeEach } from "@jest/globals";
 import {
   sequelize,
   models,
 } from "../../../src/infrastructure/database/sequelize/models/index.cjs";
-import { describe, expect, afterAll, jest } from "@jest/globals";
-const { Cedente, SoftwareHouse } = models;
+const { Cedente, WebhookModel, SoftwareHouse } = models;
 
 describe("Integração do Model: Cedente", () => {
   let softwareHouse;
@@ -28,8 +28,10 @@ describe("Integração do Model: Cedente", () => {
     const payload = {
       data_criacao: new Date(),
       cnpj: "12345678000199",
+
       token: "TOKEN_CEDENTE_TESTE",
       status: "ativo",
+
       softwarehouse_id: softwareHouse.id,
     };
 

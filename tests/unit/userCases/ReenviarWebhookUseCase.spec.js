@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import ReenviarWebhookUseCase from "@/application/useCases/ReenviarWebhookUseCase";
-// Não precisamos mais mockar o DTO, vamos passar dados válidos
+
+import ReenviarWebhookUseCase from "../../../src/application/useCases/ReenviarWebhookUseCase.js";
+import RedisCacheRepository from "../../../src/infrastructure/cache/redis/RedisCacheRepository.js";
 
 describe("ReenviarWebhookUseCase", () => {
   let reenviarWebhookUseCase;
@@ -16,7 +17,7 @@ describe("ReenviarWebhookUseCase", () => {
     id: ["1"], // Array de string, como o erro do DTO pede
     product: "boleto",
     kind: "webhook",
-    type: "disponivel"
+    type: "disponivel",
   };
 
   // Webhook que será retornado pelo findById
@@ -60,7 +61,7 @@ describe("ReenviarWebhookUseCase", () => {
       webhookRepository: mockWebhookRepository,
       webhookReprocessadoRepository: mockReprocessadoRepository,
       httpClient: mockHttpClient,
-      redisClient: mockRedisClient,
+      redisClient: RedisCacheRepository,
     });
   });
 
@@ -68,7 +69,7 @@ describe("ReenviarWebhookUseCase", () => {
   it("should throw an error if payload is not provided", async () => {
     // Espera o erro da validação inicial adicionada no .js
     await expect(reenviarWebhookUseCase.execute()).rejects.toThrow(
-      'Payload é obrigatório'
+      "Payload é obrigatório"
     );
   });
 
@@ -126,7 +127,6 @@ describe("ReenviarWebhookUseCase", () => {
     expect(result).toEqual({ success: false, status: 500 });
     // Verifica se chamou o findById corretamente
     expect(mockWebhookRepository.findById).toHaveBeenCalledWith(fakePayload.id);
-
 
     // Deve criar um registro de reprocessamento
     expect(mockReprocessadoRepository.create).toHaveBeenCalledWith(
