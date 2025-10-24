@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // src/infrastructure/database/sequelize/repositories/index.js
 
 // 1. Importe a função 'createRequire' do módulo 'module' do Node.js
@@ -29,3 +30,17 @@ export {
     redisCacheRepository,
     webhookRepository
 };
+=======
+import { models } from "../models/index.cjs";
+import SequelizeWebhookReprocessadoRepository from "./SequelizeWebhookReprocessadoRepository.js";
+import RedisCacheRepository from "../../../cache/redis/RedisCacheRepository.js";
+
+const webhookReprocessadoRepository =
+  new SequelizeWebhookReprocessadoRepository({
+    WebhookReprocessadoModel: models.WebhookReprocessado,
+  });
+
+const redisCacheRepository = new RedisCacheRepository();
+
+export { webhookReprocessadoRepository, redisCacheRepository };
+>>>>>>> e8eb97ff05622b90f384c5fbc829e82218ca52c7
