@@ -8,7 +8,11 @@ services:
     ports:
       - "5433:5432"
     volumes:
+<<<<<<< HEAD
       - pgdata:/var/lib/postgresql/data
+=======
+      - ./pgdata:/var/lib/postgresql
+>>>>>>> aa1c5d7c8915e2ead1701b5739a6dfc8116113cf
 
 # se já existir volumes: mantenha e acrescente pgdata:
 volumes:
