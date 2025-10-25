@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 
-import ReenviarWebhookUseCase from "@/application/useCases/ReenviarWebhookUseCase";
+import ReenviarWebhookUseCase from "../../../src/application/useCases/ReenviarWebhookUseCase.js";
+import RedisCacheRepository from "../../../src/infrastructure/cache/redis/RedisCacheRepository.js";
 
 describe("ReenviarWebhookUseCase", () => {
   let reenviarWebhookUseCase;
@@ -26,6 +27,7 @@ describe("ReenviarWebhookUseCase", () => {
       webhookRepository: mockWebhookRepository,
       webhookReprocessadoRepository: mockReprocessadoRepository,
       httpClient: mockHttpClient,
+      redisClient: RedisCacheRepository,
     });
   });
 
