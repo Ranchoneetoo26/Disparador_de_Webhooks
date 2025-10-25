@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
-import { resolveNotificationConfig } from '@/services/notificationConfigResolver';
+import { v4 as uuidv4 } from "uuid";
+import { resolveNotificationConfig } from "./notificationConfigResolver.js";
 
 export default class ReenvioService {
   constructor() {
@@ -8,7 +8,7 @@ export default class ReenvioService {
 
   async reenviarWebhook(data, req) {
     if (!data || !data.product || !data.id) {
-      throw new Error('Dados insuficientes para reenviar webhook.');
+      throw new Error("Dados insuficientes para reenviar webhook.");
     }
 
     const protocolo = uuidv4();
@@ -16,7 +16,7 @@ export default class ReenvioService {
     this.protocolos.set(protocolo, {
       ...data,
       createdAt: new Date(),
-      status: 'reenviado',
+      status: "reenviado",
     });
 
     return { protocolo };
@@ -39,7 +39,7 @@ export default class ReenvioService {
   }
 
   async consultarProtocolo(uuid) {
-    if (!uuid) throw new Error('UUID do protocolo é obrigatório.');
+    if (!uuid) throw new Error("UUID do protocolo é obrigatório.");
 
     const protocolo = this.protocolos.get(uuid);
     if (!protocolo) return null;
