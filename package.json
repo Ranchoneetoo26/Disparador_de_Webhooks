@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "type": "module",
-"scripts": {
-  "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
-  "start": "node src/app.js",
-  "dev": "nodemon src/app.js"
-},
+  "scripts": {
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -28,6 +28,7 @@
     "axios": "^1.12.2",
     "babel-jest": "^30.2.0",
     "cross-env": "^10.1.0",
+    "dotenv-cli": "^10.0.0",
     "jest": "^30.2.0",
     "nodemon": "^3.1.10",
     "sequelize-cli": "^6.6.3",
