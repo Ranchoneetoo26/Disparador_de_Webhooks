@@ -1,6 +1,5 @@
 import { subDays, differenceInDays } from "date-fns";
-import InvalidRequestException from "@/domain/exceptions/InvalidRequestException";
-
+import InvalidRequestException from "../../domain/exceptions/InvalidRequestException.js";
 export default class ListarProtocolosUseCase {
   constructor({ webhookReprocessadoRepository, cacheRepository }) {
     if (!webhookReprocessadoRepository) {
