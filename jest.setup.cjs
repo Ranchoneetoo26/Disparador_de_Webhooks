@@ -2,7 +2,7 @@ try {
   require("dotenv").config({ path: "./.env" });
 } catch (err) {}
 
-// REMOVE a importação do redisCacheRepository daqui
+
 
 try {
   const dbModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
@@ -75,7 +75,7 @@ afterAll(async () => {
     await tryCloseSequelize();
   } catch (err) {}
 
-  await tryCloseSequelize(); //
+  await tryCloseSequelize();
 
   try {
     const repositoriesModule = await import(
@@ -107,7 +107,7 @@ afterAll(async () => {
     typeof globalThis.jest !== "undefined" &&
     typeof globalThis.jest.useRealTimers === "function"
   ) {
-    //
+    
     globalThis.jest.useRealTimers();
   }
   console.log("afterAll concluído.");

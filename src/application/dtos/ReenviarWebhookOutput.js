@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 // src/application/dtos/ReenviarWebhookOutput.js
-=======
-
->>>>>>> e8eb97ff05622b90f384c5fbc829e82218ca52c7
 'use strict';
 
 export default class ReenviarWebhookOutput {
@@ -21,10 +17,7 @@ export default class ReenviarWebhookOutput {
     });
   }
 
-<<<<<<< HEAD
   // Requisito: Retorna o status de erro e, opcionalmente, os IDs inválidos (detalhes)
-=======
->>>>>>> e8eb97ff05622b90f384c5fbc829e82218ca52c7
   static error(status, message, detalhes = null) {
     return new ReenviarWebhookOutput({
       success: false,
@@ -44,8 +37,4 @@ export default class ReenviarWebhookOutput {
       error: this.error,
     };
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> e8eb97ff05622b90f384c5fbc829e82218ca52c7
