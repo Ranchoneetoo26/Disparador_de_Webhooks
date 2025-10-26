@@ -157,6 +157,18 @@ npx sequelize-cli db:migrate --env test
 
 ---
 
+## Swagger
+
+- Bibliotecas a serem instaladas
+
+- npm install js-yaml swagger-ui-express
+
+## Porta de acesso
+
+- http://localhost:3333/
+
+---
+
 ## 📂 Estrutura do Projeto - Clean Architecture
 
 ```
