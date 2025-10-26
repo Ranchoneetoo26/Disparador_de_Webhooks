@@ -1,0 +1,375 @@
+openapi: 3.0.0
+info:
+  title: API Disparador de Webhooks
+  version: 1.0.0
+  description: |-
+    API desenvolvida em Node.js com o objetivo de reenviar notificações de webhooks do PlugBoleto que não foram entregues corretamente.
+    O sistema garante robustez, controle e rastreabilidade no reprocessamento dessas notificações.
+servers:
+  - url: http://localhost:3333
+    description: Servidor de Desenvolvimento Local
+
+components:
+  schemas:
+    ReenviarWebhookInput:
+      type: object
+      required:
+        - product
+        - id
+        - kind
+        - type
+      properties:
+        product:
+          type: string
+          enum: [boleto, pagamento, pix]
+          description: O produto associado aos webhooks a serem reenviados.
+          example: boleto
+        id:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 30
+          description: Array de IDs dos serviços/webhooks a serem reenviados (máximo 30).
+          example:
+            - "boleto-123"
+            - "boleto-456"
+        kind:
+          type: string
+          enum: [webhook]
+          description: O tipo de recurso. Deve ser "webhook".
+          example: webhook
+        type:
+          type: string
+          enum: [disponivel, cancelado, pago]
+          description: O tipo específico do evento do webhook.
+          example: pago
+
+    ReenviarWebhookSuccessOutput:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        protocolo:
+          type: string
+          format: uuid
+          description: Identificador único gerado para a requisição de reenvio.
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        message:
+          type: string
+          example: "Webhook reenviado com sucesso."
+
+    ErrorOutput:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Mensagem descritiva do erro.
+          example: 'O campo "product" é obrigatório.'
+        error:
+          type: object
+          properties:
+            status:
+              type: integer
+              description: Código de status HTTP do erro.
+              example: 400
+            detalhes:
+              type: array
+              items:
+                type: string
+              nullable: true
+              description: Detalhes adicionais do erro (ex:IDs inválidos).
+              example:
+                - "id-invalido-1"
+                - "id-invalido-2"
+
+    ProtocoloDetalhes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do registro de reprocessamento (não o protocolo da requisição original).
+          example: "f4b5c6d7-e8f9-a0b1-c2d3-e4f5a6b7c8d9"
+        data:
+          type: object
+          description: O payload original do webhook que foi reenviado ou falhou.
+          additionalProperties: true
+          example:
+            titulo_id: "12345"
+            status: "pago"
+            valor: 100.50
+        data_criacao:
+          type: string
+          format: date-time
+          description: Data e hora em que a tentativa de reenvio foi registrada.
+          example: "2025-10-25T14:30:00Z"
+        cedente_id:
+          type: integer
+          description: ID do cedente associado ao webhook.
+          example: 42
+        kind:
+          type: string
+          description: Tipo do webhook (ex 'webhook').
+          example: "webhook"
+        type:
+          type: string
+          description: Tipo do evento do webhook (ex 'pago', 'disponivel').
+          example: "pago"
+        servico_id:
+          type: array
+          items:
+            type: string
+          description: ID(s) do(s) serviço(s) relacionado(s) ao webhook.
+          example:
+            - "boleto-123"
+        protocolo:
+          type: string
+          description: Protocolo da requisição de reenvio original (o mesmo retornado no POST).
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        status:
+          type: string
+          nullable: true
+          description: Status do reenvio (ex 'pending', 'sent', 'error').
+          example: "sent"
+
+  securitySchemes:
+    authHeaders:
+      type: apiKey
+      in: header
+      name: cnpj-sh
+      description: |
+        Autenticação via headers:
+        - cnpj-sh
+        - token-sh
+        - cnpj-cedente
+        - token-cedente
+        Todos são obrigatórios em cada requisição.
+
+security:
+  - authHeaders: []
+
+paths:
+  /webhooks:
+    post:
+      tags:
+        - Webhooks
+      summary: Solicita o reenvio de webhooks não entregues.
+      description: Envia uma lista de IDs de webhooks para serem reprocessados e reenviados aos endpoints configurados. Retorna um protocolo único para rastreamento.
+      parameters:
+        - name: cnpj-sh
+          in: header
+          required: true
+          schema:
+            type: string
+          description: CNPJ da Software House.
+        - name: token-sh
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Token da Software House.
+        - name: cnpj-cedente
+          in: header
+          required: true
+          schema:
+            type: string
+          description: CNPJ do Cedente.
+        - name: token-cedente
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Token do Cedente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReenviarWebhookInput"
+      responses:
+        "200":
+          description: Requisição de reenvio recebida com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReenviarWebhookSuccessOutput"
+        "400":
+          description: Erro de validação nos dados da requisição (Bad Request).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+        "401":
+          description: Não autorizado. Headers de autenticação ausentes ou inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+        "500":
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+
+  /protocolo:
+    get:
+      tags:
+        - Protocolos
+      summary: Lista protocolos de reenvio registrados.
+      description: Retorna uma lista de registros de tentativas de reenvio de webhooks, filtráveis por data e outros parâmetros.
+      parameters:
+        - name: cnpj-sh
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: token-sh
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: cnpj-cedente
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: token-cedente
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Data de início do período de busca (YYYY-MM-DD). Intervalo máximo de 31 dias.
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Data de fim do período de busca (YYYY-MM-DD). Intervalo máximo de 31 dias.
+        - name: product
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [boleto, pagamento, pix]
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [webhook]
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [disponivel, cancelado, pago]
+      responses:
+        "200":
+          description: Lista de protocolos encontrados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProtocoloDetalhes"
+        "400":
+          description: Erro nos parâmetros da requisição.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+        "401":
+          description: Não autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+        "500":
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+
+  /protocolo/{uuid}:
+    get:
+      tags:
+        - Protocolos
+      summary: Consulta detalhes de um protocolo de reenvio específico.
+      description: Retorna os detalhes completos de um registro de tentativa de reenvio baseado no seu UUID (protocolo).
+      parameters:
+        - name: cnpj-sh
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: token-sh
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: cnpj-cedente
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: token-cedente
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Detalhes do protocolo encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtocoloDetalhes"
+        "401":
+          description: Não autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+        "404":
+          description: Protocolo não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+        "500":
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorOutput"
+
+tags:
+  - name: Webhooks
+    description: Operações relacionadas ao reenvio de webhooks.
+  - name: Protocolos
+    description: Operações para consultar o status e detalhes dos reenvios.
