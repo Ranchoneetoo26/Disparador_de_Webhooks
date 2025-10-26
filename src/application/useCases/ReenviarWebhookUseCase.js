@@ -70,10 +70,10 @@ export default class ReenviarWebhookUseCase {
       await this.reprocessadoRepository.create({
         data: webhook.payload,
         cedente_id: webhook.cedente_id || null,
-        kind: webhook.kind || "unknown",
-        type: webhook.type || "unknown",
-        servico_id: webhook.servico_id || null,
-        protocolo: `error:${err.message}`,
+        kind: webhook.kind || kind || "unknown",
+        type: webhook.type || type || "unknown",
+        servico_id: webhook.servico_id || JSON.stringify(id) || null,
+        protocolo: `error:${err.message.slice(0, 100)}`,
         meta: { errorMessage: err.message },
       });
 

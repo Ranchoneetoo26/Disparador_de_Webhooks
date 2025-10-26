@@ -9,4 +9,12 @@ const webhookReprocessadoRepository =
 
 const redisCacheRepository = new RedisCacheRepository();
 
-export { webhookReprocessadoRepository, redisCacheRepository };
+const webhookRepository = new SequelizeWebhookRepository({
+  WebhookModel: db.Webhook,
+});
+
+export {
+  webhookReprocessadoRepository,
+  redisCacheRepository,
+  webhookRepository,
+};

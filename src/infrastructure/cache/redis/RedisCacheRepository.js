@@ -13,7 +13,7 @@ const redisConfig = {
   connectTimeout: 5000,
 };
 
-let redisClient = null;
+let redisClient = null; 
 
 function getClient() {
   if (!redisClient || redisClient.status === "end") {
@@ -37,7 +37,9 @@ function getClient() {
       );
     });
 
-    redisClient.on("close", () => {});
+        redisClient.on('close', () => {
+
+        });
 
     redisClient.on("reconnecting", (delay) => {
       console.log(`[Cache] Tentando reconectar ao Redis em ${delay}ms...`);
@@ -62,7 +64,6 @@ async function ensureReadyClient() {
   if (client.status === "connecting" || client.status === "reconnecting") {
     console.log("[Cache] Aguardando cliente Redis ficar pronto...");
     try {
-      // Espera pelo evento 'ready' ou 'error' por um tempo limitado
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(
           () =>
@@ -97,9 +98,10 @@ async function ensureReadyClient() {
 }
 
 export default class RedisCacheRepository {
-  constructor() {
-    getClient();
-  }
+    constructor() {
+
+        getClient();
+    }
 
   async get(key) {
     const client = await ensureReadyClient();
@@ -125,10 +127,10 @@ export default class RedisCacheRepository {
       return false;
     }
 
-    const { ttl } = options;
-    try {
-      const valueToStore =
-        typeof value === "string" ? value : JSON.stringify(value);
+        const { ttl } = options;
+        try {
+
+            const valueToStore = (typeof value === 'string') ? value : JSON.stringify(value);
 
       console.log(
         `[Cache] SET ${key} (TTL: ${
@@ -136,34 +138,37 @@ export default class RedisCacheRepository {
         })`
       );
 
-      if (ttl && Number.isInteger(ttl) && ttl > 0) {
-        await client.set(key, valueToStore, "EX", ttl);
-      } else {
-        await client.set(key, valueToStore);
-      }
-      return true;
-    } catch (error) {
-      console.error(`[Cache] Erro ao definir chave ${key}:`, error.message);
-      return false;
-    }
-  }
+            if (ttl && Number.isInteger(ttl) && ttl > 0) {
 
-  async disconnect() {
-    const client = redisClient;
-    if (client && client.status !== "end") {
-      console.log("[Cache] Desconectando do Redis..."); //
-      try {
-        client.removeAllListeners();
+                await client.set(key, valueToStore, 'EX', ttl);
+            } else {
 
-        await client.quit();
-        console.log("[Cache] Conexão Redis fechada via quit().");
-      } catch (err) {
-        console.error("[Cache] Erro ao desconectar do Redis:", err.message);
-      } finally {
-        redisClient = null;
-      }
-    } else {
-      redisClient = null;
+                await client.set(key, valueToStore);
+            }
+            return true;
+        } catch (error) {
+            console.error(`[Cache] Erro ao definir chave ${key}:`, error.message);
+            return false;
+        }
     }
-  }
+
+    async disconnect() {
+        const client = redisClient;
+        if (client && client.status !== 'end') {
+            console.log('[Cache] Desconectando do Redis...'); 
+            try {
+
+                client.removeAllListeners();
+
+                await client.quit();
+                console.log('[Cache] Conexão Redis fechada via quit().');
+            } catch (err) {
+                console.error('[Cache] Erro ao desconectar do Redis:', err.message);
+            } finally {
+                redisClient = null;
+            }
+        } else {
+            redisClient = null;
+        }
+    }
 }

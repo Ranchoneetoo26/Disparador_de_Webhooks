@@ -15,14 +15,32 @@ export default class ReenviarWebhookController {
     });
   }
 
-  async handle(req, res) {
+  handle = async (req, res) => {
     try {
-      const input = ReenviarWebhookInput.validate(req.body);
-      const result = await this.useCase.execute(input);
+      const finalPayload = {
+        ...req.body,
+        id: [req.params.id]
+      };
+
+      const payloadParaValidar = {
+        ...finalPayload,
+        id: [...finalPayload.id] 
+      };
+
+      ReenviarWebhookInput.validate(payloadParaValidar);
+
+      const result = await this.useCase.execute(finalPayload);
+
       return res.status(200).json(ReenviarWebhookOutput.success(result.protocolo));
+
     } catch (err) {
       console.error('Erro no reenvio:', err.message);
-      const status = err.status || 400;
+
+      let status = err.status || 400;
+      if (err.message.includes('Não foi possível gerar a notificação')) {
+        status = 502;
+      }
+
       const detalhes = err.ids_invalidos || null;
       return res.status(status).json(ReenviarWebhookOutput.error(status, err.message, detalhes));
     }

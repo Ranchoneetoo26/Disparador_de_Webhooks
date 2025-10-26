@@ -2,8 +2,6 @@ try {
   require("dotenv").config({ path: "./.env" });
 } catch (err) {}
 
-// REMOVE a importação do redisCacheRepository daqui
-
 try {
   const dbModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
   const db = dbModule.default || dbModule;
