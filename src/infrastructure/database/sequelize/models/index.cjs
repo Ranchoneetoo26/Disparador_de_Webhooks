@@ -20,6 +20,7 @@ const sequelize = new Sequelize(DB_DATABASE, DB_USERNAME, DB_PASSWORD, {
   dialect: DB_DIALECT,
   storage: DB_STORAGE,
   logging: false,
+  port: process.env.DB_PORT || 5432,
 });
 
 const models = {};
