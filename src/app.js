@@ -32,5 +32,5 @@ app.use((req, res, next) => {
   res.status(404).json({ error: "Endpoint not found" });
 });
 
-console.log("--- app.js: Fim da configuração ---"); // <-- Adicione aqui
+console.log("--- app.js: Fim da configuração ---");
 export default app;

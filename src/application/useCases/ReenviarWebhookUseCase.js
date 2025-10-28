@@ -20,26 +20,26 @@ export default class ReenviarWebhookUseCase {
   }
 
   async execute(payload = {}) {
-    // ✅ Verificação de id
+   
     if (!payload?.id) {
       throw new Error("id is required");
     }
 
-    // ✅ Busca o webhook
+    
     const webhook = await this.webhookRepository.findById(payload.id);
     if (!webhook) {
       return { success: false, error: "Webhook not found" };
     }
 
     try {
-      // ✅ Faz o POST do webhook
+     
       const response = await this.httpClient.post(
         webhook.url,
         webhook.payload,
         { timeout: 5000 }
       );
 
-      // ✅ Caso sucesso (2xx)
+     
       if (response && response.status >= 200 && response.status < 300) {
         await this.webhookRepository.update(webhook.id, {
           tentativas: (webhook.tentativas || 0) + 1,
@@ -53,7 +53,7 @@ export default class ReenviarWebhookUseCase {
         };
       }
 
-      // ✅ Caso erro de status (não 2xx)
+   
       await this.reprocessadoRepository.create({
         data: webhook.payload,
         cedente_id: webhook.cedente_id || null,
@@ -66,7 +66,7 @@ export default class ReenviarWebhookUseCase {
 
       return { success: false, status: response.status };
     } catch (err) {
-      // ✅ Caso erro de rede ou exceção
+   
       await this.reprocessadoRepository.create({
         data: webhook.payload,
         cedente_id: webhook.cedente_id || null,

@@ -193,7 +193,7 @@ describe("ListarProtocolosUseCase", () => {
       kind: "B",
       type: "A",
     };
-    const expectedFiltersString = JSON.stringify({ kind: "B", type: "A" }); // Ordem alfabética
+    const expectedFiltersString = JSON.stringify({ kind: "B", type: "A" }); 
     const expectedCacheKey = `protocolos:2025-11-01:2025-11-10:${expectedFiltersString}`;
 
     mockCacheRepository.get.mockResolvedValue(null);
@@ -203,7 +203,6 @@ describe("ListarProtocolosUseCase", () => {
 
     await listarProtocolosUseCase.execute(input1);
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
-    // Limpa a chamada anterior para verificar a próxima
     mockCacheRepository.get.mockClear();
 
     await listarProtocolosUseCase.execute(input2);

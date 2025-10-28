@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     data: {
-      type: DataTypes.JSONB, // Mantém JSONB para os dados gerais
+      type: DataTypes.JSONB, 
       allowNull: false
     },
     data_criacao: {
@@ -36,18 +36,18 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    // --- TIPO ALTERADO ABAIXO ---
+
     servico_id: {
-      type: DataTypes.JSONB, // <-- ALTERADO DE TEXT PARA JSONB
-      allowNull: false      // Agora pode armazenar o array diretamente
+      type: DataTypes.JSONB,
+      allowNull: false      
     },
-    // --- FIM DA ALTERAÇÃO ---
+   
     protocolo: {
       type: DataTypes.STRING,
       allowNull: false
     },
     status: {
-      type: DataTypes.STRING, // Ex: 'pending', 'sent', 'error'
+      type: DataTypes.STRING, 
       allowNull: true
     }
   }, {
