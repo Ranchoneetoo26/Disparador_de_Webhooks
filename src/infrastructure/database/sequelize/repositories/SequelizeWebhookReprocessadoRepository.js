@@ -8,16 +8,14 @@ export default class SequelizeWebhookReprocessadoRepository {
         this.webhookReprocessadoModel = WebhookReprocessadoModel;
     }
 
-    // Método para listar protocolos com filtros (usado por ListarProtocolosUseCase)
     async listByDateRangeAndFilters({ startDate, endDate, filters }) {
         const where = {
             data_criacao: {
-                [Op.between]: [startDate, endDate] // Usa as datas já convertidas
+                [Op.between]: [startDate, endDate] 
             }
         };
 
-        // Aplica filtros opcionais
-        if (filters.protocolo) { // Assumindo que o filtro 'id' na query string se refere ao 'protocolo' nos filtros internos
+        if (filters.protocolo) {
             where.protocolo = filters.protocolo;
         }
         if (filters.kind) {
@@ -27,27 +25,20 @@ export default class SequelizeWebhookReprocessadoRepository {
             where.type = filters.type;
         }
         if (filters.product) {
-             // Exemplo para PostgreSQL (ajuste se a chave 'produto' estiver em outro nível no JSON 'data')
-             // Esta sintaxe busca a chave 'produto' na raiz do JSONB 'data'
+    
              where[`data::jsonb ->> 'produto'`] = filters.product;
         }
 
-        // --- LÓGICA DO FILTRO DE ID (ARRAY) ATIVADA ---
-        // Assume que filters.id é um array de strings vindo da query
-        // E que a coluna 'servico_id' no banco de dados é do tipo JSONB (PostgreSQL)
         if (filters.id && Array.isArray(filters.id) && filters.id.length > 0) {
-            // Op.contains (PostgreSQL): Verifica se o campo JSONB 'servico_id'
-            // contém PELO MENOS UM dos elementos do array 'filters.id'.
+
             where.servico_id = {
-                [Op.contains]: filters.id // Filtro ativado!
+                [Op.contains]: filters.id
             };
         }
-        // --- FIM DA LÓGICA ATIVADA ---
 
         return this.webhookReprocessadoModel.findAll({ where });
     }
 
-    // Método para buscar um protocolo específico (usado por ConsultarProtocoloUseCase)
     async findByProtocolo(protocolo) {
         if (!protocolo) {
             return null;
@@ -57,7 +48,6 @@ export default class SequelizeWebhookReprocessadoRepository {
         });
     }
 
-    // Método para criar um registro (usado por ReenviarWebhookUseCase)
     async create(data) {
        if (!data) {
            throw new Error('Data is required for creation');

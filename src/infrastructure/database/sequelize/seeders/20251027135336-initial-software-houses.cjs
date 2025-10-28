@@ -11,9 +11,6 @@ module.exports = {
           token: "valid_token_sh",
           status: "ativo",
           data_criacao: new Date(),
-          // Remova as linhas createdAt e updatedAt daqui
-          // createdAt: new Date(), <--- REMOVER
-          // updatedAt: new Date()  <--- REMOVER
         },
       ],
       {}
