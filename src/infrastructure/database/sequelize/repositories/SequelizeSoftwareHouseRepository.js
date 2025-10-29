@@ -1,28 +1,35 @@
-import { models, sequelize } from '../models/index.cjs';
+// src/infrastructure/database/sequelize/repositories/SequelizeSoftwareHouseRepository.js
+'use strict';
+
+// CORREÇÃO: Importamos 'db' como o export default do arquivo .cjs
+import db from '../models/index.cjs';
+const { models, sequelize } = db;
 
 export default class SequelizeSoftwareHouseRepository {
   constructor() {
     this.db = sequelize;
+    if (!models || !models.SoftwareHouse) {
+      throw new Error('Model "SoftwareHouse" não foi carregado em SequelizeSoftwareHouseRepository');
+    }
   }
 
   async findByCnpjAndToken(cnpj, token) {
     if (!cnpj || !token) return null;
+    // CORREÇÃO: Usamos 'models'
     return models.SoftwareHouse.findOne({ where: { cnpj, token } });
   }
 
   async findByToken(token) {
     if (!token) return null;
-
     return models.SoftwareHouse.findOne({ where: { token } });
   }
 
   async findById(id) {
     if (!id) return null;
-
     return models.SoftwareHouse.findByPk(id);
   }
 
-  async listarTodas() {
+  async listarTodos() {
     return models.SoftwareHouse.findAll();
   }
 }
