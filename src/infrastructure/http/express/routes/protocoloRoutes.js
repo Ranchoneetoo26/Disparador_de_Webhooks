@@ -1,6 +1,6 @@
 // src/infrastructure/http/express/routes/protocoloRoutes.js
 'use strict';
-// [ ... todos os imports ... ]
+// [ ... outros imports ... ]
 import express from 'express';
 import createAuthMiddleware from '../middlewares/AuthMiddleware.js';
 import ProtocoloController from '../controllers/ProtocoloController.js';
@@ -12,14 +12,13 @@ import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/
 import redisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 
 // --- CORREÇÃO AQUI ---
-import dbCjs from '../../../database/sequelize/models/index.cjs';
-const db = dbCjs; // <-- Corrigido (sem .default)
+import * as dbCjs from '../../../database/sequelize/models/index.cjs';
+const db = dbCjs.default; // O export real está no '.default'
 // --- FIM DA CORREÇÃO ---
 
 const { models, sequelize, Sequelize } = db;
 const { Op } = Sequelize;
 const router = express.Router();
-
 // ... (Resto do arquivo, injeção de dependência...)
 const cedenteRepository = new SequelizeCedenteRepository();
 const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
@@ -44,7 +43,6 @@ const protocoloController = new ProtocoloController({
   listarProtocolosUseCase,
   consultarProtocoloUseCase
 });
-
 router.use(authMiddleware);
 router.get('/', (req, res) => protocoloController.listarProtocolos(req, res));
 router.get('/:uuid', (req, res) => protocoloController.consultarProtocolo(req, res));

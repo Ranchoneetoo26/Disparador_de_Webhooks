@@ -27,7 +27,6 @@ module.exports = {
           software_house_id: softwareHouseId,
           data_criacao: new Date(),
           configuracao_notificacao: null,
-          s
         },
       ],
       {}

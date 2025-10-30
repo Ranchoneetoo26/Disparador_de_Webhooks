@@ -2,8 +2,8 @@
 'use strict';
 
 // --- CORREÇÃO AQUI ---
-import dbCjs from '../models/index.cjs';
-const db = dbCjs; // <-- Corrigido (sem .default)
+import * as dbCjs from '../models/index.cjs';
+const db = dbCjs.default; // O export real está no '.default'
 const { models, Sequelize } = db;
 const { Op } = Sequelize;
 // --- FIM DA CORREÇÃO ---

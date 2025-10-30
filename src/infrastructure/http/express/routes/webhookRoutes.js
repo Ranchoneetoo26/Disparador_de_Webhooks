@@ -1,6 +1,6 @@
 // src/infrastructure/http/express/routes/webhookRoutes.js
 'use strict';
-// [ ... todos os imports ... ]
+// [ ... outros imports ... ]
 import express from 'express';
 import createAuthMiddleware from '../middlewares/AuthMiddleware.js';
 import ReenviarWebhookController from '../../../../application/controllers/ReenviarWebhookController.js';
@@ -12,14 +12,14 @@ import redisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 import httpClient from '../../../http/providers/AxiosProvider.js';
 
 // --- CORREÇÃO AQUI ---
-import dbCjs from '../../../database/sequelize/models/index.cjs';
-const db = dbCjs; // <-- Corrigido (sem .default)
+// Importamos o CJS module como um namespace
+import * as dbCjs from '../../../database/sequelize/models/index.cjs';
+const db = dbCjs.default; // O export real está no '.default'
 // --- FIM DA CORREÇÃO ---
 
 const { models, sequelize, Sequelize } = db;
 const { Op } = Sequelize;
 const router = express.Router();
-
 // ... (Resto do arquivo, injeção de dependência...)
 const cedenteRepository = new SequelizeCedenteRepository();
 const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
@@ -39,7 +39,6 @@ const reenviarWebhookController = new ReenviarWebhookController({
   httpClient,
   redisClient: redisCacheRepository,
 });
-
 router.use(authMiddleware);
 router.post('/', (req, res) => reenviarWebhookController.handle(req, res));
 export default router;
