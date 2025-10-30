@@ -24,12 +24,17 @@ export default class SequelizeWebhookReprocessadoRepository {
         if (filters.type) {
             where.type = filters.type;
         }
-         if (filters.product) {
-              // Ajuste conforme a estrutura real do seu JSON 'data' e o dialeto do DB
-              // Exemplo mais seguro para PostgreSQL usando notação de path em JSONB
-              where[`data::jsonb ->> 'produto'`] = filters.product;
-         }
+        if (filters.product) {
+    
+             where[`data::jsonb ->> 'produto'`] = filters.product;
+        }
 
+        if (filters.id && Array.isArray(filters.id) && filters.id.length > 0) {
+
+            where.servico_id = {
+                [Op.contains]: filters.id
+            };
+        }
 
         return this.webhookReprocessadoModel.findAll({ where });
     }

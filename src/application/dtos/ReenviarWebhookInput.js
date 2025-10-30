@@ -13,7 +13,6 @@ export default class ReenviarWebhookInput {
 
   static validate(input) {
     const schema = Joi.object({
-      // Requisito: product obrigatório, aceita apenas 'boleto', 'pagamento' ou 'pix'.
       product: Joi.string()
         .valid('boleto', 'pagamento', 'pix')
         .required()
@@ -22,7 +21,6 @@ export default class ReenviarWebhookInput {
           'any.only': 'O campo "product" deve ser boleto, pagamento ou pix.',
         }),
 
-      // Requisito: id obrigatório (array de strings), min 1, max 30.
       id: Joi.array()
         .items(Joi.string().required())
         .min(1)
@@ -34,7 +32,6 @@ export default class ReenviarWebhookInput {
           'any.required': 'O campo "id" é obrigatório.',
         }),
 
-      // Requisito: kind obrigatório, aceita apenas 'webhook'.
       kind: Joi.string()
         .valid('webhook')
         .required()
@@ -43,7 +40,6 @@ export default class ReenviarWebhookInput {
           'any.only': 'O campo "kind" deve ser "webhook".',
         }),
 
-      // Requisito: type obrigatório, aceita apenas 'disponivel', 'cancelado' ou 'pago'.
       type: Joi.string()
         .valid('disponivel', 'cancelado', 'pago')
         .required()
@@ -58,7 +54,7 @@ export default class ReenviarWebhookInput {
     if (error) {
       const message = error.details.map((err) => err.message).join(' | ');
       const validationError = new Error(message);
-      validationError.status = 400; // Erro de validação
+      validationError.status = 400;
       throw validationError;
     }
 

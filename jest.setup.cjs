@@ -74,7 +74,7 @@ afterAll(async () => {
     await tryCloseSequelize();
   } catch (err) {}
 
-  await tryCloseSequelize();
+  await tryCloseSequelize(); 
 
   try {
     const repositoriesModule = await import(

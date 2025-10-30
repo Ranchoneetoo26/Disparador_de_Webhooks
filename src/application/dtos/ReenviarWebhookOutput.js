@@ -1,4 +1,4 @@
-// src/application/dtos/ReenviarWebhookOutput.js
+
 'use strict';
 
 export default class ReenviarWebhookOutput {
@@ -17,7 +17,6 @@ export default class ReenviarWebhookOutput {
     });
   }
 
-  // Requisito: Retorna o status de erro e, opcionalmente, os IDs inválidos (detalhes)
   static error(status, message, detalhes = null) {
     return new ReenviarWebhookOutput({
       success: false,
