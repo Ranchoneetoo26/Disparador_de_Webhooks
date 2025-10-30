@@ -47,24 +47,30 @@ export default function createAuthMiddleware({
   return async function authMiddleware(req, res, next) {
     try {
       const headers = req.headers || {};
+      
       const cnpjSh =
         headers["cnpj-sh"] ||
         headers["x-cnpj-sh"] ||
         headers["cnpj_sh"] ||
         headers["x-cnpj"];
+        
       const tokenSh =
         headers["token-sh"] ||
         headers["x-token-sh"] ||
         headers["token_sh"] ||
         headers["x-token"];
+        
       const cnpjCedente =
         headers["cnpj-cedente"] ||
         headers["x-cnpj-cedente"] ||
-        headers["cnpj_cedente"];
+        headers["cnpj_cedente"] ||
+        headers["x-cnpj"];
+        
       const tokenCedente =
         headers["token-cedente"] ||
         headers["x-token-cedente"] ||
-        headers["token_cedente"];
+        headers["token_cedente"] ||
+        headers["x-token"]; 
 
       if (!cnpjSh || !tokenSh || !cnpjCedente || !tokenCedente) {
         console.log("parou aqui");
