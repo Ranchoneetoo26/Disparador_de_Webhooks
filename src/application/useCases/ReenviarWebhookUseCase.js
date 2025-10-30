@@ -17,6 +17,7 @@ export default class ReenviarWebhookUseCase {
     this.redisClient = redisClient;
   }
 
+<<<<<<< HEAD
   async execute(payload) {
     const input = ReenviarWebhookInput.validate(payload);
     const { product, id, kind, type } = input;
@@ -49,16 +50,45 @@ export default class ReenviarWebhookUseCase {
     }
 
     try {
+=======
+  async execute(payload = {}) {
+   
+    if (!payload?.id) {
+      throw new Error("id is required");
+    }
+
+    
+    const webhook = await this.webhookRepository.findById(payload.id);
+    if (!webhook) {
+      return { success: false, error: "Webhook not found" };
+    }
+
+    try {
+     
+>>>>>>> 17f3c16869bd4d4beeb6dc8065b71d46bcf810df
       const response = await this.httpClient.post(
         'https://webhook.site/SEU_ENDPOINT_TESTE',
         { product, id, kind, type },
         { headers: { 'Content-Type': 'application/json' } }
       );
 
+<<<<<<< HEAD
       const protocolo = response.data?.protocolo || randomUUID();
+=======
+     
+      if (response && response.status >= 200 && response.status < 300) {
+        await this.webhookRepository.update(webhook.id, {
+          tentativas: (webhook.tentativas || 0) + 1,
+          last_status: response.status,
+        });
+>>>>>>> 17f3c16869bd4d4beeb6dc8065b71d46bcf810df
 
       await this.redisClient.setEx(cacheKey, 3600, JSON.stringify({ product, id, kind, type }));
 
+<<<<<<< HEAD
+=======
+   
+>>>>>>> 17f3c16869bd4d4beeb6dc8065b71d46bcf810df
       await this.reprocessadoRepository.create({
         data: { product, id, kind, type },
         kind,
@@ -67,11 +97,17 @@ export default class ReenviarWebhookUseCase {
         protocolo,
       });
 
+<<<<<<< HEAD
       return { success: true, protocolo };
     } catch (error) {
       console.error('Erro no reenvio do webhook:', error.message);
 
       const errorProtocol = `error:${randomUUID()}`;
+=======
+      return { success: false, status: response.status };
+    } catch (err) {
+   
+>>>>>>> 17f3c16869bd4d4beeb6dc8065b71d46bcf810df
       await this.reprocessadoRepository.create({
         data: payload,
         kind: payload.kind,

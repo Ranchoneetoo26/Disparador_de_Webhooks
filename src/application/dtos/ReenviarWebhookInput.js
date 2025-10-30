@@ -1,4 +1,4 @@
-// src/application/dtos/ReenviarWebhookInput.js
+
 'use strict';
 
 import Joi from 'joi';

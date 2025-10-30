@@ -8,16 +8,14 @@ export default class SequelizeWebhookReprocessadoRepository {
         this.webhookReprocessadoModel = WebhookReprocessadoModel;
     }
 
-    // Método para listar protocolos com filtros (usado por ListarProtocolosUseCase)
     async listByDateRangeAndFilters({ startDate, endDate, filters }) {
         const where = {
             data_criacao: {
-                [Op.between]: [startDate, endDate] // Usa as datas já convertidas
+                [Op.between]: [startDate, endDate] 
             }
         };
 
-        // Aplica filtros opcionais
-        if (filters.protocolo) { // Assumindo que o filtro 'id' na query string se refere ao 'protocolo' nos filtros internos
+        if (filters.protocolo) {
             where.protocolo = filters.protocolo;
         }
         if (filters.kind) {
@@ -26,17 +24,30 @@ export default class SequelizeWebhookReprocessadoRepository {
         if (filters.type) {
             where.type = filters.type;
         }
+<<<<<<< HEAD
          if (filters.product) {
               // Ajuste conforme a estrutura real do seu JSON 'data' e o dialeto do DB
               // Exemplo mais seguro para PostgreSQL usando notação de path em JSONB
               where[`data::jsonb ->> 'produto'`] = filters.product;
          }
 
+=======
+        if (filters.product) {
+    
+             where[`data::jsonb ->> 'produto'`] = filters.product;
+        }
+
+        if (filters.id && Array.isArray(filters.id) && filters.id.length > 0) {
+
+            where.servico_id = {
+                [Op.contains]: filters.id
+            };
+        }
+>>>>>>> 17f3c16869bd4d4beeb6dc8065b71d46bcf810df
 
         return this.webhookReprocessadoModel.findAll({ where });
     }
 
-    // Método para buscar um protocolo específico (usado por ConsultarProtocoloUseCase)
     async findByProtocolo(protocolo) {
         if (!protocolo) {
             return null;
@@ -46,7 +57,6 @@ export default class SequelizeWebhookReprocessadoRepository {
         });
     }
 
-    // Método para criar um registro (usado por ReenviarWebhookUseCase)
     async create(data) {
        if (!data) {
            throw new Error('Data is required for creation');

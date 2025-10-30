@@ -1,13 +1,14 @@
-require("dotenv").config({
-  path: require("path").resolve(__dirname, "../../../../../.env"),
-});
+const path = require("path");
+require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
 
-console.log("--- DEBUG VARIÁVEIS DE TESTE ---");
-console.log("HOST LIDO:", process.env.DB_HOST_TEST);
-console.log("PORTA LIDA:", process.env.DB_PORT_TEST);
-console.log("USUÁRIO LIDO:", process.env.DB_USERNAME_TEST);
-console.log("SENHA LIDA:", process.env.DB_PASSWORD_TEST);
-console.log("------------------------------------");
+console.log("--- DEBUG VARIÁVEIS DE AMBIENTE (CLI) ---");
+console.log("DB_HOST:", process.env.DB_HOST);
+console.log("DB_PORT:", process.env.DB_PORT);
+console.log("DB_USERNAME:", process.env.DB_USERNAME);
+console.log("DB_DATABASE:", process.env.DB_DATABASE);
+console.log("-----------------------------------------");
+
+const DB_PORT = process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432;
 
 module.exports = {
   development: {
@@ -15,7 +16,7 @@ module.exports = {
     password: process.env.DB_PASSWORD || "postgres",
     database: process.env.DB_DATABASE || "disparador_test",
     host: process.env.DB_HOST || "localhost",
-    port: process.env.DB_PORT_TEST || 5433,
+    port: DB_PORT,
     dialect: "postgres",
     dialectModule: require("pg"),
     define: {
@@ -28,7 +29,7 @@ module.exports = {
     password: process.env.DB_PASSWORD || "postgres",
     database: process.env.DB_DATABASE || "disparador_test",
     host: process.env.DB_HOST || "localhost",
-    port: process.env.DB_PORT_TEST || 5433,
+    port: DB_PORT,
     dialect: "postgres",
     dialectModule: require("pg"),
     logging: false,
@@ -36,29 +37,5 @@ module.exports = {
       timestamps: true,
       underscored: true,
     },
-  },
-  production: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: process.env.DB_DIALECT || "postgres",
-  },
-  test: {
-    username: process.env.DB_USERNAME_TEST,
-    password: process.env.DB_PASSWORD_TEST,
-    database: process.env.DB_DATABASE_TEST,
-    host: process.env.DB_HOST_TEST,
-    port: process.env.DB_PORT_TEST,
-    dialect: process.env.DB_DIALECT_TEST || "postgres",
-  },
-  production: {
-    username: process.env.DB_USERNAME_PROD,
-    password: process.env.DB_PASSWORD_PROD,
-    database: process.env.DB_DATABASE_PROD,
-    host: process.env.DB_HOST_PROD,
-    port: process.env.DB_PORT_PROD,
-    dialect: process.env.DB_DIALECT_PROD || "postgres",
   },
 };

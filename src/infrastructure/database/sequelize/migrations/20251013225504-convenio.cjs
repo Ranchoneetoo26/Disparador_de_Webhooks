@@ -10,15 +10,18 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+
       numero_convenio: {
         allowNull: false,
         type: Sequelize.STRING
       },
+
       data_criacao: {
         allowNull: false,
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
+
       conta_id: {
         allowNull: false,
         type: Sequelize.INTEGER,
@@ -28,9 +31,21 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
+      },
+
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },
+
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Convenios');
   }

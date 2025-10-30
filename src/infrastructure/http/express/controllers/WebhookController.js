@@ -1,4 +1,4 @@
-import ReenvioService from '@services/ReenvioService.js';
+import ReenvioService from "../../../../services/ReenvioService.js";
 
 export default class WebhookController {
   constructor() {
@@ -14,13 +14,13 @@ export default class WebhookController {
       );
 
       return res.status(200).json({
-        message: 'Webhook reenviado com sucesso.',
+        message: "Webhook reenviado com sucesso.",
         protocolo: resultado.protocolo,
       });
     } catch (error) {
-      console.error('Erro no controlador de reenvio:', error);
+      console.error("Erro no controlador de reenvio:", error);
       return res.status(400).json({
-        message: error.message || 'Falha ao reenviar webhook.',
+        message: error.message || "Falha ao reenviar webhook.",
       });
     }
   }
@@ -40,9 +40,9 @@ export default class WebhookController {
 
       return res.status(200).json(resultado);
     } catch (error) {
-      console.error('Erro ao listar protocolos:', error);
+      console.error("Erro ao listar protocolos:", error);
       return res.status(400).json({
-        message: error.message || 'Erro ao listar protocolos.',
+        message: error.message || "Erro ao listar protocolos.",
       });
     }
   }
@@ -53,14 +53,14 @@ export default class WebhookController {
       const resultado = await this.reenvioService.consultarProtocolo(uuid);
 
       if (!resultado) {
-        return res.status(404).json({ message: 'Protocolo não encontrado.' });
+        return res.status(404).json({ message: "Protocolo não encontrado." });
       }
 
       return res.status(200).json(resultado);
     } catch (error) {
-      console.error('Erro ao consultar protocolo:', error);
+      console.error("Erro ao consultar protocolo:", error);
       return res.status(400).json({
-        message: error.message || 'Erro ao consultar protocolo.',
+        message: error.message || "Erro ao consultar protocolo.",
       });
     }
   }
