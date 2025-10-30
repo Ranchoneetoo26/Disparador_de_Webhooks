@@ -2,10 +2,6 @@ try {
   require("dotenv").config({ path: "./.env" });
 } catch (err) {}
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 17f3c16869bd4d4beeb6dc8065b71d46bcf810df
 
 try {
   const dbModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
@@ -78,11 +74,7 @@ afterAll(async () => {
     await tryCloseSequelize();
   } catch (err) {}
 
-<<<<<<< HEAD
   await tryCloseSequelize();
-=======
-  await tryCloseSequelize(); 
->>>>>>> 17f3c16869bd4d4beeb6dc8065b71d46bcf810df
 
   try {
     const repositoriesModule = await import(
