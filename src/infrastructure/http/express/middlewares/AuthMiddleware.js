@@ -1,7 +1,5 @@
-// src/infrastructure/http/express/middlewares/AuthMiddleware.js
 'use strict';
 
-// Esta é uma versão simplificada e com logs do seu AuthMiddleware
 export default function createAuthMiddleware({
   cedenteRepository,
   softwareHouseRepository,
@@ -11,9 +9,6 @@ export default function createAuthMiddleware({
       "cedenteRepository e softwareHouseRepository são obrigatórios"
     );
   }
-
-  // A função 'tryFindBy...' foi removida.
-  // Vamos chamar o método que SABEMOS que existe.
 
   return async function authMiddleware(req, res, next) {
     console.log('[AuthMiddleware] Recebida nova requisição.');
@@ -33,7 +28,6 @@ export default function createAuthMiddleware({
       console.log(`[AuthMiddleware] Buscando SH: CNPJ=${cnpjSh}, Token=${tokenSh}`);
       console.log(`[AuthMiddleware] Buscando Cedente: CNPJ=${cnpjCedente}, Token=${tokenCedente}`);
 
-      // Chamada direta aos repositórios, sem a função 'tryFind'
       const [softwareHouse, cedente] = await Promise.all([
         softwareHouseRepository.findByCnpjAndToken(cnpjSh, tokenSh),
         cedenteRepository.findByCnpjAndToken(cnpjCedente, tokenCedente),
@@ -49,7 +43,6 @@ export default function createAuthMiddleware({
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      // Sucesso!
       console.log(`[AuthMiddleware] Sucesso: SH ID=${softwareHouse.id}, Cedente ID=${cedente.id}`);
       req.softwareHouse = softwareHouse;
       req.cedente = cedente;

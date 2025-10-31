@@ -1,10 +1,8 @@
 'use strict';
-// Pega o ID do Cedente do seeder anterior
 const CEDENTE_CNPJ = '22222222000222';
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    // 1. Encontrar o ID do Cedente que já foi criado
     const cedentes = await queryInterface.sequelize.query(
       `SELECT id from "Cedentes" WHERE cnpj = '${CEDENTE_CNPJ}' LIMIT 1`,
       { type: queryInterface.sequelize.QueryTypes.SELECT }
@@ -15,10 +13,9 @@ module.exports = {
     }
     const cedenteId = cedentes[0].id;
 
-    // 2. Inserir os webhooks de teste
     await queryInterface.bulkInsert('Webhooks', [
       {
-        id: 'boleto-123', // ID de texto que o seu DTO espera
+        id: 'boleto-123',
         url: 'https://webhook.site/seu-endpoint-de-teste',
         payload: JSON.stringify({ "titulo_id": "123", "status": "pago" }),
         tentativas: 0,
@@ -27,7 +24,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        id: 'boleto-456', // ID de texto
+        id: 'boleto-456',
         url: 'https://webhook.site/seu-endpoint-de-teste',
         payload: JSON.stringify({ "titulo_id": "456", "status": "pago" }),
         tentativas: 0,

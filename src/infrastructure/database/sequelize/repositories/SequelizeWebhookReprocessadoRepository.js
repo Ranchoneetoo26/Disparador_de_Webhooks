@@ -1,4 +1,3 @@
-// src/infrastructure/database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js
 'use strict';
 
 export default class SequelizeWebhookReprocessadoRepository {
@@ -13,12 +12,12 @@ export default class SequelizeWebhookReprocessadoRepository {
       throw new Error('Op is required in constructor');
     }
     this.webhookReprocessadoModel = WebhookReprocessadoModel;
-    this.sequelize = sequelize; // Injetado
-    this.Op = Op; // Injetado
+    this.sequelize = sequelize;
+    this.Op = Op;
   }
 
   async listByDateRangeAndFilters({ startDate, endDate, filters }) {
-    const { Op, sequelize } = this; // Usamos as dependências injetadas
+    const { Op, sequelize } = this;
 
     const where = {
       data_criacao: {
@@ -36,18 +35,14 @@ export default class SequelizeWebhookReprocessadoRepository {
       where.type = filters.type;
     }
 
-    // --- CORREÇÃO AQUI ---
-    // Esta é a sintaxe correta para consultar uma chave ('product')
-    // dentro de uma coluna JSONB ('data') no PostgreSQL.
     if (filters.product) {
       where[Op.and] = [
         sequelize.where(
-          sequelize.literal("data->>'product'"), // Extrai 'product' como texto
+          sequelize.literal("data->>'product'"),
           filters.product
         )
       ];
     }
-    // --- FIM DA CORREÇÃO ---
 
     if (filters.id && Array.isArray(filters.id) && filters.id.length > 0) {
       where.servico_id = {
