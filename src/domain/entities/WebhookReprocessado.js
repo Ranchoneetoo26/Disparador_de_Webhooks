@@ -1,12 +1,4 @@
-// src/domain/entities/WebhookReprocessado.js
 'use strict';
-
-/**
- * Representa a Entidade de Domínio para um WebhookReprocessado.
- * É um objeto simples (POJO) que carrega os dados
- * entre a camada de infraestrutura e a camada de aplicação.
- * Não contém lógica de banco de dados (Sequelize).
- */
 export default class WebhookReprocessado {
   constructor({
     id,
@@ -19,20 +11,18 @@ export default class WebhookReprocessado {
     protocolo,
     status,
   }) {
-    this.id = id; // UUID
-    this.data = data; // JSONB
-    this.data_criacao = data_criacao; // Date
-    this.cedente_id = cedente_id; // Integer
-    this.kind = kind; // String
-    this.type = type; // String
-    this.servico_id = servico_id; // JSONB (Array de strings)
-    this.protocolo = protocolo; // String (UUID da requisição)
-    this.status = status; // String (ex: 'pending', 'sent', 'error')
+    this.id = id; 
+    this.data = data; 
+    this.data_criacao = data_criacao; 
+    this.cedente_id = cedente_id;
+    this.kind = kind; 
+    this.type = type; 
+    this.servico_id = servico_id; 
+    this.protocolo = protocolo;  
+    this.status = status;  
   }
 
   /**
-   * Um "Factory Method" opcional para criar uma entidade
-   * a partir de um objeto de dados (ex: vindo do Sequelize).
    * @param {object} dataObject
    * @returns {WebhookReprocessado}
    */
@@ -42,7 +32,6 @@ export default class WebhookReprocessado {
   }
 
   /**
-   * Converte a entidade para um objeto simples.
    * @returns {object}
    */
   toJSON() {

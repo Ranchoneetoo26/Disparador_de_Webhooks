@@ -1,4 +1,3 @@
-// src/infrastructure/http/express/routes/protocoloRoutes.js
 'use strict';
 
 import express from 'express';
@@ -10,10 +9,7 @@ import SequelizeCedenteRepository from '../../../database/sequelize/repositories
 import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
 import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js';
 
-// --- CORREÇÃO AQUI ---
-// 1. Importamos a CLASSE
 import RedisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
-// --- FIM DA CORREÇÃO ---
 
 import * as dbCjs from '../../../database/sequelize/models/index.cjs';
 const db = dbCjs.default;
@@ -21,7 +17,6 @@ const { models, sequelize, Sequelize } = db;
 const { Op } = Sequelize;
 const router = express.Router();
 
-// --- Injeção de Dependência ---
 const cedenteRepository = new SequelizeCedenteRepository();
 const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
 const authMiddleware = createAuthMiddleware({
@@ -29,10 +24,7 @@ const authMiddleware = createAuthMiddleware({
   softwareHouseRepository,
 });
 
-// --- CORREÇÃO AQUI ---
-// 2. Criamos a INSTÂNCIA
 const redisCacheRepository = new RedisCacheRepository();
-// --- FIM DA CORREÇÃO ---
 
 const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
   WebhookReprocessadoModel: models.WebhookReprocessado,
@@ -42,12 +34,12 @@ const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository
 
 const listarProtocolosUseCase = new ListarProtocolosUseCase({
   webhookReprocessadoRepository,
-  cacheRepository: redisCacheRepository // <-- Agora passamos a instância
+  cacheRepository: redisCacheRepository 
 });
 
 const consultarProtocoloUseCase = new ConsultarProtocoloUseCase({
   webhookReprocessadoRepository,
-  cacheRepository: redisCacheRepository // <-- Agora passamos a instância
+  cacheRepository: redisCacheRepository 
 });
 
 const protocoloController = new ProtocoloController({

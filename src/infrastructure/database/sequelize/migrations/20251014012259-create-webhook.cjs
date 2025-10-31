@@ -1,5 +1,4 @@
 'use strict';
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -7,8 +6,7 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
-        type: Sequelize.STRING // <-- TIPO STRING
-        // autoIncrement: false, <-- REMOVIDO
+        type: Sequelize.STRING
       },
       url: {
         type: Sequelize.STRING
@@ -20,9 +18,8 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0
       },
-      // Precisamos do cedente_id para o seeder
       cedente_id: {
-        allowNull: true, // Ou false, dependendo da sua regra
+        allowNull: true,
         type: Sequelize.INTEGER,
         references: {
           model: 'Cedentes',
@@ -43,4 +40,8 @@ module.exports = {
       }
     });
   },
-}
+
+  async down(queryInterface, Sequelize) {
+    await queryInterface.dropTable('Webhooks');
+  }
+};

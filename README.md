@@ -168,7 +168,7 @@ npx sequelize-cli db:migrate --env test
 
 ## Porta de acesso
 
-- http://localhost:3333/api-docs
+- http://localhost:3333/wb-docs
 
 ---
 

@@ -1,4 +1,3 @@
-// src/infrastructure/database/sequelize/models/WebhookModel.cjs
 'use strict';
 const { Model } = require('sequelize');
 
@@ -28,12 +27,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0
     },
-    // Coluna 'cedente_id' (snake_case)
     cedente_id: {
       type: DataTypes.INTEGER,
       allowNull: true 
     },
-    // Colunas de timestamp (camelCase)
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false
@@ -47,8 +44,8 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Webhook',
     tableName: 'Webhooks', 
-    timestamps: true,       // <-- MANTÉM (para usar createdAt/updatedAt)
-    underscored: false      // <-- ADICIONADO (sobrescreve o global 'true')
+    timestamps: true,     
+    underscored: false      
   });
   
   return Webhook;
