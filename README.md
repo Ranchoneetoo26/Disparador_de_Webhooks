@@ -36,6 +36,8 @@ O sistema garante robustez, controle e rastreabilidade no reprocessamento dessas
 - **jsonwebtoken (JWT)** → Autenticação
 - **uuid** → Identificadores únicos
 - **joi** → Validação de dados
+- **swagger-ui-express + js-yaml** → Documentação interativa da API
+- **jest + supertest** → Testes automatizados e integração
 - **webhook.site** → Testes de simulação de webhooks
 
 ---
@@ -51,6 +53,7 @@ Antes de começar, garanta que você tenha as seguintes ferramentas instaladas:
 - **Git**
 - **Node.js** (recomendado via NVM quando possível)
 - **Docker Desktop**
+- **PowerShell (no Windows)**
 
 ### 2. Configuração do Ambiente Windows (Passo Único)
 
