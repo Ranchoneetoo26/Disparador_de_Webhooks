@@ -1,37 +1,26 @@
-// src/app.js
 'use strict';
 
 import express from 'express';
 import fs from 'fs';
 import yaml from 'js-yaml';
 import swaggerUi from 'swagger-ui-express';
-import cors from 'cors'; // <-- 1. NOVO IMPORT
+import cors from 'cors';
 
-// Importação das rotas
 import webhookRouter from './infrastructure/http/express/routes/webhookRoutes.js';
 import protocoloRouter from './infrastructure/http/express/routes/protocoloRoutes.js';
 
 const app = express();
 
-// --- Configuração dos Middlewares ---
+app.use(cors());
 
-// Habilita o CORS para todas as requisições
-app.use(cors()); // <-- 2. NOVO MIDDLEWARE
-
-// Permite que o Express leia JSON no body das requisições
 app.use(express.json());
-
-// --- Rotas Principais ---
 
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'API is running' });
 });
 
-// Rotas da aplicação
 app.use('/webhooks', webhookRouter);
 app.use('/protocolo', protocoloRouter);
-
-// --- Documentação Swagger ---
 
 try {
   const swaggerDocument = yaml.load(
@@ -42,15 +31,11 @@ try {
   console.error('Failed to load swagger.yml file:', e);
 }
 
-// --- Tratamento de Erros (Fallback) ---
-
-// Middleware para rotas não encontradas (404)
 app.use((req, res, next) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Middleware genérico de tratamento de erro (opcional, mas bom)
-app.use((err, req, res, next) => { // <-- 3. MELHORIA NO TRATAMENTO DE ERRO
+app.use((err, req, res, next) => {
   console.error('[Erro na Aplicação]:', err);
   res.status(500).json({ error: 'Internal Server Error' });
 });

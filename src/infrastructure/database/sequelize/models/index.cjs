@@ -1,4 +1,3 @@
-// src/infrastructure/database/sequelize/models/index.cjs
 'use strict';
 
 require("dotenv").config();
@@ -8,7 +7,6 @@ const path = require("path");
 
 const env = process.env.NODE_ENV || "development";
 
-// Carrega a configuração do config.cjs (que sabemos que está correta)
 const configPath = path.resolve(__dirname, '..', 'config', 'config.cjs');
 const config = require(configPath)[env];
 
@@ -17,16 +15,14 @@ if (!config) {
   process.exit(1);
 }
 
-// Log para depuração
 console.log(`[index.cjs] Conectando ao DB: Dialect=${config.dialect}, Host=${config.host}, DB=${config.database}`);
 
-// 4. Cria a instância do Sequelize
 const sequelize = new Sequelize(config.database, config.username, config.password, {
   host: config.host,
   port: config.port,
   dialect: config.dialect,
-  dialectModule: require('pg'), // Garante que está usando 'pg'
-  logging: console.log, // <-- NOVO: Habilita o log de queries no terminal
+  dialectModule: require('pg'),
+  logging: console.log, 
   define: {
     timestamps: true,
     underscored: true,
@@ -36,7 +32,6 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 const models = {};
 
 try {
-  // O seu loader de models original
   const Cedente = require("./CedenteModel.cjs")(sequelize, SequelizeModule.DataTypes);
   const SoftwareHouse = require("./SoftwareHouseModel.cjs")(sequelize, SequelizeModule.DataTypes);
   const Conta = require("./ContaModel.cjs")(sequelize, SequelizeModule.DataTypes);
@@ -44,7 +39,6 @@ try {
   const WebhookModel = require("./WebhookModel.cjs")(sequelize, SequelizeModule.DataTypes);
   const WebhookReprocessado = require("./WebhookReprocessadoModel.cjs")(sequelize, SequelizeModule.DataTypes);
   
-  // Adiciona o model de Servico que faltava
   const Servico = require("./ServicoModel.cjs")(sequelize, SequelizeModule.DataTypes);
 
   models.WebhookReprocessado = WebhookReprocessado;
@@ -53,7 +47,7 @@ try {
   models.Conta = Conta;
   models.Cedente = Cedente;
   models.SoftwareHouse = SoftwareHouse;
-  models.Servico = Servico; // Adicionado
+  models.Servico = Servico;
 
 } catch (err) {
   console.error(
@@ -62,7 +56,6 @@ try {
   );
 }
 
-// Associa os models (isso é crucial!)
 Object.keys(models).forEach(modelName => {
   if (models[modelName].associate) {
     console.log(`[index.cjs] Associando model: ${modelName}`);
