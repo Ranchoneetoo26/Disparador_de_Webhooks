@@ -1,5 +1,12 @@
-import { subDays, differenceInDays } from "date-fns";
+// src/application/useCases/ListarProtocolosUseCase.js
+'use strict';
+
+// --- CORREÇÃO AQUI ---
+// Importamos 'endOfDay' para setar a data final para 23:59:59
+import { subDays, differenceInDays, endOfDay } from "date-fns"; 
+// --- FIM DA CORREÇÃO ---
 import InvalidRequestException from "../../domain/exceptions/InvalidRequestException.js";
+
 export default class ListarProtocolosUseCase {
   constructor({ webhookReprocessadoRepository, cacheRepository }) {
     if (!webhookReprocessadoRepository) {
@@ -22,7 +29,11 @@ export default class ListarProtocolosUseCase {
     }
 
     const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
+    
+    // --- CORREÇÃO AQUI ---
+    // Usamos endOfDay() para garantir que a data final inclua o dia inteiro
+    const endDate = endOfDay(new Date(end_date));
+    // --- FIM DA CORREÇÃO ---
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       throw new InvalidRequestException("As datas fornecidas são inválidas.");
@@ -34,6 +45,7 @@ export default class ListarProtocolosUseCase {
       );
     }
 
+    // A validação de 31 dias (Regra de Negócio)
     const daysDiff = differenceInDays(endDate, startDate);
     if (daysDiff >= 31) {
       throw new InvalidRequestException(
@@ -41,6 +53,7 @@ export default class ListarProtocolosUseCase {
       );
     }
 
+    // Lógica de Cache (que já estava correta)
     const restFilters = Object.fromEntries(
       Object.entries(filters).filter(
         ([key]) => !["start_date", "end_date"].includes(key)
@@ -53,6 +66,8 @@ export default class ListarProtocolosUseCase {
         obj[key] = restFilters[key];
         return obj;
       }, {});
+      
+    // Usamos a data original (string) na chave do cache
     const cacheKey = `protocolos:${start_date}:${end_date}:${JSON.stringify(
       sortedFilters
     )}`;
@@ -62,23 +77,24 @@ export default class ListarProtocolosUseCase {
     if (cachedData) {
       if (typeof cachedData === "string") {
         try {
-          return JSON.parse(cachedData);
+          return JSON.parse(cachedData); // Retorna do cache
         } catch (e) {
           console.error("Erro ao parsear dados do cache:", e);
-      
         }
       } else {
-        return cachedData; 
+        return cachedData; // Retorna do cache
       }
     }
 
+    // Busca no banco (agora com as datas corretas)
     const protocolos =
       await this.webhookReprocessadoRepository.listByDateRangeAndFilters({
-        startDate,
-        endDate,
+        startDate, // 30/10 00:00:00
+        endDate,   // 30/10 23:59:59
         filters: restFilters,
       });
 
+    // Salva no cache (Regra de Negócio: 1 dia)
     await this.cacheRepository.set(cacheKey, protocolos, { ttl: 86400 });
 
     return protocolos;

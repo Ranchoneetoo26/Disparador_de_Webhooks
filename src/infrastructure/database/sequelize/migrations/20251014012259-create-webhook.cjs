@@ -6,9 +6,9 @@ module.exports = {
     await queryInterface.createTable('Webhooks', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.STRING // <-- TIPO STRING
+        // autoIncrement: false, <-- REMOVIDO
       },
       url: {
         type: Sequelize.STRING
@@ -19,6 +19,17 @@ module.exports = {
       tentativas: {
         type: Sequelize.INTEGER,
         defaultValue: 0
+      },
+      // Precisamos do cedente_id para o seeder
+      cedente_id: {
+        allowNull: true, // Ou false, dependendo da sua regra
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Cedentes',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
       createdAt: {
         allowNull: false,
@@ -32,7 +43,4 @@ module.exports = {
       }
     });
   },
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Webhooks');
-  }
-};
+}
