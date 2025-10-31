@@ -1,23 +1,18 @@
+'use strict';
+
+// Carrega o .env para os testes
 try {
+  require("dotenv").config({ path: "./.env.test" });
+} catch (err) {
+  console.warn('Arquivo .env.test não encontrado, usando .env padrão.');
   require("dotenv").config({ path: "./.env" });
-} catch (err) {}
+}
 
-
+// Carrega o DB e os Models globalmente para os testes de integração
 try {
   const dbModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
+  // O import CJS/ESM que corrigimos
   const db = dbModule.default || dbModule;
-
-  console.log("--- DEBUG START ---");
-  console.log("DB Loaded:", !!db);
-  if (db) {
-    console.log("Webhook in DB:", !!db.Webhook);
-    console.log("Webhook Name:", db.Webhook ? db.Webhook.name : "N/A");
-    console.log(
-      "DB Keys:",
-      Object.keys(db).filter((key) => key.length > 3)
-    );
-  }
-  console.log("--- DEBUG END ---");
 
   global.db = db;
 
@@ -35,79 +30,61 @@ try {
   );
 }
 
-async function tryCloseServer() {
-  try {
-    const appModule = await import("./src/app.js");
-    const app = appModule.default || appModule;
-    const server = app.server;
-    if (server && typeof server.close === "function") {
-      console.log("Fechando servidor...");
-      await new Promise((resolve, reject) =>
-        server.close((err) => (err ? reject(err) : resolve()))
-      );
-      console.log("Servidor fechado.");
-    }
-  } catch (err) {}
-}
 
-async function tryCloseSequelize() {
+// Hook global que roda DEPOIS de todos os testes
+afterAll(async () => {
   try {
-    const db =
-      global.db ||
-      require("./src/infrastructure/database/sequelize/models/index.cjs");
+    // 1. Fechar a conexão do Sequelize
+    const db = global.db;
     const sequelize = db?.sequelize;
 
     if (sequelize && typeof sequelize.close === "function") {
-      console.log("Fechando conexão Sequelize...");
+      console.log("[Jest] Fechando conexão Sequelize...");
       await sequelize.close(); 
-      console.log("Conexão Sequelize fechada.");
+      console.log("[Jest] Conexão Sequelize fechada.");
     }
-  } catch (err) {}
-}
+  } catch (err) {
+    console.error("[Jest] Erro ao fechar Sequelize:", err.message);
+  }
 
-afterAll(async () => {
+  // --- CORREÇÃO AQUI ---
+  // 2. Fechar a conexão do Redis
   try {
-    await tryCloseServer();
-  } catch (err) {}
-
-  try {
-    await tryCloseSequelize();
-  } catch (err) {}
-
-  await tryCloseSequelize(); 
-
-  try {
-    const repositoriesModule = await import(
-      "./src/infrastructure/database/sequelize/repositories/index.js"
+    // Importamos o *módulo* (a classe)
+    const { default: RedisCacheRepository } = await import(
+      "./src/infrastructure/cache/redis/RedisCacheRepository.js"
     );
-    const redisCacheRepository = repositoriesModule.redisCacheRepository;
+    
+    // Instanciamos
+    const redisCacheRepository = new RedisCacheRepository();
 
     if (
       redisCacheRepository &&
       typeof redisCacheRepository.disconnect === "function"
     ) {
-      console.log("Desconectando Redis...");
+      console.log("[Jest] Desconectando Redis...");
       await redisCacheRepository.disconnect();
-      console.log("Redis desconectado.");
+      console.log("[Jest] Redis desconectado.");
     } else {
       console.warn(
-        "redisCacheRepository não encontrado ou sem método disconnect após import."
+        "[Jest] redisCacheRepository não encontrado ou sem método disconnect."
       );
     }
   } catch (err) {
+    // O erro 'Cannot find module' que víamos vai desaparecer
     console.error(
-      "Erro ao importar ou desconectar Redis no afterAll:",
+      "[Jest] Erro ao importar ou desconectar Redis no afterAll:",
       err.message
     );
   }
+  // --- FIM DA CORREÇÃO ---
 
   if (
     typeof globalThis !== "undefined" &&
     typeof globalThis.jest !== "undefined" &&
     typeof globalThis.jest.useRealTimers === "function"
   ) {
-    
     globalThis.jest.useRealTimers();
   }
-  console.log("afterAll concluído.");
+  console.log("[Jest] afterAll concluído.");
 });
