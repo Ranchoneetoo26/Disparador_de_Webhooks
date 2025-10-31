@@ -1,7 +1,6 @@
-// src/infrastructure/http/express/middlewares/AuthMiddleware.js
+
 'use strict';
 
-// Esta é uma versão simplificada e com logs do seu AuthMiddleware
 export default function createAuthMiddleware({
   cedenteRepository,
   softwareHouseRepository,
@@ -12,15 +11,12 @@ export default function createAuthMiddleware({
     );
   }
 
-  // A função 'tryFindBy...' foi removida.
-  // Vamos chamar o método que SABEMOS que existe.
 
   return async function authMiddleware(req, res, next) {
     console.log('[AuthMiddleware] Recebida nova requisição.');
 
     try {
       const headers = req.headers || {};
-<<<<<<< HEAD
       
       const cnpjSh =
         headers["cnpj-sh"] ||
@@ -45,12 +41,6 @@ export default function createAuthMiddleware({
         headers["x-token-cedente"] ||
         headers["token_cedente"] ||
         headers["x-token"]; 
-=======
-      const cnpjSh = headers["cnpj-sh"];
-      const tokenSh = headers["token-sh"];
-      const cnpjCedente = headers["cnpj-cedente"];
-      const tokenCedente = headers["token-cedente"];
->>>>>>> 651ab5fbc86e1d21442262c94bdcb06b44117687
 
       if (!cnpjSh || !tokenSh || !cnpjCedente || !tokenCedente) {
         console.warn('[AuthMiddleware] Falha: Headers de autenticação faltando.');
@@ -60,7 +50,6 @@ export default function createAuthMiddleware({
       console.log(`[AuthMiddleware] Buscando SH: CNPJ=${cnpjSh}, Token=${tokenSh}`);
       console.log(`[AuthMiddleware] Buscando Cedente: CNPJ=${cnpjCedente}, Token=${tokenCedente}`);
 
-      // Chamada direta aos repositórios, sem a função 'tryFind'
       const [softwareHouse, cedente] = await Promise.all([
         softwareHouseRepository.findByCnpjAndToken(cnpjSh, tokenSh),
         cedenteRepository.findByCnpjAndToken(cnpjCedente, tokenCedente),
@@ -76,7 +65,6 @@ export default function createAuthMiddleware({
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      // Sucesso!
       console.log(`[AuthMiddleware] Sucesso: SH ID=${softwareHouse.id}, Cedente ID=${cedente.id}`);
       req.softwareHouse = softwareHouse;
       req.cedente = cedente;

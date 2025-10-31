@@ -49,7 +49,6 @@ const reenviarWebhookController = new ReenviarWebhookController({
 });
 
 router.use(authMiddleware);
-<<<<<<< HEAD
 
 const safeHandler = (ctrl, method) => {
   try {
@@ -69,7 +68,4 @@ const webhookController = new WebhookController();
 router.post("/", safeHandler(webhookController, "reenviar"));
 router.get("/", safeHandler(webhookController, "list"));
 
-=======
-router.post('/', (req, res) => reenviarWebhookController.handle(req, res));
->>>>>>> 651ab5fbc86e1d21442262c94bdcb06b44117687
 export default router;
