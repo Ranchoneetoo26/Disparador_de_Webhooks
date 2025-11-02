@@ -1,10 +1,7 @@
-// src/infrastructure/database/sequelize/repositories/SequelizeSoftwareHouseRepository.js
 'use strict';
 
-// --- CORREÇÃO AQUI ---
 import * as dbCjs from '../models/index.cjs';
-const db = dbCjs.default; // O export real está no '.default'
-// --- FIM DA CORREÇÃO ---
+const db = dbCjs.default; 
 const { models, sequelize } = db;
 
 export default class SequelizeSoftwareHouseRepository {
@@ -14,7 +11,6 @@ export default class SequelizeSoftwareHouseRepository {
       throw new Error('Model "SoftwareHouse" não foi carregado em SequelizeSoftwareHouseRepository');
     }
   }
-  // ... (Resto dos métodos)
   async findByCnpjAndToken(cnpj, token) {
     if (!cnpj || !token) return null;
     return models.SoftwareHouse.findOne({ where: { cnpj, token } });

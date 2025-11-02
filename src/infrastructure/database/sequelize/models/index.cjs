@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 147c0084fb6ff328823fc70425debc9e25fd26ed
 'use strict';
 
 require("dotenv").config();
@@ -22,7 +25,11 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
   host: config.host,
   port: config.port,
   dialect: config.dialect,
+<<<<<<< HEAD
   dialectModule: require('pg'), 
+=======
+  dialectModule: require('pg'),
+>>>>>>> 147c0084fb6ff328823fc70425debc9e25fd26ed
   logging: console.log, 
   define: {
     timestamps: true,
@@ -48,7 +55,11 @@ try {
   models.Conta = Conta;
   models.Cedente = Cedente;
   models.SoftwareHouse = SoftwareHouse;
+<<<<<<< HEAD
   models.Servico = Servico; 
+=======
+  models.Servico = Servico;
+>>>>>>> 147c0084fb6ff328823fc70425debc9e25fd26ed
 
 } catch (err) {
   console.error(
@@ -57,4 +68,14 @@ try {
   );
 }
 
+<<<<<<< HEAD
+=======
+Object.keys(models).forEach(modelName => {
+  if (models[modelName].associate) {
+    console.log(`[index.cjs] Associando model: ${modelName}`);
+    models[modelName].associate(models);
+  }
+});
+
+>>>>>>> 147c0084fb6ff328823fc70425debc9e25fd26ed
 module.exports = { sequelize, Sequelize, models };

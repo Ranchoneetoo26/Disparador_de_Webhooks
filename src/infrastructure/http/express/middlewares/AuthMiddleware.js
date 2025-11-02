@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 147c0084fb6ff328823fc70425debc9e25fd26ed
 'use strict';
 
 export default function createAuthMiddleware({
@@ -11,7 +14,10 @@ export default function createAuthMiddleware({
     );
   }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 147c0084fb6ff328823fc70425debc9e25fd26ed
   return async function authMiddleware(req, res, next) {
     console.log('[AuthMiddleware] Recebida nova requisição.');
 

@@ -1,13 +1,9 @@
-// src/infrastructure/database/sequelize/repositories/SequelizeWebhookRepository.js
 'use strict';
 
-// --- CORREÇÃO AQUI ---
 import * as dbCjs from '../models/index.cjs';
-const db = dbCjs.default; // O export real está no '.default'
+const db = dbCjs.default; 
 const { models, Sequelize } = db;
 const { Op } = Sequelize;
-// --- FIM DA CORREÇÃO ---
-
 export default class SequelizeWebhookRepository {
   constructor() {
     this.webhookModel = models.WebhookModel;
@@ -15,7 +11,6 @@ export default class SequelizeWebhookRepository {
       throw new Error('Model "WebhookModel" não foi carregado corretamente.');
     }
   }
-  // ... (Resto dos métodos)
   async findById(id) {
     return this.webhookModel.findByPk(id);
   }
