@@ -9,7 +9,8 @@ import SequelizeCedenteRepository from '../../../database/sequelize/repositories
 import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
 import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js';
 
-import RedisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
+// Importa a INSTÂNCIA singleton do cache
+import redisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 
 import * as dbCjs from '../../../database/sequelize/models/index.cjs';
 const db = dbCjs.default;
@@ -24,23 +25,25 @@ const authMiddleware = createAuthMiddleware({
   softwareHouseRepository,
 });
 
-const redisCacheRepository = new RedisCacheRepository();
-
 const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
   WebhookReprocessadoModel: models.WebhookReprocessado,
   sequelize: sequelize,
   Op: Op
 });
 
+// --- CORREÇÃO AQUI ---
+// Os construtores de AMBOS os UseCases esperam um OBJETO
+// com as duas dependências.
 const listarProtocolosUseCase = new ListarProtocolosUseCase({
-  webhookReprocessadoRepository,
+  webhookReprocessadoRepository: webhookReprocessadoRepository,
   cacheRepository: redisCacheRepository 
 });
 
 const consultarProtocoloUseCase = new ConsultarProtocoloUseCase({
-  webhookReprocessadoRepository,
+  webhookReprocessadoRepository: webhookReprocessadoRepository,
   cacheRepository: redisCacheRepository 
 });
+// --- FIM DA CORREÇÃO ---
 
 const protocoloController = new ProtocoloController({
   listarProtocolosUseCase,

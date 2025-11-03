@@ -1,24 +1,18 @@
 'use strict';
 
 import { jest, describe, beforeEach, it, expect } from '@jest/globals';
-// --- MUDANÇA 1: Importamos o 'Op' ---
-import { Op } from 'sequelize'; 
+import { Op } from 'sequelize'; // Importamos o 'Op' real
 import SequelizeWebhookReprocessadoRepository from '@/infrastructure/database/sequelize/repositories/SequelizeWebhookReprocessadoRepository';
 
 let mockWebhookReprocessadoModel;
 let repository;
 
-// --- MUDANÇA 2: Criamos mocks para as novas dependências ---
-// Mock do 'sequelize' (só precisamos do que usamos: 'json' e 'literal')
+// Mock das dependências injetadas
 const mockSequelize = {
   json: jest.fn((field, value) => ({ mockField: field, mockValue: value })),
   literal: jest.fn((str) => str),
   where: jest.fn((literal, value) => ({ [literal]: value })),
 };
-
-// O 'Op' real é um objeto complexo, mas para testes,
-// podemos usar o 'Op' real do sequelize que importamos.
-// --- FIM DA MUDANÇA ---
 
 describe('SequelizeWebhookReprocessadoRepository Unit Tests', () => {
   beforeEach(() => {
@@ -29,13 +23,14 @@ describe('SequelizeWebhookReprocessadoRepository Unit Tests', () => {
       create: jest.fn(),  
     };
 
-    // --- MUDANÇA 3: Injetamos as novas dependências no construtor ---
+    // --- CORREÇÃO AQUI ---
+    // Injetamos as novas dependências no construtor
     repository = new SequelizeWebhookReprocessadoRepository({
       WebhookReprocessadoModel: mockWebhookReprocessadoModel,
       sequelize: mockSequelize, // <-- Injetado
-      Op: Op                    // <-- Injetado (usando o 'Op' real importado)
+      Op: Op                    // <-- Injetado (usando o 'Op' real)
     });
-    // --- FIM DA MUDANÇA ---
+    // --- FIM DA CORREÇÃO ---
   });
 
   describe('listByDateRangeAndFilters', () => {
@@ -80,7 +75,6 @@ describe('SequelizeWebhookReprocessadoRepository Unit Tests', () => {
       });
     });
 
-    // Teste atualizado para a sintaxe correta do JSONB (data->>'product')
     it('deve incluir filtro por product (no campo data) quando fornecido', async () => {
       mockWebhookReprocessadoModel.findAll.mockResolvedValue([]);
       await repository.listByDateRangeAndFilters({ startDate, endDate, filters: { product: 'boleto' } });
@@ -90,7 +84,7 @@ describe('SequelizeWebhookReprocessadoRepository Unit Tests', () => {
         where: {
           data_criacao: { [Op.between]: [startDate, endDate] },
           [Op.and]: [
-            { "data->>'product'": "boleto" } // Verifica o resultado da sintaxe correta
+            { "data->>'product'": "boleto" } 
           ]
         }
       });
@@ -115,13 +109,13 @@ describe('SequelizeWebhookReprocessadoRepository Unit Tests', () => {
       mockWebhookReprocessadoModel.findAll.mockResolvedValue([]);
 
       await repository.listByDateRangeAndFilters({ startDate, endDate, filters: { id: [] } });
-      expect(mockWebhookRepcessadoModel.findAll).toHaveBeenCalledWith({
+      expect(mockWebhookReprocessadoModel.findAll).toHaveBeenCalledWith({
         where: { data_criacao: { [Op.between]: [startDate, endDate] } } 
       });
       mockWebhookReprocessadoModel.findAll.mockClear(); 
 
       await repository.listByDateRangeAndFilters({ startDate, endDate, filters: { id: 'nao-e-array' } });
-      expect(mockWebhookRepcessadoModel.findAll).toHaveBeenCalledWith({
+      expect(mockWebhookReprocessadoModel.findAll).toHaveBeenCalledWith({
         where: { data_criacao: { [Op.between]: [startDate, endDate] } } 
       });
     });
@@ -132,7 +126,7 @@ describe('SequelizeWebhookReprocessadoRepository Unit Tests', () => {
       const uuid = 'test-uuid-123';
       mockWebhookReprocessadoModel.findOne.mockResolvedValue({ id: uuid }); 
       await repository.findByProtocolo(uuid);
-      expect(mockWebhookRepcessadoModel.findOne).toHaveBeenCalledWith({
+      expect(mockWebhookReprocessadoModel.findOne).toHaveBeenCalledWith({
         where: { protocolo: uuid }
       });
     });
@@ -140,16 +134,16 @@ describe('SequelizeWebhookReprocessadoRepository Unit Tests', () => {
     it('deve retornar null se protocolo não for fornecido', async () => {
       const result = await repository.findByProtocolo(null);
       expect(result).toBeNull();
-      expect(mockWebhookRepcessadoModel.findOne).not.toHaveBeenCalled();
+      expect(mockWebhookReprocessadoModel.findOne).not.toHaveBeenCalled();
     });
   });
 
   describe('create', () => {
     it('deve chamar create com os dados fornecidos', async () => {
       const dataToCreate = { data: { key: 'value' }, cedente_id: 1 };
-      mockWebhookRepcessadoModel.create.mockResolvedValue(dataToCreate); 
+      mockWebhookReprocessadoModel.create.mockResolvedValue(dataToCreate); 
       await repository.create(dataToCreate);
-      expect(mockWebhookRepcessadoModel.create).toHaveBeenCalledWith(dataToCreate);
+      expect(mockWebhookReprocessadoModel.create).toHaveBeenCalledWith(dataToCreate);
     });
     
     it('deve lançar erro se dados não forem fornecidos', async () => {

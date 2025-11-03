@@ -8,12 +8,10 @@ try {
   require("dotenv").config({ path: "./.env" });
 }
 
-// Carrega o DB e os Models globalmente para os testes de integração
+// Carrega o DB e os Models globalmente
 try {
   const dbModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
-  // O import CJS/ESM que corrigimos
-  const db = dbModule.default || dbModule;
-
+  const db = dbModule.default || dbModule; 
   global.db = db;
 
   Object.keys(db).forEach((key) => {
@@ -48,30 +46,27 @@ afterAll(async () => {
   }
 
   // --- CORREÇÃO AQUI ---
-  // 2. Fechar a conexão do Redis
+  // 2. Fechar a ÚNICA instância do Redis
   try {
-    // Importamos o *módulo* (a classe)
-    const { default: RedisCacheRepository } = await import(
+    // Importamos a *instância singleton*
+    const { default: redisCacheRepository } = await import(
       "./src/infrastructure/cache/redis/RedisCacheRepository.js"
     );
     
-    // Instanciamos
-    const redisCacheRepository = new RedisCacheRepository();
-
+    // Verificamos e desconectamos a instância
     if (
       redisCacheRepository &&
       typeof redisCacheRepository.disconnect === "function"
     ) {
-      console.log("[Jest] Desconectando Redis...");
+      console.log("[Jest] Desconectando Redis (singleton)...");
       await redisCacheRepository.disconnect();
-      console.log("[Jest] Redis desconectado.");
+      console.log("[Jest] Redis (singleton) desconectado.");
     } else {
       console.warn(
-        "[Jest] redisCacheRepository não encontrado ou sem método disconnect."
+        "[Jest] Instância do redisCacheRepository não encontrada ou sem método disconnect."
       );
     }
   } catch (err) {
-    // O erro 'Cannot find module' que víamos vai desaparecer
     console.error(
       "[Jest] Erro ao importar ou desconectar Redis no afterAll:",
       err.message
