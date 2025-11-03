@@ -1,35 +1,52 @@
 'use strict';
 
-import ReenviarWebhookUseCase from '../useCases/ReenviarWebhookUseCase.js';
-import ReenviarWebhookOutput from '../dtos/ReenviarWebhookOutput.js';
+// --- CORREÇÃO AQUI ---
+// Mudamos a forma como o Controlador importa o UseCase
+import { default as ReenviarWebhookUseCase } from '../useCases/ReenviarWebhookUseCase.js';
+// --- FIM DA CORREÇÃO ---
+
 import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
 
 export default class ReenviarWebhookController {
-  constructor({ webhookRepository, webhookReprocessadoRepository, httpClient, redisClient }) {
-    this.useCase = new ReenviarWebhookUseCase({
+  constructor({ 
+    webhookRepository, 
+    webhookReprocessadoRepository, 
+    httpClient, 
+    redisClient 
+  }) {
+    // Instancia o UseCase com as dependências
+    this.reenviarWebhookUseCase = new ReenviarWebhookUseCase({
       webhookRepository,
       webhookReprocessadoRepository,
       httpClient,
-      redisClient,
+      redisClient
     });
   }
 
   async handle(req, res) {
     try {
-      const input = ReenviarWebhookInput.validate(req.body);
+      const { product, id, kind, type } = req.body;
+      const input = new ReenviarWebhookInput(product, id, kind, type);
       
-      const result = await this.useCase.execute(input);
+      // O 'cedente' vem do seu AuthMiddleware
+      const cedente = req.cedente; 
+
+      const output = await this.reenviarWebhookUseCase.execute(input, cedente);
       
-      return res.status(200).json(ReenviarWebhookOutput.success(result.protocolo));
+      return res.status(200).json(output);
 
     } catch (err) {
-      console.error('[Erro no Reenvio - Controller]', err);
-
-      const status = err.status || 400;
-      const message = err.message || 'Erro desconhecido ao processar o reenvio.';
-      const detalhes = err.ids_invalidos || null;
-      
-      return res.status(status).json(ReenviarWebhookOutput.error(status, message, detalhes));
+      // Pega exceções customizadas
+      if (err.status) {
+        return res.status(err.status).json({
+          error: err.name,
+          message: err.message,
+          ...(err.details && { details: err.details })
+        });
+      }
+      // Outros erros
+      console.error(err);
+      return res.status(500).json({ error: 'InternalServerError', message: err.message });
     }
   }
 }

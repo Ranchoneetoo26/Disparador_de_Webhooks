@@ -1,51 +1,54 @@
+import { jest, describe, expect, beforeEach, test } from "@jest/globals";
 import {
   sequelize,
   models,
 } from "../../../src/infrastructure/database/sequelize/models/index.cjs";
-import { describe, expect, afterAll, jest } from "@jest/globals";
+
+// Importamos todos os models necessários para a cadeia
 const { Conta, Cedente, SoftwareHouse } = models;
 
 describe("Integration: Conta model", () => {
-  let softwareHouse;
-  jest.setTimeout(10000);
+  let cedente; // Vamos precisar do ID do cedente
 
   beforeEach(async () => {
     await sequelize.sync({ force: true });
 
-    softwareHouse = await SoftwareHouse.create({
+    // --- CORREÇÃO AQUI ---
+    // 1. Crie a SoftwareHouse primeiro
+    const softwareHouse = await SoftwareHouse.create({
       data_criacao: new Date(),
       cnpj: "11111111000111",
-      token: "TOKEN_DE_TESTE_SH",
+      token: "TOKEN_SH_TESTE",
       status: "ativo",
     });
 
-    await Cedente.create({
+    // 2. Crie o Cedente, usando o ID da SoftwareHouse
+    cedente = await Cedente.create({
       data_criacao: new Date(),
-      id: 1,
+      // id: 1, // Deixe o SERIAL cuidar disso
       cnpj: "22222222000122",
-      token: "TOKEN_CEDENTE_1",
-      softwarehouse_id: softwareHouse.id,
+      token: "TOKEN_CED_TESTE",
       status: "ativo",
+      software_house_id: softwareHouse.id, // Passe o ID
     });
+    // --- FIM DA CORREÇÃO ---
   });
 
-  afterAll(async () => {
-    await sequelize.close();
-  });
+  // afterAll foi removido (corretamente)
 
   test("deve criar uma nova Conta associada a um Cedente", async () => {
-    const payloadConta = {
+    const payload = {
       data_criacao: new Date(),
-      produto: "boleto",
+      produto: "pix",
       banco_codigo: "341",
-      status: "ativa",
-      cedente_id: 1,
+      status: "ativo",
+      cedente_id: cedente.id, // Use o ID do cedente criado no beforeEach
     };
 
-    const contaCriada = await Conta.create(payloadConta);
+    const contaCriada = await Conta.create(payload);
 
     expect(contaCriada).toBeDefined();
-    expect(contaCriada.produto).toBe(payloadConta.produto);
-    expect(contaCriada.cedente_id).toBe(1);
+    expect(contaCriada.produto).toBe("pix");
+    expect(contaCriada.cedente_id).toBe(cedente.id);
   });
 });

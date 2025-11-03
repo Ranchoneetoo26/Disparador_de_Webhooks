@@ -6,7 +6,6 @@ import {
   jest,
   describe,
   expect,
-  afterAll,
   beforeEach,
   test,
 } from "@jest/globals";
@@ -33,14 +32,15 @@ describe("Integration: Webhook Model Tests", () => {
       data_criacao: new Date(),
       cnpj: "22222222000222",
       token: "TOKEN_CED",
-      softwarehouse_id: createdSoftwareHouse.id,
+      software_house_id: createdSoftwareHouse.id,
       status: "ativo",
     });
   });
 
-  afterAll(async () => {
-    await sequelize.close();
-  });
+  //
+  // --- BLOCO afterAll REMOVIDO DAQUI ---
+  // O jest.setup.cjs vai cuidar de fechar a conexão global.
+  //
 
   test("deve criar um registro de Webhook Reprocessado com sucesso", async () => {
     const payloadWebhook = {
