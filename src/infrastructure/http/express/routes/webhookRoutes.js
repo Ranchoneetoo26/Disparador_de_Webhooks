@@ -7,40 +7,38 @@ import SequelizeCedenteRepository from '../../../database/sequelize/repositories
 import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
 import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js';
 import SequelizeWebhookRepository from '../../../database/sequelize/repositories/SequelizeWebhookRepository.js';
-import SequelizeServicoRepository from '../../../database/sequelize/repositories/SequelizeServicoRepository.js'; // 1. IMPORTAR
 import httpClient from '../../../http/providers/AxiosProvider.js';
 
 import RedisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 
-import * as dbCjs from '../../../database/sequelize/models/index.cjs';
-const db = dbCjs.default;
+// Importa o db (assumindo que exporta 'models', 'sequelize', 'Sequelize' e 'Op')
+import * as db from '../../../database/sequelize/models/index.cjs';
+
 const { models, sequelize, Sequelize } = db;
 const { Op } = Sequelize;
 const router = express.Router();
 
-// Repositórios para Autenticação
-const cedenteRepository = new SequelizeCedenteRepository();
-const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
+// Instanciação dos repositórios
+const cedenteRepository = new SequelizeCedenteRepository({ models });
+const softwareHouseRepository = new SequelizeSoftwareHouseRepository({ models });
 const authMiddleware = createAuthMiddleware({
   cedenteRepository,
   softwareHouseRepository,
 });
 
-// Cache
 const redisCacheRepository = new RedisCacheRepository();
 
-// Repositórios para o UseCase
-const servicoRepository = new SequelizeServicoRepository(); // 2. INSTANCIAR
-const webhookRepository = new SequelizeWebhookRepository();
+// Passa o 'models' e 'Op' para os repositórios que precisam
+const webhookRepository = new SequelizeWebhookRepository({ models, Op });
 const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
   WebhookReprocessadoModel: models.WebhookReprocessado,
   sequelize: sequelize,
   Op: Op
 });
 
-// Controller com todas as dependências
+// servicoRepository foi REMOVIDO
 const reenviarWebhookController = new ReenviarWebhookController({
-  servicoRepository, // 3. INJETAR
+  // servicoRepository REMOVIDO
   webhookRepository,
   webhookReprocessadoRepository,
   httpClient,
@@ -49,4 +47,5 @@ const reenviarWebhookController = new ReenviarWebhookController({
 
 router.use(authMiddleware);
 router.post('/', (req, res) => reenviarWebhookController.handle(req, res));
+
 export default router;

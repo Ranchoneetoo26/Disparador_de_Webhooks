@@ -16,16 +16,21 @@ module.exports = {
     }
     const softwareHouseId = softwareHouses[0].id;
 
+    // Tenta deletar o cedente antes de inserir, para evitar erro de duplicado
+    await queryInterface.bulkDelete("Cedentes", { cnpj: "22222222000222" }, {});
+
+    // Insere o cedente
     await queryInterface.bulkInsert(
       "Cedentes",
       [
         {
-
           cnpj: "22222222000222",
           token: "valid_token_ced",
           status: "ativo",
           software_house_id: softwareHouseId,
           data_criacao: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
           configuracao_notificacao: null,
         },
       ],

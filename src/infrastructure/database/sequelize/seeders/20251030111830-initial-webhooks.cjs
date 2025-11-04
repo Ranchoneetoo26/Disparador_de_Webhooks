@@ -1,4 +1,5 @@
 'use strict';
+// Pega o CNPJ do cedente
 const CEDENTE_CNPJ = '22222222000222';
 
 module.exports = {
@@ -13,11 +14,16 @@ module.exports = {
     }
     const cedenteId = cedentes[0].id;
 
+    // Garante que não haja duplicados antes de inserir
+    await queryInterface.bulkDelete('Webhooks', { id: ['boleto-123', 'boleto-456'] }, {});
+
     await queryInterface.bulkInsert('Webhooks', [
       {
         id: 'boleto-123',
-        url: 'https://webhook.site/seu-endpoint-de-teste',
-        payload: JSON.stringify({ "titulo_id": "123", "status": "pago" }),
+        // --- SUA URL DO WEBHOOK.SITE ---
+        url: 'https://webhook.site/692cd884-e83d-4319-8a04-6d89fe995108',
+        // O status "LIQUIDADO" bate com o type: "pago" do PDF
+        payload: JSON.stringify({ "titulo_id": "123", "status": "LIQUIDADO" }),
         tentativas: 0,
         cedente_id: cedenteId,
         createdAt: new Date(),
@@ -25,8 +31,10 @@ module.exports = {
       },
       {
         id: 'boleto-456',
-        url: 'https://webhook.site/seu-endpoint-de-teste',
-        payload: JSON.stringify({ "titulo_id": "456", "status": "pago" }),
+        // --- SUA URL DO WEBHOOK.SITE ---
+        url: 'https://webhook.site/692cd884-e83d-4319-8a04-6d89fe995108',
+        // O status "LIQUIDADO" bate com o type: "pago" do PDF
+        payload: JSON.stringify({ "titulo_id": "456", "status": "LIQUIDADO" }),
         tentativas: 0,
         cedente_id: cedenteId,
         createdAt: new Date(),

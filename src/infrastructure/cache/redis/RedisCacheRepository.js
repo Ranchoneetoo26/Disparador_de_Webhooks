@@ -37,7 +37,7 @@ function getClient() {
       );
     });
 
-    redisClient.on("close", () => {});
+    redisClient.on("close", () => { });
 
     redisClient.on("reconnecting", (delay) => {
       console.log(`[Cache] Tentando reconectar ao Redis em ${delay}ms...`);
@@ -62,7 +62,7 @@ async function ensureReadyClient() {
   if (client.status === "connecting" || client.status === "reconnecting") {
     console.log("[Cache] Aguardando cliente Redis ficar pronto...");
     try {
-      
+
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(
           () =>
@@ -131,8 +131,7 @@ export default class RedisCacheRepository {
         typeof value === "string" ? value : JSON.stringify(value);
 
       console.log(
-        `[Cache] SET ${key} (TTL: ${
-          ttl && Number.isInteger(ttl) && ttl > 0 ? ttl + "s" : "Nenhum"
+        `[Cache] SET ${key} (TTL: ${ttl && Number.isInteger(ttl) && ttl > 0 ? ttl + "s" : "Nenhum"
         })`
       );
 
@@ -148,15 +147,35 @@ export default class RedisCacheRepository {
     }
   }
 
+  // --- CORREÇÃO AQUI ---
+  // Adicionando o método .del() que estava faltando
+  async del(key) {
+    const client = await ensureReadyClient();
+    if (!client) {
+      console.warn(`[Cache] DEL ${key}: Cliente Redis não disponível.`);
+      return false;
+    }
+    try {
+      console.log(`[Cache] DEL ${key}`);
+      await client.del(key);
+      return true;
+    } catch (error) {
+      console.error(`[Cache] Erro ao deletar chave ${key}:`, error.message);
+      return false;
+    }
+  }
+  // --- FIM DA CORREÇÃO ---
+
   async disconnect() {
     const client = redisClient;
     if (client && client.status !== "end") {
-      console.log("[Cache] Desconectando do Redis..."); 
+      console.log("[Cache] Desconectando do Redis...");
       try {
         client.removeAllListeners();
 
         await client.quit();
         console.log("[Cache] Conexão Redis fechada via quit().");
+        t
       } catch (err) {
         console.error("[Cache] Erro ao desconectar do Redis:", err.message);
       } finally {
