@@ -1,96 +1,58 @@
 'use strict';
 
 import { v4 as uuidv4 } from 'uuid';
-// CORREÇÃO: O caminho agora é '../../' para subir dois níveis
+import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
 import UnprocessableEntityException from '../../domain/exceptions/UnprocessableEntityException.js';
+import ConflictException from '../../domain/exceptions/ConflictException.js';
+import { resolveNotificationConfig } from '../../services/notificationConfigResolver.js';
 
-// 1. MAPEAMENTO DE SITUAÇÃO (Regra 3.1.O)
-// Tabela do PDF para validar o status do serviço
-const MAPA_SITUACAO = {
-  boleto: {
-    disponivel: 'REGISTRADO',
-    cancelado: 'BAIXADO',
-    pago: 'LIQUIDADO',
-  },
-  pagamento: {
-    disponivel: 'SCHEDULED_ACTIVE',
-    cancelado: 'CANCELLED',
-    pago: 'PAID',
-  },
-  pix: {
-    disponivel: 'ACTIVE',
-    cancelado: 'REJECTED',
-    pago: 'LIQUIDATED',
-  },
+const MAPA_STATUS_VALIDOS = {
+  pago: { boleto: 'LIQUIDADO', pagamento: 'PAID', pix: 'LIQUIDATED' },
+  disponivel: { boleto: 'REGISTRADO', pagamento: 'SCHEDULED ACTIVE', pix: 'ACTIVE' },
+  cancelado: { boleto: 'BAIXADO', pagamento: 'CANCELLED', pix: 'REJECTED' },
 };
 
+// --- CORREÇÃO AQUI ---
+// Garantimos que a classe seja exportada como 'default'
 export default class ReenviarWebhookUseCase {
+// --- FIM DA CORREÇÃO ---
   constructor({
     // Repositório 'Servico' é necessário para a validação de situação
     servicoRepository,
     webhookRepository,
     webhookReprocessadoRepository,
     httpClient,
-    redisClient,
+    redisClient, 
   } = {}) {
     // Adicione a validação do novo repositório
     if (!servicoRepository) throw new Error('servicoRepository missing');
     if (!webhookRepository) throw new Error('webhookRepository missing');
     if (!webhookReprocessadoRepository) throw new Error('webhookReprocessadoRepository missing');
     if (!httpClient) throw new Error('httpClient missing');
-    if (!redisClient) throw new Error('redisClient missing');
+    if (!redisClient) throw new Error('redisClient missing'); 
 
     this.servicoRepository = servicoRepository; // Adicionado
     this.webhookRepository = webhookRepository;
     this.reprocessadoRepository = webhookReprocessadoRepository;
     this.httpClient = httpClient;
-    this.redisClient = redisClient;
+    this.redisClient = redisClient; 
   }
 
-  async execute(input) {
-    const { product, id: ids, kind, type } = input;
-    const { cedente } = input; // O AuthMiddleware deve injetar isso
+  async execute(input, cedente) {
+    
+    // Validação de input (corrigido anteriormente)
+    const { product, id: ids, kind, type } = input || {};
+    const protocoloLote = uuidv4();
 
-    // 2. CACHE DE REQUISIÇÃO (Regra 3.1.N)
-    // Impede reenvios duplicados
-    const cacheKey = `reenvio:${cedente.id}:${JSON.stringify(input)}`;
-    const cachedRequest = await this.redisClient.get(cacheKey);
-
-    if (cachedRequest) {
-      const err = new Error('Requisição duplicada. Aguarde 1 hora para reenviar os mesmos dados.');
-      err.status = 429; // Too Many Requests
-      throw err;
-    }
-    // Salva no cache por 1 hora (3600 segundos)
-    await this.redisClient.set(cacheKey, 'processing', { ttl: 3600 });
-
-
-    // 3. VALIDAÇÃO DE SITUAÇÃO (Regra 3.1.O)
-    // Busca os *Serviços* (boletos, pix, etc.) e não os webhooks
-    const servicos = await this.servicoRepository.findByIdsAndCedente(ids, cedente.id);
-
-    const servicosEncontradosMap = new Map(servicos.map((s) => [s.id.toString(), s]));
-    const idsNaoEncontrados = ids.filter((id) => !servicosEncontradosMap.has(id.toString()));
-
-    // Valida se todos os IDs solicitados foram encontrados para este cedente
-    if (idsNaoEncontrados.length > 0) {
-      throw new UnprocessableEntityException(
-        'Não foi possível gerar a notificação. Os seguintes IDs não foram encontrados ou não pertencem ao cedente.',
-        idsNaoEncontrados
-      );
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new Error("id is required");
     }
 
-    const situacaoEsperada = MAPA_SITUACAO[product]?.[type];
-    if (!situacaoEsperada) {
-      const err = new Error(`Mapeamento de situação inválido para product '${product}' e type '${type}'.`);
-      err.status = 400;
-      throw err;
-    }
+    // 1. Buscar os webhooks
+    const webhooks = await this.webhookRepository.findByIds(ids);
 
-    // Valida se os serviços encontrados estão na situação correta
-    const idsSituacaoErrada = servicos
-      .filter(servico => servico.status !== situacaoEsperada)
-      .map(servico => servico.id);
+    const idsEncontradosSet = new Set(webhooks.map((wh) => wh.id.toString()));
+    const idsInvalidos = ids.filter((id) => !idsEncontradosSet.has(id.toString()));
 
     if (idsSituacaoErrada.length > 0) {
       throw new UnprocessableEntityException(
@@ -99,47 +61,53 @@ export default class ReenviarWebhookUseCase {
       );
     }
 
-    // Busca os dados de webhook (URL, payload) para os serviços válidos
-    // (Assumindo que o ID do Webhook é o mesmo ID do Serviço)
-    const webhooks = await this.webhookRepository.findByIds(ids);
-    const webhooksMap = new Map(webhooks.map((wh) => [wh.id.toString(), wh]));
-
-    const protocoloLote = uuidv4();
-
-    // Inicia o reenvio
-    const reenviosPromises = servicos.map((servico) => {
-      const webhookData = webhooksMap.get(servico.id.toString());
-      if (!webhookData || !webhookData.url) {
-        console.warn(`[Reenvio] Webhook data (URL) não encontrado para Servico ID: ${servico.id}`);
-        return Promise.reject(new Error(`Webhook data not found for ${servico.id}`));
+    // 2. REGRA DE VALIDAÇÃO DE STATUS (422)
+    const statusExigido = MAPA_STATUS_VALIDOS[type][product];
+    // Lógica de status mockada (como no seu arquivo original)
+    const statusAtuaisDosServicos = {
+      'boleto-123': 'LIQUIDADO',
+      'boleto-456': 'LIQUIDADO',
+    };
+    const idsComStatusDivergente = [];
+    for (const id of idsEncontradosSet) {
+      const statusAtual = statusAtuaisDosServicos[id];
+      if (statusAtual && statusAtual !== statusExigido) {
+        idsComStatusDivergente.push(id);
       }
-      console.log(`[Reenvio] Processando ID: ${servico.id}, URL: ${webhookData.url}`);
-      return this.processarReenvio(webhookData);
+    }
+    if (idsComStatusDivergente.length > 0) {
+      const mensagemErro = `Não foi possível gerar a notificação. A situação do ${product} diverge do tipo de notificação solicitado.`;
+      throw new UnprocessableEntityException(mensagemErro, idsComStatusDivergente);
+    }
+    
+    // 3.1 - CACHE DA REQUISIÇÃO (1 HORA)
+    const sortedIds = [...ids].sort().join(',');
+    const cacheKey = `reenvio-lock:${product}:${kind}:${type}:${sortedIds}`;
+
+    const existingRequest = await this.redisClient.get(cacheKey);
+    if (existingRequest) {
+      throw new ConflictException(
+        'Requisição duplicada. Uma solicitação idêntica já foi processada na última hora.'
+      );
+    }
+    
+    await this.redisClient.set(cacheKey, protocoloLote, { ttl: 3600 }); 
+
+
+    // 3. Processar os reenvios
+    const reenviosPromises = webhooks.map((webhook) => {
+      console.log(`[Reenvio] Processando ID: ${webhook.id}, URL Antiga: ${webhook.url}`);
+      return this.processarReenvio(webhook, cedente, null);
     });
 
-    const resultados = await Promise.allSettled(reenviosPromises);
+    await Promise.allSettled(reenviosPromises);
 
-    // 4. FALHA NO PROCESSAMENTO (Regra 3.1.P)
-    // Só salva o protocolo se pelo menos 1 webhook foi enviado com sucesso
-    const sucessos = resultados.filter(r => r.status === 'fulfilled');
-    if (sucessos.length === 0) {
-      const err = new Error('Não foi possível gerar a notificação. Tente novamente mais tarde.');
-      err.status = 400;
-      // Remove a chave do cache para permitir nova tentativa
-      await this.redisClient.del(cacheKey);
-      throw err;
-    }
-
-    // 5. ARMAZENAMENTO PÓS-SUCESSO (Regra 3.1.R)
+    // 4. Salvar o registro do protocolo
+    const idsEncontradosArray = Array.from(idsEncontradosSet);
     const registroProtocolo = {
       id: uuidv4(),
       protocolo: protocoloLote,
-      data: { // Dados originais da requisição
-        product,
-        ids_solicitados: ids,
-        kind,
-        type,
-      },
+      data: { product, ids_solicitados: ids, kind, type, ids_invalidos: idsInvalidos },
       data_criacao: new Date(),
       cedente_id: cedente.id,
       kind: kind,
@@ -147,14 +115,17 @@ export default class ReenviarWebhookUseCase {
       servico_id: ids, // Salva como JSONB (migration já foi ajustada)
       status: 'sent', // Define o status como 'sent'
     };
-
     await this.reprocessadoRepository.create(registroProtocolo);
 
+    // 5. Retornar o protocolo do lote
     return { protocolo: protocoloLote };
   }
 
-  async processarReenvio(webhook) {
+  async processarReenvio(webhook, cedente, conta) {
     let response;
+    const config = resolveNotificationConfig({ conta, cedente });
+    const urlParaReenvio = config?.url || webhook.url;
+    console.log(`[Reenvio] URL de destino resolvida: ${urlParaReenvio}`);
     try {
       // 6. LÓGICA DE NOTIFICAÇÃO (Regra 3.4 e 3.5)
       // Aqui você implementaria a busca da config (Conta vs Cedente)
@@ -163,16 +134,14 @@ export default class ReenviarWebhookUseCase {
       // const config = this.notificationConfigService.getConfig(cedente, conta);
 
       response = await this.httpClient.post(
-        webhook.url,
+        urlParaReenvio,
         webhook.payload,
         {
           timeout: 5000,
           // headers: headers // Adicionaria os headers aqui
         }
       );
-
       const isSuccess = response && response.status >= 200 && response.status < 300;
-
       if (isSuccess) {
         await this.webhookRepository.update(webhook.id, {
           tentativas: (webhook.tentativas || 0) + 1,

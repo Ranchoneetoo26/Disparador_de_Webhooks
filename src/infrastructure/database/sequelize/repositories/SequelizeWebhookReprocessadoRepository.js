@@ -3,7 +3,7 @@
 export default class SequelizeWebhookReprocessadoRepository {
   constructor({ WebhookReprocessadoModel, sequelize, Op }) {
     if (!WebhookReprocessadoModel) {
-      throw new Error('WebhookRepcessadoModel is required in constructor');
+      throw new Error('WebhookReprocessadoModel is required in constructor');
     }
     if (!sequelize) {
       throw new Error('sequelize is required in constructor');
@@ -25,17 +25,17 @@ export default class SequelizeWebhookReprocessadoRepository {
       }
     };
 
-    if (filters.protocolo) {
+    if (filters && filters.protocolo) {
       where.protocolo = filters.protocolo;
     }
-    if (filters.kind) {
+    if (filters && filters.kind) {
       where.kind = filters.kind;
     }
-    if (filters.type) {
+    if (filters && filters.type) {
       where.type = filters.type;
     }
 
-    if (filters.product) {
+    if (filters && filters.product) {
       where[Op.and] = [
         sequelize.where(
           sequelize.literal("data->>'product'"),
@@ -44,7 +44,7 @@ export default class SequelizeWebhookReprocessadoRepository {
       ];
     }
 
-    if (filters.id && Array.isArray(filters.id) && filters.id.length > 0) {
+    if (filters && filters.id && Array.isArray(filters.id) && filters.id.length > 0) {
       where.servico_id = {
         [Op.contains]: filters.id
       };

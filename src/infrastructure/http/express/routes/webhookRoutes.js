@@ -10,7 +10,8 @@ import SequelizeWebhookRepository from '../../../database/sequelize/repositories
 import SequelizeServicoRepository from '../../../database/sequelize/repositories/SequelizeServicoRepository.js'; // 1. IMPORTAR
 import httpClient from '../../../http/providers/AxiosProvider.js';
 
-import RedisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
+// --- CORREÇÃO 1: Importa a INSTÂNCIA singleton ---
+import redisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 
 import * as dbCjs from '../../../database/sequelize/models/index.cjs';
 const db = dbCjs.default;
@@ -26,8 +27,7 @@ const authMiddleware = createAuthMiddleware({
   softwareHouseRepository,
 });
 
-// Cache
-const redisCacheRepository = new RedisCacheRepository();
+// --- CORREÇÃO 2: A linha "new RedisCacheRepository()" foi REMOVIDA ---
 
 // Repositórios para o UseCase
 const servicoRepository = new SequelizeServicoRepository(); // 2. INSTANCIAR
@@ -44,7 +44,7 @@ const reenviarWebhookController = new ReenviarWebhookController({
   webhookRepository,
   webhookReprocessadoRepository,
   httpClient,
-  redisClient: redisCacheRepository
+  redisClient: redisCacheRepository // Agora usa a instância importada
 });
 
 router.use(authMiddleware);

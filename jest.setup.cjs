@@ -1,113 +1,83 @@
+// jest.setup.cjs
+'use strict';
+
+// Carrega .env de teste (fallback para .env)
 try {
-  require("dotenv").config({ path: "./.env" });
-} catch (err) {}
-
-
-try {
-  const dbModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
-  const db = dbModule.default || dbModule;
-
-  console.log("--- DEBUG START ---");
-  console.log("DB Loaded:", !!db);
-  if (db) {
-    console.log("Webhook in DB:", !!db.Webhook);
-    console.log("Webhook Name:", db.Webhook ? db.Webhook.name : "N/A");
-    console.log(
-      "DB Keys:",
-      Object.keys(db).filter((key) => key.length > 3)
-    );
-  }
-  console.log("--- DEBUG END ---");
-
-  global.db = db;
-
-  Object.keys(db).forEach((key) => {
-    if (db[key] && db[key].name && typeof db[key] === "function") {
-      if (db[key].init && db[key].associate) {
-        global[db[key].name] = db[key];
-      }
-    }
-  });
+  require('dotenv').config({ path: './.env.test' });
 } catch (err) {
-  console.error(
-    "ERRO FATAL ao carregar Models no jest.setup.cjs:",
-    err.message
-  );
+  try { require('dotenv').config({ path: './.env' }); } catch (e) {}
 }
 
-async function tryCloseServer() {
-  try {
-    const appModule = await import("./src/app.js");
-    const app = appModule.default || appModule;
-    const server = app.server;
-    if (server && typeof server.close === "function") {
-      console.log("Fechando servidor...");
-      await new Promise((resolve, reject) =>
-        server.close((err) => (err ? reject(err) : resolve()))
-      );
-      console.log("Servidor fechado.");
+// Tenta carregar o index dos models de forma síncrona.
+// Se usar ESM e falhar no require(), registra o erro e continua.
+// Os repositórios devem ser tolerantes ao carregamento tardio dos models.
+try {
+  // eslint-disable-next-line global-require, import/no-dynamic-require
+  const indexModule = require('./src/infrastructure/database/sequelize/models/index.cjs');
+  const db = indexModule && (indexModule.default || indexModule);
+  if (db) {
+    global.db = db;
+    if (db.sequelize) global.sequelize = db.sequelize;
+    if (db.models) {
+      global.models = db.models;
+      Object.keys(db.models).forEach((m) => {
+        if (!global[m]) global[m] = db.models[m];
+      });
     }
-  } catch (err) {}
+    console.log('[jest.setup.cjs] DB e models carregados no global com sucesso.');
+  } else {
+    console.warn('[jest.setup.cjs] require(index.cjs) retornou falsy. Prosseguindo sem models globais.');
+  }
+} catch (err) {
+  // Se index.cjs usar ESM imports, require pode falhar; registramos e seguimos.
+  console.error('ERRO ao carregar Models no index.cjs (require):', err && err.message ? err.message : err);
+  console.warn('[jest.setup.cjs] Prosseguindo mesmo com erro no require; certifique-se que repositórios são tolerantes a models ausentes.');
 }
 
-async function tryCloseSequelize() {
-  try {
-    const db =
-      global.db ||
-      require("./src/infrastructure/database/sequelize/models/index.cjs");
-    const sequelize = db?.sequelize;
-
-    if (sequelize && typeof sequelize.close === "function") {
-      console.log("Fechando conexão Sequelize...");
-      await sequelize.close(); 
-      console.log("Conexão Sequelize fechada.");
-    }
-  } catch (err) {}
-}
-
+// afterAll: fecha Sequelize e Redis (se existirem). Definido SINTONICAMENTE.
 afterAll(async () => {
   try {
-    await tryCloseServer();
-  } catch (err) {}
-
-  try {
-    await tryCloseSequelize();
-  } catch (err) {}
-
-  await tryCloseSequelize(); 
-
-  try {
-    const repositoriesModule = await import(
-      "./src/infrastructure/database/sequelize/repositories/index.js"
-    );
-    const redisCacheRepository = repositoriesModule.redisCacheRepository;
-
-    if (
-      redisCacheRepository &&
-      typeof redisCacheRepository.disconnect === "function"
-    ) {
-      console.log("Desconectando Redis...");
-      await redisCacheRepository.disconnect();
-      console.log("Redis desconectado.");
-    } else {
-      console.warn(
-        "redisCacheRepository não encontrado ou sem método disconnect após import."
-      );
+    const sequelize = global.sequelize || (global.db && global.db.sequelize);
+    if (sequelize && typeof sequelize.close === 'function') {
+      console.log('[Jest] Fechando conexão Sequelize...');
+      try { await sequelize.close(); } catch (e) { console.warn('[Jest] Erro ao fechar sequelize (ignored):', e && e.message); }
+      console.log('[Jest] Conexão Sequelize fechada.');
     }
   } catch (err) {
-    console.error(
-      "Erro ao importar ou desconectar Redis no afterAll:",
-      err.message
-    );
+    console.error('[Jest] Erro ao fechar Sequelize:', err && err.message ? err.message : err);
   }
 
-  if (
-    typeof globalThis !== "undefined" &&
-    typeof globalThis.jest !== "undefined" &&
-    typeof globalThis.jest.useRealTimers === "function"
-  ) {
-    
+  try {
+    // tenta desconectar o singleton redis (se foi inicializado)
+    let redisRepo;
+    try {
+      // eslint-disable-next-line global-require, import/no-dynamic-require
+      const r = require('./src/infrastructure/cache/redis/RedisCacheRepository.js');
+      redisRepo = r && (r.default || r);
+    } catch (e) {
+      // ignore - pode não existir ou ser ESM
+      redisRepo = null;
+    }
+
+    if (redisRepo && typeof redisRepo.disconnect === 'function') {
+      console.log('[Jest] Desconectando Redis (singleton) via disconnect()...');
+      try { await redisRepo.disconnect(); } catch (e) { console.warn('[Jest] Erro ao disconnect Redis (ignored):', e && e.message); }
+      console.log('[Jest] Redis (singleton) desconectado via disconnect().');
+    } else if (redisRepo && typeof redisRepo.quit === 'function') {
+      console.log('[Jest] Chamando quit() no Redis...');
+      try {
+        await new Promise((resolve) => redisRepo.quit(() => resolve()));
+      } catch (e) { console.warn('[Jest] Erro ao quit() Redis (ignored):', e && e.message); }
+      console.log('[Jest] Redis fechado via quit().');
+    } else {
+      console.log('[Jest] Nenhuma instância de Redis encontrada para desconectar.');
+    }
+  } catch (err) {
+    console.error('[Jest] Erro ao desconectar Redis:', err && err.message ? err.message : err);
+  }
+
+  if (typeof globalThis !== 'undefined' && typeof globalThis.jest !== 'undefined' && typeof globalThis.jest.useRealTimers === 'function') {
     globalThis.jest.useRealTimers();
   }
-  console.log("afterAll concluído.");
+  console.log('[Jest] afterAll concluído.');
 });
