@@ -13,44 +13,57 @@ import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/
 import redisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 
 import * as dbCjs from '../../../database/sequelize/models/index.cjs';
-const db = dbCjs.default;
+
+const db = dbCjs.default || dbCjs;
 const { models, sequelize, Sequelize } = db;
 const { Op } = Sequelize;
+
 const router = express.Router();
 
+// Repositórios de apoio
 const cedenteRepository = new SequelizeCedenteRepository();
 const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
+
+// Middleware de autenticação
 const authMiddleware = createAuthMiddleware({
   cedenteRepository,
   softwareHouseRepository,
 });
 
+// Pega com segurança o model WebhookReprocessado (sensitive case)
+const webhookModel = models && (models.WebhookReprocessado || models.webhookReprocessado);
+if (!webhookModel) {
+  // Lança erro claro para debugging em ambiente de testes
+  throw new Error('Model WebhookReprocessado não encontrado em sequelize.models');
+}
+
+// Instancia repositório corretamente (propriedade com o nome correto)
 const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
-  WebhookReprocessadoModel: models.WebhookReprocessado,
-  sequelize: sequelize,
-  Op: Op
+  WebhookReprocessadoModel: webhookModel,
+  sequelize,
+  Op
 });
 
-// --- CORREÇÃO AQUI ---
-// Os construtores de AMBOS os UseCases esperam um OBJETO
-// com as duas dependências.
+// Instancia dos UseCases com as dependências esperadas (objeto)
 const listarProtocolosUseCase = new ListarProtocolosUseCase({
-  webhookReprocessadoRepository: webhookReprocessadoRepository,
-  cacheRepository: redisCacheRepository 
+  webhookReprocessadoRepository,
+  cacheRepository: redisCacheRepository
 });
 
 const consultarProtocoloUseCase = new ConsultarProtocoloUseCase({
-  webhookReprocessadoRepository: webhookReprocessadoRepository,
-  cacheRepository: redisCacheRepository 
+  webhookReprocessadoRepository,
+  cacheRepository: redisCacheRepository
 });
-// --- FIM DA CORREÇÃO ---
 
+// Controller
 const protocoloController = new ProtocoloController({
   listarProtocolosUseCase,
   consultarProtocoloUseCase
 });
 
+// Rotas
 router.use(authMiddleware);
 router.get('/', (req, res) => protocoloController.listarProtocolos(req, res));
 router.get('/:uuid', (req, res) => protocoloController.consultarProtocolo(req, res));
+
 export default router;
