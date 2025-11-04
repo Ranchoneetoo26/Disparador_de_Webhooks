@@ -1,71 +1,58 @@
 'use strict';
 
-const { Model } = require('sequelize');
+import express from 'express';
+import createAuthMiddleware from '../middlewares/AuthMiddleware.js';
+import ProtocoloController from '../controllers/ProtocoloController.js';
+import ListarProtocolosUseCase from '../../../../application/useCases/ListarProtocolosUseCase.js';
+import ConsultarProtocoloUseCase from '../../../../application/useCases/ConsultarProtocoloUseCase.js';
+import SequelizeCedenteRepository from '../../../database/sequelize/repositories/SequelizeCedenteRepository.js';
+import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
+import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js';
 
-module.exports = (sequelize, DataTypes) => {
-  class WebhookReprocessado extends Model {
-    static associate(models) {
-      this.belongsTo(models.Cedente, { foreignKey: 'cedente_id', as: 'cedente' });
-    }
-  }
-  
-  WebhookReprocessado.init({
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-      allowNull: false
-    },
-    data: {
-      type: DataTypes.JSONB, 
-      allowNull: false
-    },
-    data_criacao: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW
-    },
-    cedente_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
-    kind: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    type: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    servico_id: {
-      type: DataTypes.JSONB,
-      allowNull: false      
-    },
-    protocolo: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    status: {
-      type: DataTypes.STRING, 
-      allowNull: true
-    },
+// Importa a INSTÂNCIA singleton do cache
+import redisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false
-    }
-    
-  }, {
-    sequelize,
-    modelName: 'WebhookReprocessado',
-    tableName: 'WebhookReprocessados',
-    timestamps: true, 
-    underscored: false 
-  });
-  
-  return WebhookReprocessado;
-};
+import * as dbCjs from '../../../database/sequelize/models/index.cjs';
+const db = dbCjs.default || dbCjs;
+const { models, sequelize, Sequelize } = db;
+const { Op } = Sequelize;
+const router = express.Router();
+
+const cedenteRepository = new SequelizeCedenteRepository();
+const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
+const authMiddleware = createAuthMiddleware({
+  cedenteRepository,
+  softwareHouseRepository,
+});
+
+// pega o model com segurança (sensível a maiúsculas)
+const webhookModel = models && (models.WebhookReprocessado || models.webhookReprocessado);
+if (!webhookModel) {
+  throw new Error('Model WebhookReprocessado não encontrado em sequelize.models');
+}
+
+const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
+  WebhookReprocessadoModel: webhookModel, // <-- nome correto aqui (sem typo)
+  sequelize,
+  Op
+});
+
+const listarProtocolosUseCase = new ListarProtocolosUseCase({
+  webhookReprocessadoRepository,
+  cacheRepository: redisCacheRepository
+});
+
+const consultarProtocoloUseCase = new ConsultarProtocoloUseCase({
+  webhookReprocessadoRepository,
+  cacheRepository: redisCacheRepository
+});
+
+const protocoloController = new ProtocoloController({
+  listarProtocolosUseCase,
+  consultarProtocoloUseCase
+});
+
+router.use(authMiddleware);
+router.get('/', (req, res) => protocoloController.listarProtocolos(req, res));
+router.get('/:uuid', (req, res) => protocoloController.consultarProtocolo(req, res));
+export default router;
