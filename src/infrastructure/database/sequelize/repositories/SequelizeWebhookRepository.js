@@ -1,25 +1,14 @@
 'use strict';
 
-// SequelizeWebhookRepository.js
-// Repositório que acessa o model WebhookModel.
-// Não lança erro no construtor se os models ainda não estiverem carregados.
+import * as dbCjs from '../models/index.cjs';
+const db = dbCjs.default;
+const { models, Sequelize } = db;
+const { Op } = Sequelize;
 
 export default class SequelizeWebhookRepository {
-  constructor({ sequelize } = {}) {
-    this.db = sequelize || null;
-    this.models = (this.db && this.db.models) ? this.db.models : (global.models || null);
-    this.webhookModel = this.models && this.models.WebhookModel ? this.models.WebhookModel : null;
-  }
-
-  _getWebhookModel() {
-    if (!this.webhookModel) {
-      if (this.db && this.db.models && this.db.models.WebhookModel) {
-        this.webhookModel = this.db.models.WebhookModel;
-      } else if (global && global.models && global.models.WebhookModel) {
-        this.webhookModel = global.models.WebhookModel;
-      }
-    }
-
+  constructor() {
+    this.webhookModel = models.WebhookModel;
+    this.Op = Op; // Adicionado para garantir que o 'Op' esteja no 'this'
     if (!this.webhookModel) {
       throw new Error('Model "WebhookModel" não foi carregado corretamente.');
     }
@@ -32,11 +21,36 @@ export default class SequelizeWebhookRepository {
     return WebhookModel.findByPk(id);
   }
 
-  async create(data) {
-    if (!data) throw new Error('Data is required to create webhook');
-    const WebhookModel = this._getWebhookModel();
-    return WebhookModel.create(data);
+  async findByIds(ids) {
+    return this.webhookModel.findAll({
+      where: {
+        id: {
+          [this.Op.in]: ids,
+        },
+      },
+    });
   }
 
-  // adicione outros métodos necessários usando _getWebhookModel()
-}
+  async update(id, data) {
+    await this.webhookModel.update(data, {
+      where: { id: id },
+    });
+  }
+
+  // --- MÉTODO NOVO ADICIONADO ---
+  // O ReenviarWebhookUseCase precisa deste método para
+  // validar se os IDs pertencem ao cedente que está logado.
+  async findByIdsAndCedente(ids, cedenteId) {
+    if (!ids || ids.length === 0 || !cedenteId) {
+      return [];
+    }
+    return this.webhookModel.findAll({
+      where: {
+        id: {
+          [this.Op.in]: ids
+        },
+        cedente_id: cedenteId
+      }
+    });
+  }
+} // <-- Esta é a chave '}' final correta
