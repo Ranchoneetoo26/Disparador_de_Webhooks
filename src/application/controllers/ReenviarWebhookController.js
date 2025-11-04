@@ -1,24 +1,27 @@
 'use strict';
 
-import ReenviarWebhookUseCase from '../useCases/ReenviarWebhookUseCase.js';
-import ReenviarWebhookOutput from '../dtos/ReenviarWebhookOutput.js';
+// --- CORREÇÃO AQUI ---
+// Mudamos a forma como o Controlador importa o UseCase
+import { default as ReenviarWebhookUseCase } from '../useCases/ReenviarWebhookUseCase.js';
+// --- FIM DA CORREÇÃO ---
+
 import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
 import UnprocessableEntityException from '../../domain/exceptions/UnprocessableEntityException.js';
 
 export default class ReenviarWebhookController {
   constructor({
-    // servicoRepository REMOVIDO
+    servicoRepository, // Adicionada nova dependência
     webhookRepository,
     webhookReprocessadoRepository,
     httpClient,
     redisClient
   }) {
     this.useCase = new ReenviarWebhookUseCase({
-      // servicoRepository REMOVIDO
+      servicoRepository, // Injetada no useCase
       webhookRepository,
       webhookReprocessadoRepository,
       httpClient,
-      redisClient,
+      redisClient
     });
   }
 
@@ -27,9 +30,9 @@ export default class ReenviarWebhookController {
       const input = ReenviarWebhookInput.validate(req.body);
       input.cedente = req.cedente;
 
-      const result = await this.useCase.execute(input);
-
-      return res.status(200).json(ReenviarWebhookOutput.success(result.protocolo));
+      const output = await this.reenviarWebhookUseCase.execute(input, cedente);
+      
+      return res.status(200).json(output);
 
     } catch (err) {
       console.error('[Erro no Reenvio - Controller]', err);

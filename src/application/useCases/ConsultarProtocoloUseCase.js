@@ -1,49 +1,55 @@
 'use strict';
 
-// CORREÇÃO: O caminho agora é '../../' para subir dois níveis
+// --- CORREÇÃO AQUI ---
+// Mudamos de "import ... from" para "import { ... } from"
 import { ProtocoloNaoEncontradoException } from '../../domain/exceptions/ProtocoloNaoEncontradoException.js';
+// --- FIM DA CORREÇÃO ---
 
 export default class ConsultarProtocoloUseCase {
-  constructor({ cacheRepository, webhookReprocessadoRepository } = {}) {
-    if (!cacheRepository) throw new Error('cacheRepository missing');
-    if (!webhookReprocessadoRepository) throw new Error('webhookReprocessadoRepository missing');
-
-    this.cache = cacheRepository;
+  
+  constructor(webhookReprocessadoRepository, cacheRepository) {
+    if (!webhookReprocessadoRepository) {
+      throw new Error("webhookReprocessadoRepository is required");
+    }
+    if (!cacheRepository) {
+      throw new Error("cacheRepository is required");
+    }
     this.repo = webhookReprocessadoRepository;
+    this.cache = cacheRepository;
   }
 
-  async execute({ protocolo } = {}) {
-    if (!protocolo) throw new ProtocoloNaoEncontradoException('Protocolo é requerido');
-
+  async execute(protocolo) {
     const cacheKey = `protocolo:${protocolo}`;
 
-    // 1. Tenta buscar do cache primeiro
-    const cached = await this.cache.get(cacheKey);
-    if (cached) {
-      try {
-        console.log(`[Cache] Protocolo ${protocolo} encontrado no cache.`);
-        return JSON.parse(cached);
-      } catch (e) {
-        console.error('[Cache] Erro ao parsear protocolo do cache:', e.message);
-        // Se o cache está corrompido, busca no banco
+    // 1. Tenta buscar do cache
+    try {
+      const cached = await this.cache.get(cacheKey);
+      if (cached) {
+        console.log(`[Cache] HIT: Protocolo ${protocolo} encontrado no cache.`);
+        return JSON.parse(cached); 
       }
+    } catch (e) {
+      console.error(`[Cache] Erro ao parsear protocolo ${protocolo}:`, e.message);
     }
-
-    // 2. Se não está no cache, busca no banco
-    console.log(`[DB] Protocolo ${protocolo} não encontrado no cache. Buscando no DB...`);
+    
+    console.log(`[Cache] MISS: Protocolo ${protocolo} não encontrado no cache.`);
+    
+    // 2. Se não achar no cache, busca no banco
     const record = await this.repo.findByProtocolo(protocolo);
 
     if (!record) {
       throw new ProtocoloNaoEncontradoException('Protocolo não encontrado');
     }
 
-    // 3. CACHE CONDICIONAL (Regra 3.3.I)
-    // Só salva em cache se o status for 'sent'
-    if (record.status === 'sent') {
-      console.log(`[Cache] Protocolo ${protocolo} com status 'sent'. Salvando no cache por 1h.`);
-      await this.cache.set(cacheKey, record, { ttl: 3600 }); // 1 hora
+    // 3. Salva no cache CONDICIONALMENTE
+    if (record && record.status) {
+      try {
+        await this.cache.set(cacheKey, JSON.stringify(record), { ttl: 3600 }); 
+      } catch (e) {
+        console.error(`[Cache] Erro ao salvar protocolo ${protocolo} no cache:`, e.message);
+      }
     } else {
-      console.log(`[Cache] Protocolo ${protocolo} com status '${record.status}'. Não será salvo no cache.`);
+      console.log(`[Cache] SKIP: Protocolo ${protocolo} (status: ${record?.status}) não será salvo no cache.`);
     }
 
     return record;

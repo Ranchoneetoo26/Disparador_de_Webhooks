@@ -17,17 +17,11 @@ if (!config) {
 
 console.log(`[index.cjs] Conectando ao DB: Dialect=${config.dialect}, Host=${config.host}, DB=${config.database}`);
 
-const sequelize = new Sequelize(config.database, config.username, config.password, {
-  host: config.host,
-  port: config.port,
-  dialect: config.dialect,
-  dialectModule: require('pg'),
-  logging: console.log, 
-  define: {
-    timestamps: true,
-    underscored: true,
-  },
-});
+// --- CORREÇÃO AQUI ---
+// Removemos as opções manuais e passamos o objeto 'config' diretamente.
+// O 'config' já contém 'host', 'port', 'dialect', 'define' e 'logging: false' (do seu config.cjs).
+const sequelize = new Sequelize(config.database, config.username, config.password, config);
+// --- FIM DA CORREÇÃO ---
 
 const models = {};
 

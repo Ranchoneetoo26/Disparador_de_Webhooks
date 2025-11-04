@@ -1,18 +1,22 @@
-"use strict";
-
+'use strict';
 /** @type {import('sequelize-cli').Migration} */
+
+// O CNPJ da SoftwareHouse do seeder anterior
+const SOFTWARE_HOUSE_CNPJ = '11111111000111';
+
+// A URL para onde queremos que os webhooks sejam reenviados
+const WEBHOOK_SITE_URL = 'https://webhook.site/692cd884-e83d-4319-8a04-6d89fe995108';
+
 module.exports = {
   async up(queryInterface, Sequelize) {
-
+    // 1. Encontrar o ID da SoftwareHouse que já foi criada
     const softwareHouses = await queryInterface.sequelize.query(
-      `SELECT id from "SoftwareHouses" WHERE cnpj = '11111111000111' LIMIT 1;`,
+      `SELECT id from "SoftwareHouses" WHERE cnpj = '${SOFTWARE_HOUSE_CNPJ}' LIMIT 1`,
       { type: queryInterface.sequelize.QueryTypes.SELECT }
     );
 
     if (!softwareHouses || softwareHouses.length === 0) {
-      throw new Error(
-        "Software House com CNPJ 11111111000111 não encontrada. Execute o seeder de SoftwareHouses primeiro."
-      );
+      throw new Error(`Seeder: SoftwareHouse com CNPJ ${SOFTWARE_HOUSE_CNPJ} não encontrada. Rode o seeder de SoftwareHouses primeiro.`);
     }
     const softwareHouseId = softwareHouses[0].id;
 
@@ -21,7 +25,7 @@ module.exports = {
 
     // Insere o cedente
     await queryInterface.bulkInsert(
-      "Cedentes",
+      'Cedentes',
       [
         {
           cnpj: "22222222000222",

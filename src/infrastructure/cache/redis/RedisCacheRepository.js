@@ -1,7 +1,6 @@
-import Redis from "ioredis";
-import dotenv from "dotenv";
+'use strict';
 
-dotenv.config();
+import Redis from 'ioredis';
 
 const redisConfig = {
   host: process.env.REDIS_HOST || "localhost",
@@ -98,33 +97,29 @@ async function ensureReadyClient() {
 
 export default class RedisCacheRepository {
   constructor() {
-    getClient();
+    try {
+      this.client = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: process.env.REDIS_PORT || 6379,
+        db: process.env.REDIS_DB || 0,
+        maxRetriesPerRequest: 3
+      });
+
+      this.client.on('connect', () => console.log('[Cache] Conectando ao Redis...'));
+      this.client.on('ready', () => console.log('[Cache] Cliente Redis pronto para uso.'));
+      this.client.on('error', (err) => console.error('[Cache] Erro no Redis:', err.message));
+    } catch (err) {
+      console.error('[Cache] Falha ao criar cliente Redis:', err.message);
+    }
   }
 
   async get(key) {
-    const client = await ensureReadyClient();
-    if (!client) {
-      console.warn(`[Cache] GET ${key}: Cliente Redis não disponível.`);
-      return null;
-    }
-    try {
-      console.log(`[Cache] GET ${key}`);
-      const value = await client.get(key);
-
-      return value;
-    } catch (error) {
-      console.error(`[Cache] Erro ao buscar chave ${key}:`, error.message);
-      return null;
-    }
+    if (!this.client) return null;
+    return this.client.get(key);
   }
 
   async set(key, value, options = {}) {
-    const client = await ensureReadyClient();
-    if (!client) {
-      console.warn(`[Cache] SET ${key}: Cliente Redis não disponível.`);
-      return false;
-    }
-
+    if (!this.client) return;
     const { ttl } = options;
     try {
       const valueToStore =
@@ -145,6 +140,7 @@ export default class RedisCacheRepository {
       console.error(`[Cache] Erro ao definir chave ${key}:`, error.message);
       return false;
     }
+    return this.client.set(key, value);
   }
 
   // --- CORREÇÃO AQUI ---

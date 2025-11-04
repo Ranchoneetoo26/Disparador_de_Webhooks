@@ -1,10 +1,8 @@
 'use strict';
-
-export default class UnprocessableEntityException extends Error {
-  constructor(message = "Entidade não processável", ids_invalidos = null) {
+export default class ConflictException extends Error {
+  constructor(message) {
     super(message);
-    this.name = "UnprocessableEntityException";
-    this.status = 422;
-    this.ids_invalidos = ids_invalidos;
+    this.name = 'ConflictException';
+    this.status = 409;
   }
 }

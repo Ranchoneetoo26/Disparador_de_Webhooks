@@ -12,10 +12,13 @@ export default class SequelizeWebhookRepository {
     if (!this.webhookModel) {
       throw new Error('Model "WebhookModel" não foi carregado corretamente.');
     }
+    return this.webhookModel;
   }
 
   async findById(id) {
-    return this.webhookModel.findByPk(id);
+    if (!id) return null;
+    const WebhookModel = this._getWebhookModel();
+    return WebhookModel.findByPk(id);
   }
 
   async findByIds(ids) {

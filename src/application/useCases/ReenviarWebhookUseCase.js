@@ -24,22 +24,23 @@ const MAPA_SITUACAO = {
 };
 
 export default class ReenviarWebhookUseCase {
+// --- FIM DA CORREÇÃO ---
   constructor({
     // servicoRepository foi REMOVIDO para corrigir o crash
     webhookRepository,
     webhookReprocessadoRepository,
     httpClient,
-    redisClient,
+    redisClient, 
   } = {}) {
     if (!webhookRepository) throw new Error('webhookRepository missing');
     if (!webhookReprocessadoRepository) throw new Error('webhookReprocessadoRepository missing');
     if (!httpClient) throw new Error('httpClient missing');
-    if (!redisClient) throw new Error('redisClient missing');
+    if (!redisClient) throw new Error('redisClient missing'); 
 
     this.webhookRepository = webhookRepository;
     this.reprocessadoRepository = webhookReprocessadoRepository;
     this.httpClient = httpClient;
-    this.redisClient = redisClient;
+    this.redisClient = redisClient; 
   }
 
   async execute(input) {
@@ -108,7 +109,7 @@ export default class ReenviarWebhookUseCase {
       return this.processarReenvio(webhook);
     });
 
-    const resultados = await Promise.allSettled(reenviosPromises);
+    await Promise.allSettled(reenviosPromises);
 
     // 4. FALHA NO PROCESSAMENTO (Regra 3.1.P)
     const sucessos = resultados.filter(r => r.status === 'fulfilled');
@@ -131,21 +132,19 @@ export default class ReenviarWebhookUseCase {
       servico_id: ids,
       status: 'sent',
     };
-
     await this.reprocessadoRepository.create(registroProtocolo);
     return { protocolo: protocoloLote };
   }
 
-  async processarReenvio(webhook) {
+  async processarReenvio(webhook, cedente, conta) {
     let response;
     try {
       response = await this.httpClient.post(
-        webhook.url,
+        urlParaReenvio,
         webhook.payload,
         { timeout: 5000 }
       );
       const isSuccess = response && response.status >= 200 && response.status < 300;
-
       if (isSuccess) {
         await this.webhookRepository.update(webhook.id, {
           tentativas: (webhook.tentativas || 0) + 1,
