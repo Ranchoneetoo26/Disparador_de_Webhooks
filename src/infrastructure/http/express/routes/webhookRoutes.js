@@ -7,6 +7,7 @@ import SequelizeCedenteRepository from '../../../database/sequelize/repositories
 import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
 import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js';
 import SequelizeWebhookRepository from '../../../database/sequelize/repositories/SequelizeWebhookRepository.js';
+import SequelizeServicoRepository from '../../../database/sequelize/repositories/SequelizeServicoRepository.js'; // 1. IMPORTAR
 import httpClient from '../../../http/providers/AxiosProvider.js';
 
 // --- CORREÇÃO 1: Importa a INSTÂNCIA singleton ---
@@ -18,6 +19,7 @@ const { models, sequelize, Sequelize } = db;
 const { Op } = Sequelize;
 const router = express.Router();
 
+// Repositórios para Autenticação
 const cedenteRepository = new SequelizeCedenteRepository();
 const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
 const authMiddleware = createAuthMiddleware({
@@ -27,6 +29,8 @@ const authMiddleware = createAuthMiddleware({
 
 // --- CORREÇÃO 2: A linha "new RedisCacheRepository()" foi REMOVIDA ---
 
+// Repositórios para o UseCase
+const servicoRepository = new SequelizeServicoRepository(); // 2. INSTANCIAR
 const webhookRepository = new SequelizeWebhookRepository();
 const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
   WebhookReprocessadoModel: models.WebhookReprocessado,
@@ -34,7 +38,9 @@ const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository
   Op: Op
 });
 
+// Controller com todas as dependências
 const reenviarWebhookController = new ReenviarWebhookController({
+  servicoRepository, // 3. INJETAR
   webhookRepository,
   webhookReprocessadoRepository,
   httpClient,

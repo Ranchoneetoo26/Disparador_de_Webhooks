@@ -6,6 +6,8 @@ import { default as ReenviarWebhookUseCase } from '../useCases/ReenviarWebhookUs
 // --- FIM DA CORREÇÃO ---
 
 import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
+// CORREÇÃO: O caminho agora é '../../' para subir dois níveis
+import UnprocessableEntityException from '../../domain/exceptions/UnprocessableEntityException.js';
 
 export default class ReenviarWebhookController {
   constructor({ 

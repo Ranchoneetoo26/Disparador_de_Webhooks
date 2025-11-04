@@ -36,6 +36,7 @@ export default class ConsultarProtocoloUseCase {
     
     // 2. Se não achar no cache, busca no banco
     const record = await this.repo.findByProtocolo(protocolo);
+
     if (!record) {
       throw new ProtocoloNaoEncontradoException('Protocolo não encontrado');
     }

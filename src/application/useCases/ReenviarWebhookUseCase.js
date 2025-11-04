@@ -17,16 +17,21 @@ const MAPA_STATUS_VALIDOS = {
 export default class ReenviarWebhookUseCase {
 // --- FIM DA CORREÇÃO ---
   constructor({
+    // Repositório 'Servico' é necessário para a validação de situação
+    servicoRepository,
     webhookRepository,
     webhookReprocessadoRepository,
     httpClient,
     redisClient, 
   } = {}) {
+    // Adicione a validação do novo repositório
+    if (!servicoRepository) throw new Error('servicoRepository missing');
     if (!webhookRepository) throw new Error('webhookRepository missing');
     if (!webhookReprocessadoRepository) throw new Error('webhookReprocessadoRepository missing');
     if (!httpClient) throw new Error('httpClient missing');
     if (!redisClient) throw new Error('redisClient missing'); 
 
+    this.servicoRepository = servicoRepository; // Adicionado
     this.webhookRepository = webhookRepository;
     this.reprocessadoRepository = webhookReprocessadoRepository;
     this.httpClient = httpClient;
@@ -49,11 +54,11 @@ export default class ReenviarWebhookUseCase {
     const idsEncontradosSet = new Set(webhooks.map((wh) => wh.id.toString()));
     const idsInvalidos = ids.filter((id) => !idsEncontradosSet.has(id.toString()));
 
-    if (webhooks.length === 0) {
-      const error = new Error('Nenhum webhook encontrado para os IDs fornecidos.');
-      error.status = 422;
-      error.ids_invalidos = idsInvalidos;
-      throw error;
+    if (idsSituacaoErrada.length > 0) {
+      throw new UnprocessableEntityException(
+        `Não foi possível gerar a notificação. A situação do ${product} diverge do tipo de notificação solicitado (esperado: ${situacaoEsperada}).`,
+        idsSituacaoErrada
+      );
     }
 
     // 2. REGRA DE VALIDAÇÃO DE STATUS (422)
@@ -104,11 +109,11 @@ export default class ReenviarWebhookUseCase {
       protocolo: protocoloLote,
       data: { product, ids_solicitados: ids, kind, type, ids_invalidos: idsInvalidos },
       data_criacao: new Date(),
-      cedente_id: webhooks[0].cedente_id || null,
+      cedente_id: cedente.id,
       kind: kind,
       type: type,
-      servico_id: idsEncontradosArray,
-      status: 'completed',
+      servico_id: ids, // Salva como JSONB (migration já foi ajustada)
+      status: 'sent', // Define o status como 'sent'
     };
     await this.reprocessadoRepository.create(registroProtocolo);
 
@@ -122,10 +127,19 @@ export default class ReenviarWebhookUseCase {
     const urlParaReenvio = config?.url || webhook.url;
     console.log(`[Reenvio] URL de destino resolvida: ${urlParaReenvio}`);
     try {
+      // 6. LÓGICA DE NOTIFICAÇÃO (Regra 3.4 e 3.5)
+      // Aqui você implementaria a busca da config (Conta vs Cedente)
+      // E a adição dos headers (cnpj-sh, token-sh, etc.)
+      // const headers = this.notificationConfigService.getHeaders(cedente, conta);
+      // const config = this.notificationConfigService.getConfig(cedente, conta);
+
       response = await this.httpClient.post(
         urlParaReenvio,
         webhook.payload,
-        { timeout: 5000 }
+        {
+          timeout: 5000,
+          // headers: headers // Adicionaria os headers aqui
+        }
       );
       const isSuccess = response && response.status >= 200 && response.status < 300;
       if (isSuccess) {
@@ -138,11 +152,12 @@ export default class ReenviarWebhookUseCase {
         throw new Error(`HTTP Status ${response.status}`);
       }
     } catch (err) {
+      console.error(`[ProcessarReenvio] Falha ao enviar ID ${webhook.id}: ${err.message}`);
       await this.webhookRepository.update(webhook.id, {
         tentativas: (webhook.tentativas || 0) + 1,
         last_status: response?.status || null,
       });
-      return { id: webhook.id, status: 'rejected', reason: err.message };
+      throw new Error(`Falha no reenvio para ${webhook.id}: ${err.message}`);
     }
   }
 }
