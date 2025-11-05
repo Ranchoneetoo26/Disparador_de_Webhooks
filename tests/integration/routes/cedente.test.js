@@ -1,45 +1,39 @@
-import { jest, describe, expect, beforeEach, test } from "@jest/globals";
+/* eslint-disable no-undef */
+import { describe, test, expect, beforeAll } from '@jest/globals';
 
 // --- CORREÇÃO AQUI ---
-// Importamos os models do 'global' que o jest.setup.cjs (provavelmente) criou.
-// Se isso não funcionar, mude para a importação direta:
-// const { Cedente, SoftwareHouse } = require("../../../src/infrastructure/database/sequelize/models/index.cjs").models;
-const { Cedente, SoftwareHouse } = global.db.models;
+// 1. Importamos o 'dbCjs'
+import dbCjs from '../../../src/infrastructure/database/sequelize/models/index.cjs';
+// 2. O 'dbCjs' JÁ É o objeto que queremos. Não precisamos do '.default'.
+const { Cedente, SoftwareHouse } = dbCjs.models;
 // --- FIM DA CORREÇÃO ---
 
+describe('Integration: Cedente Model Tests', () => {
+  let softwareHouse;
 
-describe("Integração do Model: Cedente", () => {
-  let softwareHouse;
-  jest.setTimeout(15000);
+  // Cria a SoftwareHouse (dependência)
+  beforeAll(async () => {
+    // O jest.setup.cjs já limpou o banco (sync: force)
+  	 softwareHouse = await SoftwareHouse.create({
+      cnpj: '12345678000199',
+      token: 'sh_token_teste',
+      status: 'ativo',
+    });
+  });
 
-  beforeEach(async () => {
-    await global.db.sequelize.sync({ force: true });
+  test('deve criar e recuperar um Cedente com dados válidos', async () => {
+    const cedenteData = {
+      cnpj: '98765432000188',
+      token: 'ced_token_teste',
+      status: 'ativo',
+      software_house_id: softwareHouse.id,
+    };
+    const cedente = await Cedente.create(cedenteData);
 
-    // Correto: Precisamos criar a SoftwareHouse ANTES de criar o Cedente
-    softwareHouse = await SoftwareHouse.create({
-      data_criacao: new Date(),
-      cnpj: "11111111000111",
-      token: "TOKEN_DE_TESTE_SH",
-      status: "ativo",
-    });
-  });
+    expect(cedente.id).toBeDefined();
+    expect(cedente.cnpj).toBe(cedenteData.cnpj);
 
-  // afterAll foi removido (corretamente)
-
-  test("deve CRIAR um novo Cedente com dados válidos", async () => {
-    const payload = {
-      data_criacao: new Date(),
-      cnpj: "12345678000199",
-      token: "TOKEN_CEDENTE_TESTE",
-      status: "ativo",
-      software_house_id: softwareHouse.id,
-    };
-
-    const cedenteCriado = await Cedente.create(payload);
-
-    expect(cedenteCriado).toBeDefined();
-    expect(cedenteCriado.cnpj).toBe(payload.cnpj);
-    expect(cedenteCriado.token).toBe(payload.token);
-    expect(cedenteCriado.software_house_id).toBe(softwareHouse.id);
-  });
+    const found = await Cedente.findByPk(cedente.id);
+    expect(found.token).toBe(cedenteData.token);
+  });
 });

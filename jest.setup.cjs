@@ -1,85 +1,74 @@
-'use strict';
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
 
-// Carrega o .env para os testes
-try {
-  require("dotenv").config({ path: "./.env.test" });
-} catch (err) {
-  console.warn('Arquivo .env.test não encontrado, usando .env padrão.');
-  require("dotenv").config({ path: "./.env" });
-}
+const path = require('path');
+require('dotenv').config({
+  path: path.resolve(process.cwd(), '.env.test'),
+});
 
-// Carrega o DB e os Models globalmente
-try {
-  const dbModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
-  const db = dbModule.default || dbModule; 
-  global.db = db;
+// Importa o CJS (CommonJS)
+// Usamos 'require' aqui porque este arquivo é CJS
+const db = require('./src/infrastructure/database/sequelize/models/index.cjs');
 
-  Object.keys(db).forEach((key) => {
-    if (db[key] && db[key].name && typeof db[key] === "function") {
-      if (db[key].init && db[key].associate) {
-        global[db[key].name] = db[key];
-      }
-    }
-  });
-} catch (err) {
-  console.error(
-    "ERRO FATAL ao carregar Models no jest.setup.cjs:",
-    err.message
-  );
-}
+// Variável para guardar a instância do Redis
+let redisCacheRepositoryInstance;
 
-
-// Hook global que roda DEPOIS de todos os testes
-afterAll(async () => {
+// Bloco beforeAll para rodar as migrations de teste
+beforeAll(async () => {
   try {
-    // 1. Fechar a conexão do Sequelize
-    const db = global.db;
-    const sequelize = db?.sequelize;
-
-    if (sequelize && typeof sequelize.close === "function") {
-      console.log("[Jest] Fechando conexão Sequelize...");
-      await sequelize.close(); 
-      console.log("[Jest] Conexão Sequelize fechada.");
-    }
+    console.log('[Jest Setup] Sincronizando banco de dados de teste (force: true)...');
+    // Sobe o banco de dados de teste (limpa e recria)
+    await db.sequelize.sync({ force: true });
+    console.log('[Jest Setup] Banco de dados sincronizado.');
   } catch (err) {
-    console.error("[Jest] Erro ao fechar Sequelize:", err.message);
+    console.error('[Jest Setup] Erro na sincronização do DB:', err);
+    process.exit(1);
   }
 
-  // --- CORREÇÃO AQUI ---
-  // 2. Fechar a ÚNICA instância do Redis
+  // Importa dinamicamente o RedisCacheRepository (que é ESM)
   try {
-    // Importamos a *instância singleton*
-    const { default: redisCacheRepository } = await import(
-      "./src/infrastructure/cache/redis/RedisCacheRepository.js"
+    const RedisCacheRepoModule = await import(
+      './src/infrastructure/cache/redis/RedisCacheRepository.js'
     );
-    
-    // Verificamos e desconectamos a instância
-    if (
-      redisCacheRepository &&
-      typeof redisCacheRepository.disconnect === "function"
-    ) {
-      console.log("[Jest] Desconectando Redis (singleton)...");
-      await redisCacheRepository.disconnect();
-      console.log("[Jest] Redis (singleton) desconectado.");
+    redisCacheRepositoryInstance = new RedisCacheRepoModule.default();
+    console.log('[Jest Setup] Instância do RedisCacheRepository criada.');
+  } catch (err) {
+    console.error(
+      '[Jest Setup] Erro ao importar RedisCacheRepository:',
+      err.message,
+    );
+  }
+});
+
+// Bloco afterAll para fechar conexões
+afterAll(async () => {
+  try {
+    // Fecha a conexão do Sequelize
+    if (db && db.sequelize) {
+      await db.sequelize.close();
+      console.log('[Jest Teardown] Conexão Sequelize fechada.');
+    }
+  } catch (err) {
+    console.error(
+      '[Jest Teardown] Erro ao fechar Sequelize:',
+      err.message,
+    );
+  }
+
+  // Fecha a conexão do Redis
+  try {
+    if (redisCacheRepositoryInstance && redisCacheRepositoryInstance.disconnect) {
+      await redisCacheRepositoryInstance.disconnect();
+      console.log('[Jest Teardown] Conexão Redis (singleton) desconectada.');
     } else {
       console.warn(
-        "[Jest] Instância do redisCacheRepository não encontrada ou sem método disconnect."
+        '[Jest Teardown] Instância do redisCacheRepository não encontrada ou sem método disconnect.',
       );
     }
   } catch (err) {
     console.error(
-      "[Jest] Erro ao importar ou desconectar Redis no afterAll:",
-      err.message
+      '[Jest Teardown] Erro ao desconectar Redis no afterAll:',
+      err.message,
     );
   }
-  // --- FIM DA CORREÇÃO ---
-
-  if (
-    typeof globalThis !== "undefined" &&
-    typeof globalThis.jest !== "undefined" &&
-    typeof globalThis.jest.useRealTimers === "function"
-  ) {
-    globalThis.jest.useRealTimers();
-  }
-  console.log("[Jest] afterAll concluído.");
 });
