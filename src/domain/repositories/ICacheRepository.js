@@ -1,18 +1,18 @@
-'use strict';
-export default class ICacheRepository {
+"use strict";
+class ICacheRepository {
   /**
-   * @param {string} key 
-   * @returns {Promise<string | object | null>} 
+   * @param {string} key
+   * @returns {Promise<string | object | null>}
    */
   async get(key) {
     throw new Error('Método "get" não implementado');
   }
 
   /**
-   * @param {string} key - 
+   * @param {string} key -
    * @param {string | object} value -
-   * @param {object} [options] - 
-   * @returns {Promise<boolean>} 
+   * @param {object} [options] -
+   * @returns {Promise<boolean>}
    */
   async set(key, value, options = {}) {
     throw new Error('Método "set" não implementado');
@@ -25,3 +25,5 @@ export default class ICacheRepository {
     throw new Error('Método "disconnect" não implementado');
   }
 }
+
+module.exports = ICacheRepository;

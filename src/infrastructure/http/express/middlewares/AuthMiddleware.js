@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-export default function createAuthMiddleware({
+function createAuthMiddleware({
   cedenteRepository,
   softwareHouseRepository,
 } = {}) {
@@ -11,7 +11,7 @@ export default function createAuthMiddleware({
   }
 
   return async function authMiddleware(req, res, next) {
-    console.log('[AuthMiddleware] Recebida nova requisição.');
+    console.log("[AuthMiddleware] Recebida nova requisição.");
 
     try {
       const headers = req.headers || {};
@@ -21,12 +21,18 @@ export default function createAuthMiddleware({
       const tokenCedente = headers["token-cedente"];
 
       if (!cnpjSh || !tokenSh || !cnpjCedente || !tokenCedente) {
-        console.warn('[AuthMiddleware] Falha: Headers de autenticação faltando.');
+        console.warn(
+          "[AuthMiddleware] Falha: Headers de autenticação faltando."
+        );
         return res.status(401).json({ error: "Missing auth headers" });
       }
-      
-      console.log(`[AuthMiddleware] Buscando SH: CNPJ=${cnpjSh}, Token=${tokenSh}`);
-      console.log(`[AuthMiddleware] Buscando Cedente: CNPJ=${cnpjCedente}, Token=${tokenCedente}`);
+
+      console.log(
+        `[AuthMiddleware] Buscando SH: CNPJ=${cnpjSh}, Token=${tokenSh}`
+      );
+      console.log(
+        `[AuthMiddleware] Buscando Cedente: CNPJ=${cnpjCedente}, Token=${tokenCedente}`
+      );
 
       const [softwareHouse, cedente] = await Promise.all([
         softwareHouseRepository.findByCnpjAndToken(cnpjSh, tokenSh),
@@ -34,24 +40,27 @@ export default function createAuthMiddleware({
       ]);
 
       if (!softwareHouse) {
-        console.warn('[AuthMiddleware] Falha: SoftwareHouse não encontrada.');
+        console.warn("[AuthMiddleware] Falha: SoftwareHouse não encontrada.");
         return res.status(401).json({ error: "Unauthorized" });
       }
 
       if (!cedente) {
-        console.warn('[AuthMiddleware] Falha: Cedente não encontrado.');
+        console.warn("[AuthMiddleware] Falha: Cedente não encontrado.");
         return res.status(401).json({ error: "Unauthorized" });
       }
-      
-      console.log(`[AuthMiddleware] Sucesso: SH ID=${softwareHouse.id}, Cedente ID=${cedente.id}`);
+
+      console.log(
+        `[AuthMiddleware] Sucesso: SH ID=${softwareHouse.id}, Cedente ID=${cedente.id}`
+      );
       req.softwareHouse = softwareHouse;
       req.cedente = cedente;
 
       return next();
-
     } catch (err) {
       console.error("[AuthMiddleware] Erro inesperado:", err);
       return next(err);
     }
   };
 }
+
+module.exports = createAuthMiddleware;

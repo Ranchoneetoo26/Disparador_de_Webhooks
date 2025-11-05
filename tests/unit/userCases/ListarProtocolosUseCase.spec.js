@@ -1,5 +1,5 @@
-import ListarProtocolosUseCase from "@/application/useCases/ListarProtocolosUseCase";
-import { jest, describe, beforeEach, it, expect } from "@jest/globals";
+const ListarProtocolosUseCase = require("@/application/useCases/ListarProtocolosUseCase");
+const { describe, beforeEach, it, expect } = require("@jest/globals");
 
 // Nota: ajuste os mocks abaixo caso seu cache retorne JSON string em vez de objeto/array.
 
@@ -102,7 +102,9 @@ describe("ListarProtocolosUseCase", () => {
     );
 
     // Verifica que as datas informadas foram convertidas corretamente (dd de UTC)
-    const calledArgs = mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock.calls[0][0];
+    const calledArgs =
+      mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock
+        .calls[0][0];
     expect(calledArgs.startDate.toISOString().split("T")[0]).toBe("2025-10-01");
     expect(calledArgs.endDate.toISOString().split("T")[0]).toBe("2025-10-15");
     expect(mockCacheRepository.set).toHaveBeenCalled();
@@ -154,9 +156,13 @@ describe("ListarProtocolosUseCase", () => {
     const result = await listarProtocolosUseCase.execute(input);
     expect(result).toEqual(expectedResult);
 
-    const expectedCacheKey = `protocolos:${input.start_date}:${input.end_date}:${JSON.stringify({})}`;
+    const expectedCacheKey = `protocolos:${input.start_date}:${
+      input.end_date
+    }:${JSON.stringify({})}`;
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
-    expect(mockWebhookReprocessadoRepository.listByDateRangeAndFilters).toHaveBeenCalledTimes(1);
+    expect(
+      mockWebhookReprocessadoRepository.listByDateRangeAndFilters
+    ).toHaveBeenCalledTimes(1);
     expect(mockCacheRepository.set).toHaveBeenCalledWith(
       expectedCacheKey,
       expectedResult,
@@ -172,9 +178,13 @@ describe("ListarProtocolosUseCase", () => {
 
     const result = await listarProtocolosUseCase.execute(input);
     expect(result).toEqual(cachedResult);
-    const expectedCacheKey = `protocolos:${input.start_date}:${input.end_date}:${JSON.stringify({})}`;
+    const expectedCacheKey = `protocolos:${input.start_date}:${
+      input.end_date
+    }:${JSON.stringify({})}`;
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
-    expect(mockWebhookReprocessadoRepository.listByDateRangeAndFilters).not.toHaveBeenCalled();
+    expect(
+      mockWebhookReprocessadoRepository.listByDateRangeAndFilters
+    ).not.toHaveBeenCalled();
     expect(mockCacheRepository.set).not.toHaveBeenCalled();
   });
 
@@ -198,7 +208,9 @@ describe("ListarProtocolosUseCase", () => {
     const expectedCacheKey = `protocolos:2025-11-01:2025-11-10:${expectedFiltersString}`;
 
     mockCacheRepository.get.mockResolvedValue(null);
-    mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue([]);
+    mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue(
+      []
+    );
 
     await listarProtocolosUseCase.execute(input1);
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
