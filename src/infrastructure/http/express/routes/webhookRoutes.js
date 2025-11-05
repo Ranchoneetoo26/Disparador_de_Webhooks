@@ -8,39 +8,44 @@ import SequelizeSoftwareHouseRepository from '../../../database/sequelize/reposi
 import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js';
 import SequelizeWebhookRepository from '../../../database/sequelize/repositories/SequelizeWebhookRepository.js';
 import httpClient from '../../../http/providers/AxiosProvider.js';
+import RedisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 
-// --- CORREÇÃO 1: Importa a INSTÂNCIA singleton ---
-import redisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
+// Importa o db
+import * as db from '../../../database/sequelize/models/index.cjs';
 
-import * as dbCjs from '../../../database/sequelize/models/index.cjs';
-const db = dbCjs.default;
 const { models, sequelize, Sequelize } = db;
 const { Op } = Sequelize;
 const router = express.Router();
 
-const cedenteRepository = new SequelizeCedenteRepository();
-const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
+// Instanciação dos repositórios
+// Eu adicionei o { models } que estava faltando no construtor
+const cedenteRepository = new SequelizeCedenteRepository({ models });
+const softwareHouseRepository = new SequelizeSoftwareHouseRepository({ models });
 const authMiddleware = createAuthMiddleware({
-  cedenteRepository,
-  softwareHouseRepository,
+  cedenteRepository,
+  softwareHouseRepository,
 });
 
-// --- CORREÇÃO 2: A linha "new RedisCacheRepository()" foi REMOVIDA ---
+const redisCacheRepository = new RedisCacheRepository();
 
-const webhookRepository = new SequelizeWebhookRepository();
+// Passa o 'models' e 'Op' para os repositórios que precisam
+const webhookRepository = new SequelizeWebhookRepository({ models, Op });
 const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
-  WebhookReprocessadoModel: models.WebhookReprocessado,
-  sequelize: sequelize,
-  Op: Op
+  WebhookReprocessadoModel: models.WebhookReprocessado,
+  sequelize: sequelize,
+  Op: Op
 });
 
+// servicoRepository foi REMOVIDO
 const reenviarWebhookController = new ReenviarWebhookController({
-  webhookRepository,
-  webhookReprocessadoRepository,
-  httpClient,
-  redisClient: redisCacheRepository // Agora usa a instância importada
+  // servicoRepository REMOVIDO
+  webhookRepository,
+  webhookReprocessadoRepository,
+  httpClient,
+  redisClient: redisCacheRepository 
 });
 
 router.use(authMiddleware);
 router.post('/', (req, res) => reenviarWebhookController.handle(req, res));
+
 export default router;

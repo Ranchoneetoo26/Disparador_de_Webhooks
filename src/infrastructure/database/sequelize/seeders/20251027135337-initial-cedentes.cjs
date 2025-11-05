@@ -20,7 +20,6 @@ module.exports = {
     }
     const softwareHouseId = softwareHouses[0].id;
 
-    // 2. Inserir o Cedente de teste
     await queryInterface.bulkInsert(
       'Cedentes',
       [

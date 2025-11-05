@@ -9,48 +9,55 @@ import SequelizeCedenteRepository from '../../../database/sequelize/repositories
 import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
 import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js';
 
-// Importa a INSTÂNCIA singleton do cache
-import redisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
+import RedisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
 
-import * as dbCjs from '../../../database/sequelize/models/index.cjs';
-const db = dbCjs.default;
+import * as db from '../../../database/sequelize/models/index.cjs';
+
 const { models, sequelize, Sequelize } = db;
 const { Op } = Sequelize;
 const router = express.Router();
 
-const cedenteRepository = new SequelizeCedenteRepository();
-const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
+const cedenteRepository = new SequelizeCedenteRepository({ models });
+const softwareHouseRepository = new SequelizeSoftwareHouseRepository({ models });
 const authMiddleware = createAuthMiddleware({
-  cedenteRepository,
-  softwareHouseRepository,
-});
-
-const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
-  WebhookReprocessadoModel: models.WebhookReprocessado,
-  sequelize: sequelize,
-  Op: Op
+  cedenteRepository,
+  softwareHouseRepository,
 });
 
 // --- CORREÇÃO AQUI ---
-// Os construtores de AMBOS os UseCases esperam um OBJETO
-// com as duas dependências.
+// 1. Instancia o RedisCacheRepository (a classe com .get(), .set(), .del())
+const redisCacheRepository = new RedisCacheRepository();
+
+const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
+  WebhookReprocessadoModel: models.WebhookReprocessado,
+  sequelize: sequelize,
+  Op: Op
+});
+
 const listarProtocolosUseCase = new ListarProtocolosUseCase({
-  webhookReprocessadoRepository: webhookReprocessadoRepository,
-  cacheRepository: redisCacheRepository 
+  webhookReprocessadoRepository,
+  // 2. Injeta a CLASSE correta, e não o 'redisClient'
+  cacheRepository: redisCacheRepository 
 });
 
 const consultarProtocoloUseCase = new ConsultarProtocoloUseCase({
-  webhookReprocessadoRepository: webhookReprocessadoRepository,
-  cacheRepository: redisCacheRepository 
+  webhookReprocessadoRepository,
+  // 3. Injeta a CLASSE correta, e não o 'redisClient'
+  cacheRepository: redisCacheRepository 
 });
 // --- FIM DA CORREÇÃO ---
 
 const protocoloController = new ProtocoloController({
-  listarProtocolosUseCase,
-  consultarProtocoloUseCase
+  listarProtocolosUseCase,
+  consultarProtocoloUseCase
 });
 
 router.use(authMiddleware);
+
+// A rota de listagem (GET /)
 router.get('/', (req, res) => protocoloController.listarProtocolos(req, res));
+
+// A rota de consulta (GET /:uuid)
 router.get('/:uuid', (req, res) => protocoloController.consultarProtocolo(req, res));
+
 export default router;
