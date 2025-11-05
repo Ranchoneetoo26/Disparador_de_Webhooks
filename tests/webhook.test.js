@@ -31,11 +31,6 @@ describe("Integration: Webhook Model Tests", () => {
     });
   });
 
-  //
-  // --- BLOCO afterAll REMOVIDO DAQUI ---
-  // O jest.setup.cjs vai cuidar de fechar a conexão global.
-  //
-
   test("deve criar um registro de Webhook Reprocessado com sucesso", async () => {
     const payloadWebhook = {
       data: { message: "Dados da requisição falha" },

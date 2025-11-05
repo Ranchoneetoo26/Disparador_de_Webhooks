@@ -2,12 +2,10 @@ const { describe, it, expect, afterAll } = require("@jest/globals");
 const request = require("supertest");
 const app = require("@/app");
 
-// Ajuste esses imports conforme seus exports reais:
 const {
   sequelize,
-} = require("@/infrastructure/database/sequelize/models/index.cjs"); // o arquivo que você já usa
-const redisCacheRepository = require("@/infrastructure/cache/redis/RedisCacheRepository"); // export default do client/instance
-
+} = require("@/infrastructure/database/sequelize/models/index.cjs"); 
+const redisCacheRepository = require("@/infrastructure/cache/redis/RedisCacheRepository"); 
 describe("Testes da API Principal", () => {
   it("deve responder com status 200 na rota GET /", async () => {
     const response = await request(app).get("/");
@@ -16,22 +14,17 @@ describe("Testes da API Principal", () => {
 });
 
 afterAll(async () => {
-  // fecha sequelize
   try {
     if (sequelize && typeof sequelize.close === "function") {
       await sequelize.close();
-      // console.log('Sequelize closed');
     }
   } catch (err) {
-    // console.warn('Erro fechando sequelize:', err);
   }
 
-  // fecha redis (ajuste conforme a lib que você usa: node-redis ou ioredis)
   try {
-    const client = redisCacheRepository; // se você exporta a instância default
+    const client = redisCacheRepository; 
     if (client) {
       if (typeof client.quit === "function") {
-        // node-redis v3 callback style
         await new Promise((resolve) => client.quit(() => resolve()));
       } else if (typeof client.disconnect === "function") {
         client.disconnect();
@@ -39,11 +32,9 @@ afterAll(async () => {
         typeof client.quit === "object" &&
         client.quit.constructor.name === "AsyncFunction"
       ) {
-        // ioredis ou node-redis v4 returning Promise
         await client.quit();
       }
     }
   } catch (err) {
-    // console.warn('Erro fechando redis:', err);
   }
 });

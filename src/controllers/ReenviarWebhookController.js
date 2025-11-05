@@ -21,23 +21,16 @@ class ReenviarWebhookController {
 
   async handle(req, res) {
     try {
-      // 1. Validar a entrada
       const input = ReenviarWebhookInput.validate(req.body);
 
-      // --- MUDANÇA AQUI ---
-      // 2. Pegamos o 'cedente' que o AuthMiddleware já buscou
       const cedente = req.cedente;
-      // --- FIM DA MUDANÇA ---
 
-      // 3. Executar o caso de uso, passando o 'cedente'
-      const result = await this.useCase.execute(input, cedente); // <-- 'cedente' adicionado
+      const result = await this.useCase.execute(input, cedente); 
 
-      // 4. Retornar o sucesso
       return res
         .status(200)
         .json(ReenviarWebhookOutput.success(result.protocolo));
     } catch (err) {
-      // 5. Capturar QUALQUER erro (inclusive o 422)
       console.error("[Erro no Reenvio - Controller]", err);
 
       const status = err.status || 400;

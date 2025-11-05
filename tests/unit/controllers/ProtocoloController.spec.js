@@ -1,4 +1,17 @@
-const ProtocoloController = require("@/infrastructure/http/express/controllers/ProtocoloController");
+// tests/unit/controllers/ProtocoloController.spec.js
+
+const {
+  describe,
+  expect,
+  it,
+} = require("@jest/globals"); // 'jest' removido daqui
+
+const ProtocoloController = require("../../../src/infrastructure/http/express/controllers/ProtocoloController");
+
+const {
+  ProtocoloNaoEncontradoException,
+} = require("../../../src/domain/exceptions/ProtocoloNaoEncontradoException.js");
+
 
 describe("ProtocoloController (unit)", () => {
   it("listarProtocolos chama useCase e retorna JSON", async () => {
@@ -24,7 +37,11 @@ describe("ProtocoloController (unit)", () => {
   });
 
   it("consultarProtocolo retorna 404 se não encontrado", async () => {
-    const fakeUseCase = { execute: jest.fn().mockResolvedValue(null) };
+    // CORREÇÃO: O mock agora REJEITA a promessa com a exceção esperada para forçar o 404 no controller
+    const fakeUseCase = {
+      execute: jest.fn().mockRejectedValue(new ProtocoloNaoEncontradoException("Protocolo não encontrado"))
+    };
+
     const controller = new ProtocoloController({
       listarProtocolosUseCase: fakeUseCase,
       consultarProtocoloUseCase: fakeUseCase,
@@ -35,7 +52,7 @@ describe("ProtocoloController (unit)", () => {
 
     await controller.consultarProtocolo(req, res);
 
-    // expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.status).toHaveBeenCalledWith(200);
+    // O controller vai capturar a exceção e retornar 404
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 });

@@ -1,12 +1,8 @@
 "use strict";
 
-// --- CORREÇÃO AQUI ---
-// Mudamos de "import ... from" para "import { ... } from"
 const {
   ProtocoloNaoEncontradoException,
 } = require("../../domain/exceptions/ProtocoloNaoEncontradoException.js");
-// --- FIM DA CORREÇÃO ---
-
 class ConsultarProtocoloUseCase {
   constructor({ webhookReprocessadoRepository, cacheRepository }) {
     if (!webhookReprocessadoRepository) {
@@ -22,7 +18,6 @@ class ConsultarProtocoloUseCase {
   async execute(protocolo) {
     const cacheKey = `protocolo:${protocolo}`;
 
-    // 1. Tenta buscar do cache
     try {
       const cached = await this.cache.get(cacheKey);
       if (cached) {
@@ -40,14 +35,12 @@ class ConsultarProtocoloUseCase {
       `[Cache] MISS: Protocolo ${protocolo} não encontrado no cache.`
     );
 
-    // 2. Se não achar no cache, busca no banco
     const record = await this.repo.findByProtocolo(protocolo);
 
     if (!record) {
       throw new ProtocoloNaoEncontradoException("Protocolo não encontrado");
     }
 
-    // 3. Salva no cache CONDICIONALMENTE
     if (record && record.status) {
       try {
         await this.cache.set(cacheKey, JSON.stringify(record), { ttl: 3600 });

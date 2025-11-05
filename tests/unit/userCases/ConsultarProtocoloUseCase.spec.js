@@ -7,15 +7,11 @@ const {
   afterAll,
 } = require("@jest/globals");
 
-// --- CORREÇÕES AQUI ---
-// Mudamos de "import { default as ... }" para "import { ... }"
 const ConsultarProtocoloUseCase = require("../../../src/application/useCases/ConsultarProtocoloUseCase.js");
 const {
   ProtocoloNaoEncontradoException,
 } = require("../../../src/domain/exceptions/ProtocoloNaoEncontradoException.js");
-// --- FIM DAS CORREÇÕES ---
 
-// Silenciar logs
 let consoleLogSpy, consoleErrorSpy;
 beforeAll(() => {
   consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});

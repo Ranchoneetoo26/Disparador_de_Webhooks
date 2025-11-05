@@ -1,8 +1,6 @@
 const ListarProtocolosUseCase = require("@/application/useCases/ListarProtocolosUseCase");
 const { describe, beforeEach, it, expect } = require("@jest/globals");
 
-// Nota: ajuste os mocks abaixo caso seu cache retorne JSON string em vez de objeto/array.
-
 let mockWebhookReprocessadoRepository;
 let mockCacheRepository;
 let listarProtocolosUseCase;
@@ -101,7 +99,6 @@ describe("ListarProtocolosUseCase", () => {
       })
     );
 
-    // Verifica que as datas informadas foram convertidas corretamente (dd de UTC)
     const calledArgs =
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock
         .calls[0][0];
@@ -147,7 +144,6 @@ describe("ListarProtocolosUseCase", () => {
   it("deve retornar dados do repositório em cache miss e armazená-los no cache", async () => {
     const input = { start_date: "2025-10-10", end_date: "2025-10-20" };
     const expectedResult = [{ id: "abc", data: "some data" }];
-    // Se o cache armazenar JSON string no projeto real, troque para JSON.stringify(expectedResult)
     mockCacheRepository.get.mockResolvedValue(null);
     mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue(
       expectedResult
@@ -173,7 +169,6 @@ describe("ListarProtocolosUseCase", () => {
   it("deve retornar dados do cache em cache hit e não chamar o repositório", async () => {
     const input = { start_date: "2025-10-10", end_date: "2025-10-20" };
     const cachedResult = [{ id: "cached-abc", data: "cached data" }];
-    // se cache retorna string no seu projeto, use JSON.stringify(cachedResult)
     mockCacheRepository.get.mockResolvedValue(cachedResult);
 
     const result = await listarProtocolosUseCase.execute(input);
@@ -202,8 +197,6 @@ describe("ListarProtocolosUseCase", () => {
       type: "A",
     };
 
-    // o UseCase deve ordenar filtros antes de serializar; ajustamos expectativa para
-    // JSON.stringify({ kind: "B", type: "A" })
     const expectedFiltersString = JSON.stringify({ kind: "B", type: "A" });
     const expectedCacheKey = `protocolos:2025-11-01:2025-11-10:${expectedFiltersString}`;
 

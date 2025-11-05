@@ -1,11 +1,6 @@
 const { describe, expect, beforeEach, test } = require("@jest/globals");
 
-// --- CORREÇÃO AQUI ---
-// Importamos os models do 'global' que o jest.setup.cjs (provavelmente) criou.
-// Se isso não funcionar, mude para a importação direta:
-// const { Cedente, SoftwareHouse } = require("../../../src/infrastructure/database/sequelize/models/index.cjs").models;
 const { Cedente, SoftwareHouse } = global.db.models;
-// --- FIM DA CORREÇÃO ---
 
 describe("Integração do Model: Cedente", () => {
   let softwareHouse;
@@ -14,7 +9,6 @@ describe("Integração do Model: Cedente", () => {
   beforeEach(async () => {
     await global.db.sequelize.sync({ force: true });
 
-    // Correto: Precisamos criar a SoftwareHouse ANTES de criar o Cedente
     softwareHouse = await SoftwareHouse.create({
       data_criacao: new Date(),
       cnpj: "11111111000111",
@@ -22,8 +16,6 @@ describe("Integração do Model: Cedente", () => {
       status: "ativo",
     });
   });
-
-  // afterAll foi removido (corretamente)
 
   test("deve CRIAR um novo Cedente com dados válidos", async () => {
     const payload = {

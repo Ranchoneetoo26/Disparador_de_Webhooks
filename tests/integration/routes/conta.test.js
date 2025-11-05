@@ -4,17 +4,14 @@ const {
   models,
 } = require("../../../src/infrastructure/database/sequelize/models/index.cjs");
 
-// Importamos todos os models necessários para a cadeia
 const { Conta, Cedente, SoftwareHouse } = models;
 
 describe("Integration: Conta model", () => {
-  let cedente; // Vamos precisar do ID do cedente
+  let cedente; 
 
   beforeEach(async () => {
     await sequelize.sync({ force: true });
 
-    // --- CORREÇÃO AQUI ---
-    // 1. Crie a SoftwareHouse primeiro
     const softwareHouse = await SoftwareHouse.create({
       data_criacao: new Date(),
       cnpj: "11111111000111",
@@ -22,19 +19,14 @@ describe("Integration: Conta model", () => {
       status: "ativo",
     });
 
-    // 2. Crie o Cedente, usando o ID da SoftwareHouse
     cedente = await Cedente.create({
       data_criacao: new Date(),
-      // id: 1, // Deixe o SERIAL cuidar disso
       cnpj: "22222222000122",
       token: "TOKEN_CED_TESTE",
       status: "ativo",
-      software_house_id: softwareHouse.id, // Passe o ID
+      software_house_id: softwareHouse.id, 
     });
-    // --- FIM DA CORREÇÃO ---
   });
-
-  // afterAll foi removido (corretamente)
 
   test("deve criar uma nova Conta associada a um Cedente", async () => {
     const payload = {
@@ -42,7 +34,7 @@ describe("Integration: Conta model", () => {
       produto: "pix",
       banco_codigo: "341",
       status: "ativo",
-      cedente_id: cedente.id, // Use o ID do cedente criado no beforeEach
+      cedente_id: cedente.id, 
     };
 
     const contaCriada = await Conta.create(payload);

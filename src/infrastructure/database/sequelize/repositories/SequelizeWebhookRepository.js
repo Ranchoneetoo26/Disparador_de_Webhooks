@@ -7,11 +7,12 @@ class SequelizeWebhookRepository {
 
   async findById(id) {
     if (!id) return null;
-    return models.WebhookReprocessado.findByPk(id);
+    return models.Webhook.findByPk(id);
   }
 
   async findByIds(ids) {
-    return models.WebhookReprocessado.findAll({
+    if (!ids || ids.length === 0) return [];
+    return models.Webhook.findAll({
       where: {
         id: {
           [Sequelize.Op.in]: ids,
@@ -21,19 +22,17 @@ class SequelizeWebhookRepository {
   }
 
   async update(id, data) {
-    await models.WebhookReprocessado.update(data, {
+    await models.Webhook.update(data, {
       where: { id: id },
     });
   }
 
-  // --- MÉTODO NOVO ADICIONADO ---
-  // O ReenviarWebhookUseCase precisa deste método para
-  // validar se os IDs pertencem ao cedente que está logado.
   async findByIdsAndCedente(ids, cedenteId) {
     if (!ids || ids.length === 0 || !cedenteId) {
       return [];
     }
-    return models.WebhookReprocessado.findAll({
+
+    return models.Webhook.findAll({
       where: {
         id: {
           [Sequelize.Op.in]: ids,
@@ -42,6 +41,6 @@ class SequelizeWebhookRepository {
       },
     });
   }
-} // <-- Esta é a chave '}' final correta
+}
 
 module.exports = SequelizeWebhookRepository;

@@ -1,11 +1,6 @@
 "use strict";
 const { models } = require("../models/index.cjs");
 
-// SequelizeSoftwareHouseRepository.js
-// Repositório que acessa o model SoftwareHouse.
-// Não lança erro no construtor se os models ainda não estiverem carregados:
-// busca o model dinamicamente quando necessário.
-
 class SequelizeSoftwareHouseRepository {
   /**
    * @param {Object} params
@@ -15,7 +10,6 @@ class SequelizeSoftwareHouseRepository {
   }
 
   _getSoftwareHouseModel() {
-    // Atualiza referência a models se possível (caso global tenha sido populado depois)
     return models.SoftwareHouse;
   }
 
@@ -34,7 +28,6 @@ class SequelizeSoftwareHouseRepository {
     });
   }
 
-  // Outros métodos que precisem do model podem usar _getSoftwareHouseModel()
 }
 
 module.exports = SequelizeSoftwareHouseRepository;

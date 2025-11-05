@@ -1,18 +1,12 @@
-// jest.setup.cjs
 'use strict';
 
-// Carrega .env de teste (fallback para .env)
 try {
   require('dotenv').config({ path: './.env.test' });
 } catch (err) {
   try { require('dotenv').config({ path: './.env' }); } catch (e) {}
 }
 
-// Tenta carregar o index dos models de forma síncrona.
-// Se usar ESM e falhar no require(), registra o erro e continua.
-// Os repositórios devem ser tolerantes ao carregamento tardio dos models.
 try {
-  // eslint-disable-next-line global-require, import/no-dynamic-require
   const indexModule = require('./src/infrastructure/database/sequelize/models/index.cjs');
   const db = indexModule && (indexModule.default || indexModule);
   if (db) {
@@ -29,12 +23,10 @@ try {
     console.warn('[jest.setup.cjs] require(index.cjs) retornou falsy. Prosseguindo sem models globais.');
   }
 } catch (err) {
-  // Se index.cjs usar ESM imports, require pode falhar; registramos e seguimos.
   console.error('ERRO ao carregar Models no index.cjs (require):', err && err.message ? err.message : err);
   console.warn('[jest.setup.cjs] Prosseguindo mesmo com erro no require; certifique-se que repositórios são tolerantes a models ausentes.');
 }
 
-// afterAll: fecha Sequelize e Redis (se existirem). Definido SINTONICAMENTE.
 afterAll(async () => {
   try {
     const sequelize = global.sequelize || (global.db && global.db.sequelize);
@@ -48,14 +40,11 @@ afterAll(async () => {
   }
 
   try {
-    // tenta desconectar o singleton redis (se foi inicializado)
     let redisRepo;
     try {
-      // eslint-disable-next-line global-require, import/no-dynamic-require
       const r = require('./src/infrastructure/cache/redis/RedisCacheRepository.js');
       redisRepo = r && (r.default || r);
     } catch (e) {
-      // ignore - pode não existir ou ser ESM
       redisRepo = null;
     }
 

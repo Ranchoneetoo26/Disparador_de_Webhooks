@@ -1,16 +1,13 @@
-// Importe os models no topo do arquivo
 const {
   sequelize,
   models,
 } = require("../../../src/infrastructure/database/sequelize/models/index.cjs");
 const { describe, expect, beforeEach, test } = require("@jest/globals");
-// ... seus outros imports (app, supertest, etc.)
 
 const { WebhookReprocessado, Cedente, SoftwareHouse } = models;
 
 describe("Integration Tests for webhookRoutes", () => {
   let softwareHouse, cedente, webhook;
-  // ... suas outras variáveis (app, server, request)
 
   beforeEach(async () => {
     await sequelize.sync({ force: true });
@@ -52,8 +49,6 @@ describe("Integration Tests for webhookRoutes", () => {
       );
     }
   });
-
-  // ... (remova o afterAll daqui)
 
   test("should return 401 Unauthorized if auth headers are missing", async () => {
     // Este teste provavelmente não precisa do setup, mas não tem problema

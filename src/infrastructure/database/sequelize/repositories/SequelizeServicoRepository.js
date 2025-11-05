@@ -1,6 +1,7 @@
 "use strict";
 
 const { Sequelize, models } = require("../models/index.cjs");
+const { Op } = Sequelize; // Importe o 'Op' para usar o 'Op.in'
 
 class SequelizeServicoRepository {
   constructor() {
@@ -16,7 +17,7 @@ class SequelizeServicoRepository {
   }
 
   /**
-   * Busca serviços (boletos, pix, etc.) pelos seus IDs
+   * Busca serviços (boletos, pix, etc.) pelos seus IDs (numero_convenio)
    * e garante que eles pertençam ao cedente autenticado.
    */
   async findByIdsAndCedente(ids, cedenteId) {
@@ -24,30 +25,38 @@ class SequelizeServicoRepository {
       return [];
     }
 
+    // A consulta foi movida para o 'include' do Convenio
     return this.servicoModel.findAll({
-      where: {
-        id: {
-          [Sequelize.Op.in]: ids,
-        },
-      },
       include: [
         {
           model: this.convenioModel,
           as: "convenio",
           required: true,
+
+          // ===== ESTA É A CORREÇÃO =====
+          // A cláusula 'where' foi movida para cá.
+          // Estamos filtrando por 'numero_convenio' (assumindo que este é o nome da coluna)
+          // que é uma string, em vez de 'Servico.id' (que é um integer).
+          where: {
+            numero_convenio: {
+              [Op.in]: ids,
+            },
+          },
+          // ==============================
+
           include: [
             {
               model: this.contaModel,
               as: "conta",
               required: true,
               where: {
-                // Filtro final para garantir que o serviço pertence ao cedente
                 cedente_id: cedenteId,
               },
             },
           ],
         },
       ],
+      // A cláusula 'where' principal foi removida daqui
     });
   }
 }

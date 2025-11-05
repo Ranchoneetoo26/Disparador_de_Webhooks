@@ -1,12 +1,6 @@
 "use strict";
 
 const { models } = require("../models/index.cjs");
-
-// SequelizeCedenteRepository.js
-// Repositório que acessa o model Cedente.
-// Nota: não lança erro no construtor se os models ainda não estiverem carregados.
-// Em vez disso, busca models dinamicamente quando necessário.
-
 class SequelizeCedenteRepository {
   /**
    * @param {Object} params
@@ -34,7 +28,6 @@ class SequelizeCedenteRepository {
 
     const Cedente = this._getCedenteModel();
 
-    // Supondo que o campo no model seja cnpj e token, ajuste se for outro nome
     return Cedente.findOne({
       where: {
         cnpj: cnpj,
@@ -43,7 +36,6 @@ class SequelizeCedenteRepository {
     });
   }
 
-  // Outros métodos do repositório que precisarem do model podem usar _getCedenteModel()
 }
 
 module.exports = SequelizeCedenteRepository;

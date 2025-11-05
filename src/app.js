@@ -1,5 +1,8 @@
 "use strict";
 
+// NENHUMA MUDANÇA NECESSÁRIA AQUI
+// Este arquivo é carregado pelo server.js
+
 const express = require("express");
 const fs = require("fs");
 const yaml = require("js-yaml");

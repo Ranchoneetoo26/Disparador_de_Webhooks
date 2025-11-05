@@ -9,7 +9,6 @@ const SequelizeCedenteRepository = require("../../../database/sequelize/reposito
 const SequelizeSoftwareHouseRepository = require("../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js");
 const SequelizeWebhookReprocessadoRepository = require("../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js");
 
-// Importa a INSTÂNCIA singleton do cache
 const redisCacheRepository =
   new (require("../../../cache/redis/RedisCacheRepository.js"))();
 
@@ -21,22 +20,17 @@ const {
 
 const router = express.Router();
 
-// Repositórios de apoio
 const cedenteRepository = new SequelizeCedenteRepository();
 const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
 
-// Middleware de autenticação
 const authMiddleware = createAuthMiddleware({
   cedenteRepository,
   softwareHouseRepository,
 });
 
-// Pega com segurança o model WebhookReprocessado (sensitive case)
-// Instancia repositório corretamente (propriedade com o nome correto)
 const webhookReprocessadoRepository =
   new SequelizeWebhookReprocessadoRepository();
 
-// Instancia dos UseCases com as dependências esperadas (objeto)
 const listarProtocolosUseCase = new ListarProtocolosUseCase({
   webhookReprocessadoRepository,
   cacheRepository: redisCacheRepository,
@@ -47,13 +41,11 @@ const consultarProtocoloUseCase = new ConsultarProtocoloUseCase({
   cacheRepository: redisCacheRepository,
 });
 
-// Controller
 const protocoloController = new ProtocoloController({
   listarProtocolosUseCase,
   consultarProtocoloUseCase,
 });
 
-// Rotas
 router.use(authMiddleware);
 router.get("/", (req, res) => protocoloController.listarProtocolos(req, res));
 router.get("/:uuid", (req, res) =>

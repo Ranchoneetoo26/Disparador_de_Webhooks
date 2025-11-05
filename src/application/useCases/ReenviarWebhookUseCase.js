@@ -3,8 +3,6 @@
 const { v4: uuidv4 } = require("uuid");
 const UnprocessableEntityException = require("../../domain/exceptions/UnprocessableEntityException.js");
 
-// 1. MAPEAMENTO DE SITUAÇÃO (Regra 3.1.O)
-// Tabela do PDF para validar o status
 const MAPA_SITUACAO = {
   boleto: {
     disponivel: "REGISTRADO",
@@ -24,20 +22,21 @@ const MAPA_SITUACAO = {
 };
 
 class ReenviarWebhookUseCase {
-  // --- FIM DA CORREÇÃO ---
   constructor({
-    // servicoRepository foi REMOVIDO para corrigir o crash
+    servicoRepository,
     webhookRepository,
     webhookReprocessadoRepository,
     httpClient,
     redisClient,
   } = {}) {
+    if (!servicoRepository) throw new Error("servicoRepository missing");
     if (!webhookRepository) throw new Error("webhookRepository missing");
     if (!webhookReprocessadoRepository)
       throw new Error("webhookReprocessadoRepository missing");
     if (!httpClient) throw new Error("httpClient missing");
     if (!redisClient) throw new Error("redisClient missing");
 
+    this.servicoRepository = servicoRepository;
     this.webhookRepository = webhookRepository;
     this.reprocessadoRepository = webhookReprocessadoRepository;
     this.httpClient = httpClient;
@@ -48,7 +47,6 @@ class ReenviarWebhookUseCase {
     const { product, id: ids, kind, type } = input;
     const { cedente } = input;
 
-    // 2. CACHE DE REQUISIÇÃO (Regra 3.1.N)
     const cacheKey = `reenvio:${cedente.id}:${JSON.stringify(input)}`;
     const cachedRequest = await this.redisClient.get(cacheKey);
 
@@ -61,18 +59,16 @@ class ReenviarWebhookUseCase {
     }
     await this.redisClient.set(cacheKey, "processing", { ttl: 3600 });
 
-    // 3. VALIDAÇÃO DE SITUAÇÃO (Regra 3.1.O) - Lógica Corrigida
-    // Busca os *Webhooks* (que têm ID string)
-    const webhooks = await this.webhookRepository.findByIdsAndCedente(
+    const servicos = await this.servicoRepository.findByIdsAndCedente(
       ids,
       cedente.id
     );
 
-    const webhooksEncontradosMap = new Map(
-      webhooks.map((wh) => [wh.id.toString(), wh])
+    const servicosEncontradosMap = new Map(
+      servicos.map((s) => [s.id.toString(), s])
     );
     const idsNaoEncontrados = ids.filter(
-      (id) => !webhooksEncontradosMap.has(id.toString())
+      (id) => !servicosEncontradosMap.has(id.toString())
     );
 
     if (idsNaoEncontrados.length > 0) {
@@ -91,22 +87,14 @@ class ReenviarWebhookUseCase {
       throw err;
     }
 
-    // Valida o status DENTRO DO PAYLOAD do webhook
-    const idsSituacaoErrada = webhooks
-      .filter((wh) => {
-        // Assume que o status está em 'webhook.payload.status'
-        // NOTA: O seeder tem 'pago', mas a regra pede 'LIQUIDADO'.
-        // Isso significa que o seeder está "errado" ou a regra do PDF está
-        // simplificada. Vamos assumir que o 'status' no payload deve
-        // corresponder ao 'MAPA_SITUACAO'.
-        const statusReal = wh.payload?.status;
+    const idsSituacaoErrada = servicos
+      .filter((servico) => {
+        const statusReal = servico.status;
         return statusReal !== situacaoEsperada;
       })
-      .map((wh) => wh.id);
+      .map((servico) => servico.id);
 
     if (idsSituacaoErrada.length > 0) {
-      // O seeder tem "pago" e o teste é "disponivel" (espera "REGISTRADO")
-      // "pago" != "REGISTRADO", então o erro 422 vai disparar.
       throw new UnprocessableEntityException(
         `Não foi possível gerar a notificação. A situação do ${product} diverge do tipo de notificação solicitado (esperado: ${situacaoEsperada}).`,
         idsSituacaoErrada
@@ -115,17 +103,15 @@ class ReenviarWebhookUseCase {
 
     const protocoloLote = uuidv4();
 
-    // Inicia o reenvio
-    const reenviosPromises = webhooks.map((webhook) => {
+    const reenviosPromises = servicos.map((servico) => {
       console.log(
-        `[Reenvio] Processando ID: ${webhook.id}, URL: ${webhook.url}`
+        `[Reenvio] Processando ID: ${servico.id}, URL: ${servico.url}`
       );
-      return this.processarReenvio(webhook);
+      return this.processarReenvio(servico, cedente, null);
     });
 
     const resultados = await Promise.allSettled(reenviosPromises);
 
-    // 4. FALHA NO PROCESSAMENTO (Regra 3.1.P)
     const sucessos = resultados.filter((r) => r.status === "fulfilled");
     if (sucessos.length === 0) {
       const err = new Error(
@@ -136,7 +122,6 @@ class ReenviarWebhookUseCase {
       throw err;
     }
 
-    // 5. ARMAZENAMENTO PÓS-SUCESSO (Regra 3.1.R)
     const registroProtocolo = {
       id: uuidv4(),
       protocolo: protocoloLote,
@@ -152,21 +137,21 @@ class ReenviarWebhookUseCase {
     return { protocolo: protocoloLote };
   }
 
-  async processarReenvio(webhook, cedente, conta) {
+  async processarReenvio(servico, cedente, conta) {
     let response;
     try {
-      response = await this.httpClient.post(webhook.url, webhook.payload, {
+      response = await this.httpClient.post(servico.url, servico.payload, {
         timeout: 5000,
       });
       const isSuccess =
         response && response.status >= 200 && response.status < 300;
       if (isSuccess) {
-        await this.webhookRepository.update(webhook.id, {
-          tentativas: (webhook.tentativas || 0) + 1,
+        await this.webhookRepository.update(servico.id, {
+          tentativas: (servico.tentativas || 0) + 1,
           last_status: response.status,
         });
         return {
-          id: webhook.id,
+          id: servico.id,
           status: "fulfilled",
           httpStatus: response.status,
         };
@@ -175,13 +160,13 @@ class ReenviarWebhookUseCase {
       }
     } catch (err) {
       console.error(
-        `[ProcessarReenvio] Falha ao enviar ID ${webhook.id}: ${err.message}`
+        `[ProcessarReenvio] Falha ao enviar ID ${servico.id}: ${err.message}`
       );
-      await this.webhookRepository.update(webhook.id, {
-        tentativas: (webhook.tentativas || 0) + 1,
+      await this.webhookRepository.update(servico.id, {
+        tentativas: (servico.tentativas || 0) + 1,
         last_status: response?.status || null,
       });
-      throw new Error(`Falha no reenvio para ${webhook.id}: ${err.message}`);
+      throw new Error(`Falha no reenvio para ${servico.id}: ${err.message}`);
     }
   }
 }
