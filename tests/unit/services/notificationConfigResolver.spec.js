@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+=======
+const { describe, it, expect } = require("@jest/globals");
+const {
+  resolveNotificationConfig,
+} = require("@/services/notificationConfigResolver");
+>>>>>>> d69ec169d0d39e2e3744332f34d207bd68b6f06a
 
 import ReenviarWebhookUseCase from "../../../src/application/useCases/ReenviarWebhookUseCase.js";
 import RedisCacheRepository from "../../../src/infrastructure/cache/redis/RedisCacheRepository.js";

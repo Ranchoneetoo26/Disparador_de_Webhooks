@@ -1,94 +1,81 @@
 'use strict';
 
-// Carrega o .env para os testes
 try {
-  require("dotenv").config({ path: "./.env.test" });
+  require('dotenv').config({ path: './.env.test' });
 } catch (err) {
-  console.warn('Arquivo .env.test não encontrado, usando .env padrão.');
-  require("dotenv").config({ path: "./.env" });
+  try { require('dotenv').config({ path: './.env' }); } catch (e) {}
 }
 
-// Carrega o DB e os Models globalmente para os testes de integração
 try {
-  const dbModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
-  // O import CJS/ESM que corrigimos
-  const db = dbModule.default || dbModule;
-
-  global.db = db;
-
-  Object.keys(db).forEach((key) => {
-    if (db[key] && db[key].name && typeof db[key] === "function") {
-      if (db[key].init && db[key].associate) {
-        global[db[key].name] = db[key];
-      }
+  const indexModule = require('./src/infrastructure/database/sequelize/models/index.cjs');
+  const db = indexModule && (indexModule.default || indexModule);
+  if (db) {
+    global.db = db;
+    if (db.sequelize) global.sequelize = db.sequelize;
+    if (db.models) {
+      global.models = db.models;
+      Object.keys(db.models).forEach((m) => {
+        if (!global[m]) global[m] = db.models[m];
+      });
     }
-  });
+    console.log('[jest.setup.cjs] DB e models carregados no global com sucesso.');
+  } else {
+    console.warn('[jest.setup.cjs] require(index.cjs) retornou falsy. Prosseguindo sem models globais.');
+  }
 } catch (err) {
-  console.error(
-    "ERRO FATAL ao carregar Models no jest.setup.cjs:",
-    err.message
-  );
+  console.error('ERRO ao carregar Models no index.cjs (require):', err && err.message ? err.message : err);
+  console.warn('[jest.setup.cjs] Prosseguindo mesmo com erro no require; certifique-se que repositórios são tolerantes a models ausentes.');
 }
 
-
-// Hook global que roda DEPOIS de todos os testes
 afterAll(async () => {
   try {
-    // 1. Fechar a conexão do Sequelize
-    const db = global.db;
-    const sequelize = db?.sequelize;
-
-    if (sequelize && typeof sequelize.close === "function") {
-      console.log("[Jest] Fechando conexão Sequelize...");
-      await sequelize.close(); 
-      console.log("[Jest] Conexão Sequelize fechada.");
+    const sequelize = global.sequelize || (global.db && global.db.sequelize);
+    if (sequelize && typeof sequelize.close === 'function') {
+      console.log('[Jest] Fechando conexão Sequelize...');
+      try { await sequelize.close(); } catch (e) { console.warn('[Jest] Erro ao fechar sequelize (ignored):', e && e.message); }
+      console.log('[Jest] Conexão Sequelize fechada.');
     }
   } catch (err) {
-    console.error("[Jest] Erro ao fechar Sequelize:", err.message);
+    console.error('[Jest] Erro ao fechar Sequelize:', err && err.message ? err.message : err);
   }
 
-  // --- CORREÇÃO AQUI ---
-  // 2. Fechar a conexão do Redis
   try {
-    // Importamos o *módulo* (a classe)
-    const { default: RedisCacheRepository } = await import(
-      "./src/infrastructure/cache/redis/RedisCacheRepository.js"
-    );
-    
-    // Instanciamos
-    const redisCacheRepository = new RedisCacheRepository();
+    let redisRepo;
+    try {
+      const r = require('./src/infrastructure/cache/redis/RedisCacheRepository.js');
+      redisRepo = r && (r.default || r);
+    } catch (e) {
+      redisRepo = null;
+    }
 
-    if (
-      redisCacheRepository &&
-      typeof redisCacheRepository.disconnect === "function"
-    ) {
-      console.log("[Jest] Desconectando Redis...");
-      await redisCacheRepository.disconnect();
-      console.log("[Jest] Redis desconectado.");
+    if (redisRepo && typeof redisRepo.disconnect === 'function') {
+      console.log('[Jest] Desconectando Redis (singleton) via disconnect()...');
+      try { await redisRepo.disconnect(); } catch (e) { console.warn('[Jest] Erro ao disconnect Redis (ignored):', e && e.message); }
+      console.log('[Jest] Redis (singleton) desconectado via disconnect().');
+    } else if (redisRepo && typeof redisRepo.quit === 'function') {
+      console.log('[Jest] Chamando quit() no Redis...');
+      try {
+        await new Promise((resolve) => redisRepo.quit(() => resolve()));
+      } catch (e) { console.warn('[Jest] Erro ao quit() Redis (ignored):', e && e.message); }
+      console.log('[Jest] Redis fechado via quit().');
     } else {
-      console.warn(
-        "[Jest] redisCacheRepository não encontrado ou sem método disconnect."
-      );
+      console.log('[Jest] Nenhuma instância de Redis encontrada para desconectar.');
     }
   } catch (err) {
-    // O erro 'Cannot find module' que víamos vai desaparecer
-    console.error(
-      "[Jest] Erro ao importar ou desconectar Redis no afterAll:",
-      err.message
-    );
+    console.error('[Jest] Erro ao desconectar Redis:', err && err.message ? err.message : err);
   }
-  // --- FIM DA CORREÇÃO ---
 
-  if (
-    typeof globalThis !== "undefined" &&
-    typeof globalThis.jest !== "undefined" &&
-    typeof globalThis.jest.useRealTimers === "function"
-  ) {
+  if (typeof globalThis !== 'undefined' && typeof globalThis.jest !== 'undefined' && typeof globalThis.jest.useRealTimers === 'function') {
     globalThis.jest.useRealTimers();
   }
+<<<<<<< HEAD
 <<<<<<< HEAD
   console.log("afterAll concluído.");
 =======
   console.log("[Jest] afterAll concluído.");
 >>>>>>> 147c0084fb6ff328823fc70425debc9e25fd26ed
 });
+=======
+  console.log('[Jest] afterAll concluído.');
+});
+>>>>>>> d69ec169d0d39e2e3744332f34d207bd68b6f06a

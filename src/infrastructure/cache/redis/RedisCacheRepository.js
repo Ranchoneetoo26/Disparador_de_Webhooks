@@ -1,7 +1,6 @@
-import Redis from "ioredis";
-import dotenv from "dotenv";
+"use strict";
 
-dotenv.config();
+const Redis = require("ioredis");
 
 const redisConfig = {
   host: process.env.REDIS_HOST || "localhost",
@@ -62,7 +61,6 @@ async function ensureReadyClient() {
   if (client.status === "connecting" || client.status === "reconnecting") {
     console.log("[Cache] Aguardando cliente Redis ficar pronto...");
     try {
-      
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(
           () =>
@@ -96,35 +94,37 @@ async function ensureReadyClient() {
   return null;
 }
 
-export default class RedisCacheRepository {
+class RedisCacheRepository {
   constructor() {
-    getClient();
+    try {
+      this.client = new Redis({
+        host: process.env.REDIS_HOST || "localhost",
+        port: process.env.REDIS_PORT || 6379,
+        db: process.env.REDIS_DB || 0,
+        maxRetriesPerRequest: 3,
+      });
+
+      this.client.on("connect", () =>
+        console.log("[Cache] Conectando ao Redis...")
+      );
+      this.client.on("ready", () =>
+        console.log("[Cache] Cliente Redis pronto para uso.")
+      );
+      this.client.on("error", (err) =>
+        console.error("[Cache] Erro no Redis:", err.message)
+      );
+    } catch (err) {
+      console.error("[Cache] Falha ao criar cliente Redis:", err.message);
+    }
   }
 
   async get(key) {
-    const client = await ensureReadyClient();
-    if (!client) {
-      console.warn(`[Cache] GET ${key}: Cliente Redis não disponível.`);
-      return null;
-    }
-    try {
-      console.log(`[Cache] GET ${key}`);
-      const value = await client.get(key);
-
-      return value;
-    } catch (error) {
-      console.error(`[Cache] Erro ao buscar chave ${key}:`, error.message);
-      return null;
-    }
+    if (!this.client) return null;
+    return this.client.get(key);
   }
 
   async set(key, value, options = {}) {
-    const client = await ensureReadyClient();
-    if (!client) {
-      console.warn(`[Cache] SET ${key}: Cliente Redis não disponível.`);
-      return false;
-    }
-
+    if (!this.client) return;
     const { ttl } = options;
     try {
       const valueToStore =
@@ -137,13 +137,30 @@ export default class RedisCacheRepository {
       );
 
       if (ttl && Number.isInteger(ttl) && ttl > 0) {
-        await client.set(key, valueToStore, "EX", ttl);
+        await this.client.set(key, valueToStore, "EX", ttl); // <--- CORRIGIDO
       } else {
-        await client.set(key, valueToStore);
+        await this.client.set(key, valueToStore); // <--- CORRIGIDO
       }
       return true;
     } catch (error) {
       console.error(`[Cache] Erro ao definir chave ${key}:`, error.message);
+      return false;
+    }
+    return this.client.set(key, value);
+  }
+
+  async del(key) {
+    const client = await ensureReadyClient();
+    if (!client) {
+      console.warn(`[Cache] DEL ${key}: Cliente Redis não disponível.`);
+      return false;
+    }
+    try {
+      console.log(`[Cache] DEL ${key}`);
+      await client.del(key);
+      return true;
+    } catch (error) {
+      console.error(`[Cache] Erro ao deletar chave ${key}:`, error.message);
       return false;
     }
   }
@@ -151,12 +168,13 @@ export default class RedisCacheRepository {
   async disconnect() {
     const client = redisClient;
     if (client && client.status !== "end") {
-      console.log("[Cache] Desconectando do Redis..."); 
+      console.log("[Cache] Desconectando do Redis...");
       try {
         client.removeAllListeners();
 
         await client.quit();
         console.log("[Cache] Conexão Redis fechada via quit().");
+        t;
       } catch (err) {
         console.error("[Cache] Erro ao desconectar do Redis:", err.message);
       } finally {
@@ -166,4 +184,10 @@ export default class RedisCacheRepository {
       redisClient = null;
     }
   }
+<<<<<<< HEAD
 }
+=======
+}
+
+module.exports = RedisCacheRepository;
+>>>>>>> d69ec169d0d39e2e3744332f34d207bd68b6f06a

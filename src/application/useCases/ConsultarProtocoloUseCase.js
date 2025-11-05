@@ -1,55 +1,63 @@
-'use strict';
+"use strict";
 
-// Importamos a exceção (já deve estar assim)
-import { ProtocoloNaoEncontradoException } from '../../domain/exceptions/ProtocoloNaoEncontradoException.js';
-
+const {
+  ProtocoloNaoEncontradoException,
+} = require("../../domain/exceptions/ProtocoloNaoEncontradoException.js");
 class ConsultarProtocoloUseCase {
-  constructor({ cacheRepository, webhookReprocessadoRepository } = {}) {
-    if (!cacheRepository) throw new Error('cacheRepository missing');
-    if (!webhookReprocessadoRepository) throw new Error('webhookReprocessadoRepository missing');
-
-    this.cache = cacheRepository;
+  constructor({ webhookReprocessadoRepository, cacheRepository }) {
+    if (!webhookReprocessadoRepository) {
+      throw new Error("webhookReprocessadoRepository is required");
+    }
+    if (!cacheRepository) {
+      throw new Error("cacheRepository is required");
+    }
     this.repo = webhookReprocessadoRepository;
+    this.cache = cacheRepository;
   }
 
-  async execute({ protocolo } = {}) {
-    if (!protocolo) throw new Error('protocolo is required');
-
+  async execute(protocolo) {
     const cacheKey = `protocolo:${protocolo}`;
 
-    // 1. Tenta buscar do cache (como antes)
-    const cached = await this.cache.get(cacheKey);
-    if (cached) {
-      try {
+    try {
+      const cached = await this.cache.get(cacheKey);
+      if (cached) {
         console.log(`[Cache] HIT: Protocolo ${protocolo} encontrado no cache.`);
         return JSON.parse(cached);
-      } catch (e) {
-        console.error(`[Cache] Erro ao parsear protocolo ${protocolo}:`, e.message);
       }
+    } catch (e) {
+      console.error(
+        `[Cache] Erro ao parsear protocolo ${protocolo}:`,
+        e.message
+      );
     }
-    console.log(`[Cache] MISS: Protocolo ${protocolo} não encontrado no cache.`);
 
-    // 2. Se não está no cache, busca no repositório (como antes)
+    console.log(
+      `[Cache] MISS: Protocolo ${protocolo} não encontrado no cache.`
+    );
+
     const record = await this.repo.findByProtocolo(protocolo);
+
     if (!record) {
-      throw new ProtocoloNaoEncontradoException('Protocolo não encontrado');
+      throw new ProtocoloNaoEncontradoException("Protocolo não encontrado");
     }
 
-    // --- MUDANÇA AQUI: REGRA 3.3 - CACHE CONDICIONAL ---
-    // Verificamos o status do registro ANTES de salvar no cache.
-    // O PDF pede "sent", mas nós salvamos como "completed".
-    if (record.status === 'completed') {
-      console.log(`[Cache] SET: Salvando protocolo ${protocolo} (status: ${record.status}) no cache por 1h.`);
-      // O Redis salva strings, o 'set' no nosso RedisCacheRepository já faz o stringify.
-      await this.cache.set(cacheKey, record, { ttl: 3600 }); // 1 hora
+    if (record && record.status) {
+      try {
+        await this.cache.set(cacheKey, JSON.stringify(record), { ttl: 3600 });
+      } catch (e) {
+        console.error(
+          `[Cache] Erro ao salvar protocolo ${protocolo} no cache:`,
+          e.message
+        );
+      }
     } else {
-      console.log(`[Cache] SKIP: Protocolo ${protocolo} (status: ${record.status}) não será salvo no cache.`);
+      console.log(
+        `[Cache] SKIP: Protocolo ${protocolo} (status: ${record?.status}) não será salvo no cache.`
+      );
     }
-    // --- FIM DA MUDANÇA ---
 
-    // 3. Retorna o registro do banco
     return record;
   }
 }
 
-export default ConsultarProtocoloUseCase;
+module.exports = ConsultarProtocoloUseCase;

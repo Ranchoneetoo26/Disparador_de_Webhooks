@@ -23,6 +23,13 @@ module.exports = {
         type: Sequelize.STRING(14)
       },
 
+      // >>> COLUNA 'token' ADICIONADA <<<
+      token: {
+        allowNull: false,
+        unique: true,
+        type: Sequelize.STRING // Ajuste o tamanho conforme a necessidade do seu token (ex: STRING(255))
+      },
+
       software_house_id: {
         allowNull: false,
         type: Sequelize.INTEGER,

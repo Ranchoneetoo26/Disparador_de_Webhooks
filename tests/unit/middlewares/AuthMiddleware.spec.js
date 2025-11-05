@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import createAuthMiddleware from "../../../src/infrastructure/http/express/middlewares/AuthMiddleware.js";
+const { describe, it, expect, beforeEach } = require("@jest/globals");
+const createAuthMiddleware = require("../../../src/infrastructure/http/express/middlewares/AuthMiddleware.js");
 
 describe("AuthMiddleware", () => {
   let mockCedenteRepository;

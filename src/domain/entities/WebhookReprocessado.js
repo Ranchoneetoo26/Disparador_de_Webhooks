@@ -1,5 +1,5 @@
-'use strict';
-export default class WebhookReprocessado {
+"use strict";
+class WebhookReprocessado {
   constructor({
     id,
     data,
@@ -11,15 +11,15 @@ export default class WebhookReprocessado {
     protocolo,
     status,
   }) {
-    this.id = id; 
-    this.data = data; 
-    this.data_criacao = data_criacao; 
+    this.id = id;
+    this.data = data;
+    this.data_criacao = data_criacao;
     this.cedente_id = cedente_id;
-    this.kind = kind; 
-    this.type = type; 
-    this.servico_id = servico_id; 
-    this.protocolo = protocolo;  
-    this.status = status;  
+    this.kind = kind;
+    this.type = type;
+    this.servico_id = servico_id;
+    this.protocolo = protocolo;
+    this.status = status;
   }
 
   /**
@@ -48,3 +48,4 @@ export default class WebhookReprocessado {
     };
   }
 }
+module.exports = WebhookReprocessado;

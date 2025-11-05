@@ -1,5 +1,5 @@
-'use strict';
-export default class ICedenteRepository {
+"use strict";
+class ICedenteRepository {
   /**
    * @param {string} cnpj
    * @param {string} token
@@ -16,5 +16,6 @@ export default class ICedenteRepository {
   async findById(id) {
     throw new Error('Método "findById" não implementado');
   }
-
 }
+
+module.exports = ICedenteRepository;

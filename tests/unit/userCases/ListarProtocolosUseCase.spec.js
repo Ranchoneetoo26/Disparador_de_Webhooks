@@ -1,5 +1,5 @@
-import ListarProtocolosUseCase from "@/application/useCases/ListarProtocolosUseCase";
-import { jest, describe, beforeEach, it, expect } from "@jest/globals";
+const ListarProtocolosUseCase = require("@/application/useCases/ListarProtocolosUseCase");
+const { describe, beforeEach, it, expect } = require("@jest/globals");
 
 let mockWebhookReprocessadoRepository;
 let mockCacheRepository;
@@ -86,7 +86,9 @@ describe("ListarProtocolosUseCase", () => {
       mockResult
     );
     mockCacheRepository.get.mockResolvedValue(null);
+
     await listarProtocolosUseCase.execute(input);
+
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters
     ).toHaveBeenCalledWith(
@@ -96,16 +98,12 @@ describe("ListarProtocolosUseCase", () => {
         filters: {},
       })
     );
-    expect(
-      mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock.calls[0][0].startDate
-        .toISOString()
-        .split("T")[0]
-    ).toBe("2025-10-01");
-    expect(
-      mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock.calls[0][0].endDate
-        .toISOString()
-        .split("T")[0]
-    ).toBe("2025-10-15");
+
+    const calledArgs =
+      mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mock
+        .calls[0][0];
+    expect(calledArgs.startDate.toISOString().split("T")[0]).toBe("2025-10-01");
+    expect(calledArgs.endDate.toISOString().split("T")[0]).toBe("2025-10-15");
     expect(mockCacheRepository.set).toHaveBeenCalled();
   });
 
@@ -123,7 +121,9 @@ describe("ListarProtocolosUseCase", () => {
       mockResult
     );
     mockCacheRepository.get.mockResolvedValue(null);
+
     await listarProtocolosUseCase.execute(input);
+
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters
     ).toHaveBeenCalledWith(
@@ -144,15 +144,17 @@ describe("ListarProtocolosUseCase", () => {
   it("deve retornar dados do repositório em cache miss e armazená-los no cache", async () => {
     const input = { start_date: "2025-10-10", end_date: "2025-10-20" };
     const expectedResult = [{ id: "abc", data: "some data" }];
-    const expectedCacheKey = `protocolos:${input.start_date}:${
-      input.end_date
-    }:${JSON.stringify({})}`;
     mockCacheRepository.get.mockResolvedValue(null);
     mockWebhookReprocessadoRepository.listByDateRangeAndFilters.mockResolvedValue(
       expectedResult
     );
+
     const result = await listarProtocolosUseCase.execute(input);
     expect(result).toEqual(expectedResult);
+
+    const expectedCacheKey = `protocolos:${input.start_date}:${
+      input.end_date
+    }:${JSON.stringify({})}`;
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters
@@ -167,12 +169,13 @@ describe("ListarProtocolosUseCase", () => {
   it("deve retornar dados do cache em cache hit e não chamar o repositório", async () => {
     const input = { start_date: "2025-10-10", end_date: "2025-10-20" };
     const cachedResult = [{ id: "cached-abc", data: "cached data" }];
+    mockCacheRepository.get.mockResolvedValue(cachedResult);
+
+    const result = await listarProtocolosUseCase.execute(input);
+    expect(result).toEqual(cachedResult);
     const expectedCacheKey = `protocolos:${input.start_date}:${
       input.end_date
     }:${JSON.stringify({})}`;
-    mockCacheRepository.get.mockResolvedValue(cachedResult);
-    const result = await listarProtocolosUseCase.execute(input);
-    expect(result).toEqual(cachedResult);
     expect(mockCacheRepository.get).toHaveBeenCalledWith(expectedCacheKey);
     expect(
       mockWebhookReprocessadoRepository.listByDateRangeAndFilters
@@ -193,7 +196,8 @@ describe("ListarProtocolosUseCase", () => {
       kind: "B",
       type: "A",
     };
-    const expectedFiltersString = JSON.stringify({ kind: "B", type: "A" }); 
+
+    const expectedFiltersString = JSON.stringify({ kind: "B", type: "A" });
     const expectedCacheKey = `protocolos:2025-11-01:2025-11-10:${expectedFiltersString}`;
 
     mockCacheRepository.get.mockResolvedValue(null);

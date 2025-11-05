@@ -1,6 +1,10 @@
-export class ProtocoloNaoEncontradoException extends Error {
-  constructor(message = 'Protocolo não encontrado') {
+"use strict";
+class ProtocoloNaoEncontradoException extends Error {
+  constructor(message) {
     super(message);
-    this.name = 'ProtocoloNaoEncontradoException';
+    this.name = "ProtocoloNaoEncontradoException";
+    this.status = 404;
   }
 }
+
+module.exports = { ProtocoloNaoEncontradoException };

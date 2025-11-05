@@ -1,46 +1,54 @@
-'use strict';
+"use strict";
 
-import express from 'express';
-import createAuthMiddleware from '../middlewares/AuthMiddleware.js';
-import ReenviarWebhookController from '../../../../application/controllers/ReenviarWebhookController.js';
-import SequelizeCedenteRepository from '../../../database/sequelize/repositories/SequelizeCedenteRepository.js';
-import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
-import SequelizeWebhookReprocessadoRepository from '../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js';
-import SequelizeWebhookRepository from '../../../database/sequelize/repositories/SequelizeWebhookRepository.js';
-import httpClient from '../../../http/providers/AxiosProvider.js';
+const express = require("express");
+const createAuthMiddleware = require("../middlewares/AuthMiddleware.js");
+const ReenviarWebhookController = require("../../../../application/controllers/ReenviarWebhookController.js");
 
-import RedisCacheRepository from '../../../cache/redis/RedisCacheRepository.js';
+// --- Importações dos Repositórios ---
+const SequelizeCedenteRepository = require("../../../database/sequelize/repositories/SequelizeCedenteRepository.js");
+const SequelizeSoftwareHouseRepository = require("../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js");
+const SequelizeWebhookReprocessadoRepository = require("../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js");
+const SequelizeWebhookRepository = require("../../../database/sequelize/repositories/SequelizeWebhookRepository.js");
+// ===== 1. ADICIONE A IMPORTAÇÃO AQUI =====
+const SequelizeServicoRepository = require("../../../database/sequelize/repositories/SequelizeServicoRepository.js");
 
-import * as dbCjs from '../../../database/sequelize/models/index.cjs';
-const db = dbCjs.default;
-const { models, sequelize, Sequelize } = db;
-const { Op } = Sequelize;
+const httpClient = require("../../../http/providers/AxiosProvider.js");
+const RedisCacheRepository = require("../../../cache/redis/RedisCacheRepository.js");
+const { models } = require("../../../database/sequelize/models/index.cjs");
+
 const router = express.Router();
 
-const cedenteRepository = new SequelizeCedenteRepository();
-const softwareHouseRepository = new SequelizeSoftwareHouseRepository();
-const authMiddleware = createAuthMiddleware({
-  cedenteRepository,
-  softwareHouseRepository,
+// --- Instâncias dos Repositórios ---
+const cedenteRepository = new SequelizeCedenteRepository({ models });
+const softwareHouseRepository = new SequelizeSoftwareHouseRepository({
+  models,
 });
+
+// (Nota: Seus outros repositórios provavelmente também precisam dos 'models')
+const webhookRepository = new SequelizeWebhookRepository({ models });
+const webhookReprocessadoRepository =
+  new SequelizeWebhookReprocessadoRepository({ models });
+
+// ===== 2. ADICIONE A INSTÂNCIA AQUI =====
+const servicoRepository = new SequelizeServicoRepository({ models });
 
 const redisCacheRepository = new RedisCacheRepository();
 
-const webhookRepository = new SequelizeWebhookRepository();
-const webhookReprocessadoRepository = new SequelizeWebhookReprocessadoRepository({
-  WebhookReprocessadoModel: models.WebhookReprocessado,
-  sequelize: sequelize,
-  Op: Op
+const authMiddleware = createAuthMiddleware({
+  cedenteRepository,
+  softwareHouseRepository,
 });
 
 const reenviarWebhookController = new ReenviarWebhookController({
   webhookRepository,
   webhookReprocessadoRepository,
   httpClient,
-  redisClient: redisCacheRepository 
+  redisClient: redisCacheRepository,
+  servicoRepository: servicoRepository,
 });
 
 router.use(authMiddleware);
+<<<<<<< HEAD
 
 const safeHandler = (ctrl, method) => {
   try {
@@ -61,3 +69,8 @@ router.post("/", safeHandler(webhookController, "reenviar"));
 router.get("/", safeHandler(webhookController, "list"));
 
 export default router;
+=======
+router.post("/", (req, res) => reenviarWebhookController.handle(req, res));
+
+module.exports = router;
+>>>>>>> d69ec169d0d39e2e3744332f34d207bd68b6f06a

@@ -1,63 +1,74 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+const {
+  describe,
+  expect,
+  beforeEach,
+  test,
+  beforeAll,
+  afterAll,
+} = require("@jest/globals");
 
-import ConsultarProtocoloUseCase from '@/application/useCases/ConsultarProtocoloUseCase';
-import { ProtocoloNaoEncontradoException } from '@/domain/exceptions/ProtocoloNaoEncontradoException';
+const ConsultarProtocoloUseCase = require("../../../src/application/useCases/ConsultarProtocoloUseCase.js");
+const {
+  ProtocoloNaoEncontradoException,
+} = require("../../../src/domain/exceptions/ProtocoloNaoEncontradoException.js");
 
-describe('ConsultarProtocoloUseCase', () => {
+let consoleLogSpy, consoleErrorSpy;
+beforeAll(() => {
+  consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+  consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+});
+afterAll(() => {
+  consoleLogSpy.mockRestore();
+  consoleErrorSpy.mockRestore();
+});
+
+describe("ConsultarProtocoloUseCase", () => {
   let useCase;
-  let mockCacheRepository;
   let mockWebhookReprocessadoRepository;
+  let mockCacheRepository;
 
   beforeEach(() => {
-    mockCacheRepository = {
-      get: jest.fn(),
-      set: jest.fn(),
-    };
-
-    mockWebhookReprocessadoRepository = {
-      findByProtocolo: jest.fn(),
-    };
-
+    mockWebhookReprocessadoRepository = { findByProtocolo: jest.fn() };
+    mockCacheRepository = { get: jest.fn(), set: jest.fn() };
     useCase = new ConsultarProtocoloUseCase({
-      cacheRepository: mockCacheRepository,
       webhookReprocessadoRepository: mockWebhookReprocessadoRepository,
+      cacheRepository: mockCacheRepository,
     });
   });
 
-  it('retorna dados do protocolo quando o uuid existe', async () => {
-    const uuid = 'uuid-1234';
-
+  test("retorna dados do protocolo quando o uuid existe (cache miss)", async () => {
+    const uuid = "uuid-1234";
+    const fakeRecord = { protocolo: uuid, data: { a: 1 }, status: "completed" };
     mockCacheRepository.get.mockResolvedValue(null);
-
-    const fakeRecord = { protocolo: uuid, data: { a: 1 } };
-    mockWebhookReprocessadoRepository.findByProtocolo.mockResolvedValue(fakeRecord);
-
-    const result = await useCase.execute({ protocolo: uuid });
-
+    mockWebhookReprocessadoRepository.findByProtocolo.mockResolvedValue(
+      fakeRecord
+    );
+    const result = await useCase.execute(uuid);
     expect(result).toEqual(fakeRecord);
-    expect(mockCacheRepository.get).toHaveBeenCalledWith(`protocolo:${uuid}`);
-    expect(mockWebhookReprocessadoRepository.findByProtocolo).toHaveBeenCalledWith(uuid);
-    expect(mockCacheRepository.set).toHaveBeenCalledWith(`protocolo:${uuid}`, fakeRecord, { ttl: 3600 });
+    expect(mockCacheRepository.set).toHaveBeenCalledWith(
+      `protocolo:${uuid}`,
+      JSON.stringify(fakeRecord),
+      { ttl: 3600 }
+    );
   });
 
-  it('retorna dados em cache quando estiver certo no cache', async () => {
-    const uuid = 'uuid-cache';
-    const cached = { protocolo: uuid, data: { b: 2 } };
-
-    mockCacheRepository.get.mockResolvedValue(cached);
-
-    const result = await useCase.execute({ protocolo: uuid });
-
-    expect(result).toEqual(cached);
-    expect(mockCacheRepository.get).toHaveBeenCalledWith(`protocolo:${uuid}`);
-    expect(mockWebhookReprocessadoRepository.findByProtocolo).not.toHaveBeenCalled();
+  test("retorna dados em cache quando estiver certo no cache (cache hit)", async () => {
+    const uuid = "uuid-cache";
+    const fakeRecord = { protocolo: uuid, data: { a: 1 }, status: "completed" };
+    mockCacheRepository.get.mockResolvedValue(JSON.stringify(fakeRecord));
+    const result = await useCase.execute(uuid);
+    expect(result).toEqual(fakeRecord);
+    expect(
+      mockWebhookReprocessadoRepository.findByProtocolo
+    ).not.toHaveBeenCalled();
   });
 
-  it('lança ProtocoloNaoEncontradoException quando não encontrado', async () => {
-    const uuid = 'não existe';
+  test("lança ProtocoloNaoEncontradoException quando não encontrado", async () => {
+    const uuid = "nao-existe";
     mockCacheRepository.get.mockResolvedValue(null);
     mockWebhookReprocessadoRepository.findByProtocolo.mockResolvedValue(null);
-
-    await expect(useCase.execute({ protocolo: uuid })).rejects.toThrow('Protocolo não encontrado');
+    await expect(useCase.execute(uuid)).rejects.toThrow(
+      ProtocoloNaoEncontradoException
+    );
   });
 });

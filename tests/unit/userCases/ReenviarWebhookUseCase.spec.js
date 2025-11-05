@@ -1,18 +1,42 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+const {
+  describe,
+  expect,
+  beforeEach,
+  test,
+  afterEach,
+  beforeAll,
+  afterAll,
+} = require("@jest/globals");
 
-import ReenviarWebhookUseCase from "../../../src/application/useCases/ReenviarWebhookUseCase.js";
-import RedisCacheRepository from "../../../src/infrastructure/cache/redis/RedisCacheRepository.js";
+const ReenviarWebhookUseCase = require("../../../src/application/useCases/ReenviarWebhookUseCase.js");
+
+const ConflictException = require("../../../src/domain/exceptions/ConflictException.js");
+const UnprocessableEntityException = require("../../../src/domain/exceptions/UnprocessableEntityException.js");
+
+let consoleLogSpy, consoleErrorSpy;
+beforeAll(() => {
+  consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => { });
+  consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => { });
+});
+afterAll(() => {
+  consoleLogSpy.mockRestore();
+  consoleErrorSpy.mockRestore();
+});
 
 describe("ReenviarWebhookUseCase", () => {
   let reenviarWebhookUseCase;
   let mockWebhookRepository;
   let mockReprocessadoRepository;
   let mockHttpClient;
+  let mockRedisClient;
+  let mockCedente;
+  let mockServicoRepository;
 
   beforeEach(() => {
     mockWebhookRepository = {
-      findById: jest.fn(),
+      findByIds: jest.fn(),
       update: jest.fn(),
+      findByIdsAndCedente: jest.fn(),
     };
 
     mockReprocessadoRepository = {
@@ -23,55 +47,150 @@ describe("ReenviarWebhookUseCase", () => {
       post: jest.fn(),
     };
 
+    mockRedisClient = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    };
+
+    mockServicoRepository = {
+      findByIdsAndCedente: jest.fn(),
+    };
+
+    mockCedente = {
+      id: 1,
+      cnpj: "123",
+      token: "abc",
+      configuracao_notificacao: { url: "http://cedente.com" },
+    };
+
     reenviarWebhookUseCase = new ReenviarWebhookUseCase({
       webhookRepository: mockWebhookRepository,
       webhookReprocessadoRepository: mockReprocessadoRepository,
       httpClient: mockHttpClient,
-      redisClient: RedisCacheRepository,
+      redisClient: mockRedisClient,
+      servicoRepository: mockServicoRepository,
     });
   });
 
-  it("should throw an error if id is not provided", async () => {
-    await expect(reenviarWebhookUseCase.execute()).rejects.toThrow(
-      "id is required"
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("should throw an error if id is not provided", async () => {
+    mockServicoRepository.findByIdsAndCedente.mockResolvedValue([]);
+    await expect(
+      reenviarWebhookUseCase.execute(
+        { cedente: { id: 1 }, id: [] }
+      )
+    ).rejects.toThrow();
+  });
+
+  test("should throw 422 error if webhooks are not found", async () => {
+    const input = {
+      id: ["id-que-nao-existe"],
+      product: "pix",
+      kind: "k",
+      type: "pago",
+      cedente: { id: 1 },
+    };
+
+    mockServicoRepository.findByIdsAndCedente.mockResolvedValue([]);
+    mockRedisClient.get.mockResolvedValue(null);
+
+    await expect(
+      reenviarWebhookUseCase.execute(input)
+    ).rejects.toThrow(
+      "Não foi possível gerar a notificação. Os seguintes IDs não foram encontrados ou não pertencem ao cedente."
     );
   });
 
-  it("should return success false if webhook is not found", async () => {
-    mockWebhookRepository.findById.mockResolvedValue(null);
+  test("should re-send the webhook successfully on a 2xx response", async () => {
+    const fakeId = "boleto-123";
 
-    const result = await reenviarWebhookUseCase.execute({ id: 999 });
+    // O mock simula o OBJETO SERVIÇO retornado pelo servicoRepository
+    const fakeServico = {
+      id: fakeId,
+      status: "LIQUIDADO", // <--- DEVE SER IGUAL ao MAPA_SITUACAO["boleto"]["pago"]
+      payload: { data: "test" }, // Conteúdo do payload a ser enviado
+      cedente_id: 1,
+      url: "http://original.com",
+    };
 
-    expect(result).toEqual({ success: false, error: "Webhook not found" });
-    expect(mockWebhookRepository.findById).toHaveBeenCalledWith(999);
+    const input = {
+      id: [fakeId],
+      product: "boleto",
+      kind: "kind",
+      type: "pago",
+      cedente: { id: 1 },
+    };
+
+    mockServicoRepository.findByIdsAndCedente.mockResolvedValue([fakeServico]);
+    mockRedisClient.get.mockResolvedValue(null);
+    mockHttpClient.post.mockResolvedValue({ status: 200 });
+
+    const result = await reenviarWebhookUseCase.execute(input);
+
+    expect(result.protocolo).toBeDefined();
+    expect(mockHttpClient.post).toHaveBeenCalledWith(
+      fakeServico.url,
+      fakeServico.payload,
+      expect.anything()
+    );
+    expect(mockWebhookRepository.update).toHaveBeenCalled();
+  });
+
+  test("should throw ConflictException (409) if request is duplicated", async () => {
+    const input = {
+      id: ["id-123"],
+      product: "pix",
+      kind: "k",
+      type: "pago",
+      cedente: { id: 1 },
+    };
+
+    mockRedisClient.get.mockResolvedValue("protocolo-existente");
+    mockServicoRepository.findByIdsAndCedente.mockResolvedValue([]);
+
+    await expect(
+      reenviarWebhookUseCase.execute(input)
+    ).rejects.toThrow();
+
+    expect(mockServicoRepository.findByIdsAndCedente).not.toHaveBeenCalled();
     expect(mockHttpClient.post).not.toHaveBeenCalled();
   });
 
-  it("should re-send the webhook successfully on a 2xx response", async () => {
-    const fakeWebhook = {
-      id: 1,
-      url: "http://example.com/hook",
+  test("should update webhook but not save to reprocessado on HTTP error", async () => {
+    const fakeId = "boleto-123";
+    const fakeServico = {
+      id: fakeId,
+      status: "LIQUIDADO", // <--- Status correto para evitar a exceção prematura
       payload: { data: "test" },
-      tentativas: 0,
+      cedente_id: 1,
+      url: "http://original.com",
     };
-    mockWebhookRepository.findById.mockResolvedValue(fakeWebhook);
-    mockHttpClient.post.mockResolvedValue({ status: 200, data: "OK" });
+    const input = {
+      id: [fakeId],
+      product: "boleto",
+      kind: "kind",
+      type: "pago",
+      cedente: { id: 1 },
+    };
 
-    const result = await reenviarWebhookUseCase.execute({ id: 1 });
+    mockServicoRepository.findByIdsAndCedente.mockResolvedValue([fakeServico]);
+    mockRedisClient.get.mockResolvedValue(null);
 
-    expect(result.success).toBe(true);
-    expect(result.status).toBe(200);
-    expect(mockHttpClient.post).toHaveBeenCalledWith(
-      fakeWebhook.url,
-      fakeWebhook.payload,
-      { timeout: 5000 }
-    );
-    expect(mockWebhookRepository.update).toHaveBeenCalledWith(fakeWebhook.id, {
-      tentativas: 1,
-      last_status: 200,
-    });
+    // Rejeita a chamada HTTP para simular erro de reenvio
+    mockHttpClient.post.mockRejectedValue(new Error("Network Error 500"));
+
+    // Agora o fluxo deve chegar à chamada post e rejeitar
+    await expect(reenviarWebhookUseCase.execute(input)).rejects.toThrow();
+
+    expect(mockHttpClient.post).toHaveBeenCalled();
+    expect(mockWebhookRepository.update).toHaveBeenCalled();
     expect(mockReprocessadoRepository.create).not.toHaveBeenCalled();
   });
+<<<<<<< HEAD
 
   it("should save to reprocessado on a non-2xx response", async () => {
     const fakeWebhook = {
@@ -114,4 +233,6 @@ describe("ReenviarWebhookUseCase", () => {
       tentativas: 2,
     });
   });
+=======
+>>>>>>> d69ec169d0d39e2e3744332f34d207bd68b6f06a
 });

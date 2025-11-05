@@ -1,31 +1,46 @@
-'use strict';
+"use strict";
 
-import * as dbCjs from '../models/index.cjs';
-const db = dbCjs.default; 
-const { models, Sequelize } = db;
-const { Op } = Sequelize;
-export default class SequelizeWebhookRepository {
-  constructor() {
-    this.webhookModel = models.WebhookModel;
-    if (!this.webhookModel) {
-      throw new Error('Model "WebhookModel" não foi carregado corretamente.');
-    }
-  }
+const { models, Sequelize } = require("../models/index.cjs");
+
+class SequelizeWebhookRepository {
+  constructor() {}
+
   async findById(id) {
-    return this.webhookModel.findByPk(id);
+    if (!id) return null;
+    return models.Webhook.findByPk(id);
   }
+
   async findByIds(ids) {
-    return this.webhookModel.findAll({
+    if (!ids || ids.length === 0) return [];
+    return models.Webhook.findAll({
       where: {
         id: {
-          [Op.in]: ids,
+          [Sequelize.Op.in]: ids,
         },
       },
     });
   }
+
   async update(id, data) {
-    await this.webhookModel.update(data, {
+    await models.Webhook.update(data, {
       where: { id: id },
     });
   }
+
+  async findByIdsAndCedente(ids, cedenteId) {
+    if (!ids || ids.length === 0 || !cedenteId) {
+      return [];
+    }
+
+    return models.Webhook.findAll({
+      where: {
+        id: {
+          [Sequelize.Op.in]: ids,
+        },
+        cedente_id: cedenteId,
+      },
+    });
+  }
 }
+
+module.exports = SequelizeWebhookRepository;

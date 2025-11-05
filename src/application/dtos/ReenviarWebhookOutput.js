@@ -1,7 +1,6 @@
+"use strict";
 
-'use strict';
-
-export default class ReenviarWebhookOutput {
+class ReenviarWebhookOutput {
   constructor({ success, protocolo = null, message = null, error = null }) {
     this.success = success;
     this.protocolo = protocolo;
@@ -9,7 +8,7 @@ export default class ReenviarWebhookOutput {
     this.error = error;
   }
 
-  static success(protocolo, message = 'Webhook reenviado com sucesso.') {
+  static success(protocolo, message = "Webhook reenviado com sucesso.") {
     return new ReenviarWebhookOutput({
       success: true,
       protocolo,
@@ -36,4 +35,10 @@ export default class ReenviarWebhookOutput {
       error: this.error,
     };
   }
+<<<<<<< HEAD
 }
+=======
+}
+
+module.exports = ReenviarWebhookOutput;
+>>>>>>> d69ec169d0d39e2e3744332f34d207bd68b6f06a

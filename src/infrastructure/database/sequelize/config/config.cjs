@@ -1,7 +1,11 @@
 const path = require("path");
-require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
 
-console.log("--- DEBUG VARIÁVEIS DE AMBIENTE (CLI) ---");
+const env = process.env.NODE_ENV || 'development';
+const envPath = env === 'test' ? '.env.test' : '.env';
+
+require("dotenv").config({ path: path.resolve(process.cwd(), envPath) });
+
+console.log(`--- DEBUG: Carregando env do [${envPath}] ---`);
 console.log("DB_HOST:", process.env.DB_HOST);
 console.log("DB_PORT:", process.env.DB_PORT);
 console.log("DB_USERNAME:", process.env.DB_USERNAME);
@@ -32,7 +36,7 @@ module.exports = {
     port: DB_PORT,
     dialect: "postgres",
     dialectModule: require("pg"),
-    logging: false,
+    logging: false, 
     define: {
       timestamps: true,
       underscored: true,
