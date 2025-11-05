@@ -1,15 +1,9 @@
 // Importe os models no topo do arquivo
-import {
+const {
   sequelize,
   models,
-} from "../../../src/infrastructure/database/sequelize/models/index.cjs";
-import {
-  jest,
-  describe,
-  expect,
-  beforeEach,
-  test,
-} from "@jest/globals";
+} = require("../../../src/infrastructure/database/sequelize/models/index.cjs");
+const { describe, expect, beforeEach, test } = require("@jest/globals");
 
 const { Convenio, Conta, Cedente, SoftwareHouse } = models;
 

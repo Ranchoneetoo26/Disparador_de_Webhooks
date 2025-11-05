@@ -1,19 +1,10 @@
-'use strict';
+"use strict";
+const { models, sequelize, Sequelize } = require("../models/index.cjs");
 
-export default class SequelizeWebhookReprocessadoRepository {
-  constructor({ WebhookReprocessadoModel, sequelize, Op }) {
-    if (!WebhookReprocessadoModel) {
-      throw new Error('WebhookReprocessadoModel is required in constructor');
-    }
-    if (!sequelize) {
-      throw new Error('sequelize is required in constructor');
-    }
-    if (!Op) {
-      throw new Error('Op is required in constructor');
-    }
-    this.webhookReprocessadoModel = WebhookReprocessadoModel;
+class SequelizeWebhookReprocessadoRepository {
+  constructor() {
     this.sequelize = sequelize;
-    this.Op = Op;
+    this.Op = Sequelize.Op;
   }
 
   async listByDateRangeAndFilters({ startDate, endDate, filters }) {
@@ -21,8 +12,8 @@ export default class SequelizeWebhookReprocessadoRepository {
 
     const where = {
       data_criacao: {
-        [Op.between]: [startDate, endDate]
-      }
+        [Op.between]: [startDate, endDate],
+      },
     };
 
     if (filters && filters.protocolo) {
@@ -37,35 +28,39 @@ export default class SequelizeWebhookReprocessadoRepository {
 
     if (filters && filters.product) {
       where[Op.and] = [
-        sequelize.where(
-          sequelize.literal("data->>'product'"),
-          filters.product
-        )
+        sequelize.where(sequelize.literal("data->>'product'"), filters.product),
       ];
     }
 
-    if (filters && filters.id && Array.isArray(filters.id) && filters.id.length > 0) {
+    if (
+      filters &&
+      filters.id &&
+      Array.isArray(filters.id) &&
+      filters.id.length > 0
+    ) {
       where.servico_id = {
-        [Op.contains]: filters.id
+        [Op.contains]: filters.id,
       };
     }
 
-    return this.webhookReprocessadoModel.findAll({ where });
+    return models.WebhookReprocessado.findAll({ where });
   }
 
   async findByProtocolo(protocolo) {
     if (!protocolo) {
       return null;
     }
-    return this.webhookReprocessadoModel.findOne({
-      where: { protocolo: protocolo }
+    return models.WebhookReprocessado.findOne({
+      where: { protocolo: protocolo.protocolo },
     });
   }
 
   async create(data) {
     if (!data) {
-      throw new Error('Data is required for creation');
+      throw new Error("Data is required for creation");
     }
-    return this.webhookReprocessadoModel.create(data);
+    return models.WebhookReprocessado.create(data);
   }
 }
+
+module.exports = SequelizeWebhookReprocessadoRepository;

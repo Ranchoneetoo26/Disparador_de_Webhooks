@@ -1,5 +1,7 @@
-import { describe, it, expect } from "@jest/globals";
-import { resolveNotificationConfig } from "@/services/notificationConfigResolver";
+const { describe, it, expect } = require("@jest/globals");
+const {
+  resolveNotificationConfig,
+} = require("@/services/notificationConfigResolver");
 
 describe("notificationConfigResolver", () => {
   it("Retorna a configuração da conta quando presente.", () => {

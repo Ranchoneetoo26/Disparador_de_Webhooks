@@ -1,4 +1,4 @@
-import { jest, describe, expect, beforeEach, test } from "@jest/globals";
+const { describe, expect, beforeEach, test } = require("@jest/globals");
 
 // --- CORREÇÃO AQUI ---
 // Importamos os models do 'global' que o jest.setup.cjs (provavelmente) criou.
@@ -6,7 +6,6 @@ import { jest, describe, expect, beforeEach, test } from "@jest/globals";
 // const { Cedente, SoftwareHouse } = require("../../../src/infrastructure/database/sequelize/models/index.cjs").models;
 const { Cedente, SoftwareHouse } = global.db.models;
 // --- FIM DA CORREÇÃO ---
-
 
 describe("Integração do Model: Cedente", () => {
   let softwareHouse;

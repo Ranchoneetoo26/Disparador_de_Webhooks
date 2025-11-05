@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-import Redis from 'ioredis';
+const Redis = require("ioredis");
 
 const redisConfig = {
   host: process.env.REDIS_HOST || "localhost",
@@ -36,7 +36,7 @@ function getClient() {
       );
     });
 
-    redisClient.on("close", () => { });
+    redisClient.on("close", () => {});
 
     redisClient.on("reconnecting", (delay) => {
       console.log(`[Cache] Tentando reconectar ao Redis em ${delay}ms...`);
@@ -61,7 +61,6 @@ async function ensureReadyClient() {
   if (client.status === "connecting" || client.status === "reconnecting") {
     console.log("[Cache] Aguardando cliente Redis ficar pronto...");
     try {
-
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(
           () =>
@@ -95,21 +94,27 @@ async function ensureReadyClient() {
   return null;
 }
 
-export default class RedisCacheRepository {
+class RedisCacheRepository {
   constructor() {
     try {
       this.client = new Redis({
-        host: process.env.REDIS_HOST || 'localhost',
+        host: process.env.REDIS_HOST || "localhost",
         port: process.env.REDIS_PORT || 6379,
         db: process.env.REDIS_DB || 0,
-        maxRetriesPerRequest: 3
+        maxRetriesPerRequest: 3,
       });
 
-      this.client.on('connect', () => console.log('[Cache] Conectando ao Redis...'));
-      this.client.on('ready', () => console.log('[Cache] Cliente Redis pronto para uso.'));
-      this.client.on('error', (err) => console.error('[Cache] Erro no Redis:', err.message));
+      this.client.on("connect", () =>
+        console.log("[Cache] Conectando ao Redis...")
+      );
+      this.client.on("ready", () =>
+        console.log("[Cache] Cliente Redis pronto para uso.")
+      );
+      this.client.on("error", (err) =>
+        console.error("[Cache] Erro no Redis:", err.message)
+      );
     } catch (err) {
-      console.error('[Cache] Falha ao criar cliente Redis:', err.message);
+      console.error("[Cache] Falha ao criar cliente Redis:", err.message);
     }
   }
 
@@ -126,7 +131,8 @@ export default class RedisCacheRepository {
         typeof value === "string" ? value : JSON.stringify(value);
 
       console.log(
-        `[Cache] SET ${key} (TTL: ${ttl && Number.isInteger(ttl) && ttl > 0 ? ttl + "s" : "Nenhum"
+        `[Cache] SET ${key} (TTL: ${
+          ttl && Number.isInteger(ttl) && ttl > 0 ? ttl + "s" : "Nenhum"
         })`
       );
 
@@ -171,7 +177,7 @@ export default class RedisCacheRepository {
 
         await client.quit();
         console.log("[Cache] Conexão Redis fechada via quit().");
-        t
+        t;
       } catch (err) {
         console.error("[Cache] Erro ao desconectar do Redis:", err.message);
       } finally {
@@ -182,3 +188,5 @@ export default class RedisCacheRepository {
     }
   }
 }
+
+module.exports = RedisCacheRepository;

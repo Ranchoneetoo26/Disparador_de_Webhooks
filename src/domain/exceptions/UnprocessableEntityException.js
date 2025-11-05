@@ -1,8 +1,10 @@
-'use strict';
-export default class ConflictException extends Error {
+"use strict";
+class ConflictException extends Error {
   constructor(message) {
     super(message);
-    this.name = 'ConflictException';
+    this.name = "ConflictException";
     this.status = 409;
   }
 }
+
+module.exports = ConflictException;

@@ -1,38 +1,27 @@
-'use strict';
+"use strict";
 
-import * as dbCjs from '../models/index.cjs';
-const db = dbCjs.default;
-const { models, Sequelize } = db;
-const { Op } = Sequelize;
+const { models, Sequelize } = require("../models/index.cjs");
 
-export default class SequelizeWebhookRepository {
-  constructor() {
-    this.webhookModel = models.WebhookModel;
-    this.Op = Op; // Adicionado para garantir que o 'Op' esteja no 'this'
-    if (!this.webhookModel) {
-      throw new Error('Model "WebhookModel" não foi carregado corretamente.');
-    }
-    return this.webhookModel;
-  }
+class SequelizeWebhookRepository {
+  constructor() {}
 
   async findById(id) {
     if (!id) return null;
-    const WebhookModel = this._getWebhookModel();
-    return WebhookModel.findByPk(id);
+    return models.WebhookReprocessado.findByPk(id);
   }
 
   async findByIds(ids) {
-    return this.webhookModel.findAll({
+    return models.WebhookReprocessado.findAll({
       where: {
         id: {
-          [this.Op.in]: ids,
+          [Sequelize.Op.in]: ids,
         },
       },
     });
   }
 
   async update(id, data) {
-    await this.webhookModel.update(data, {
+    await models.WebhookReprocessado.update(data, {
       where: { id: id },
     });
   }
@@ -44,13 +33,15 @@ export default class SequelizeWebhookRepository {
     if (!ids || ids.length === 0 || !cedenteId) {
       return [];
     }
-    return this.webhookModel.findAll({
+    return models.WebhookReprocessado.findAll({
       where: {
         id: {
-          [this.Op.in]: ids
+          [Sequelize.Op.in]: ids,
         },
-        cedente_id: cedenteId
-      }
+        cedente_id: cedenteId,
+      },
     });
   }
 } // <-- Esta é a chave '}' final correta
+
+module.exports = SequelizeWebhookRepository;

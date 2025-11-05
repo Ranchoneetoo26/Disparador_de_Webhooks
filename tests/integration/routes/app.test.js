@@ -1,13 +1,12 @@
-import { describe, it, expect, afterAll } from "@jest/globals";
-import request from "supertest";
-import app from "@/app";
+const { describe, it, expect, afterAll } = require("@jest/globals");
+const request = require("supertest");
+const app = require("@/app");
 
 // Ajuste esses imports conforme seus exports reais:
-import dbCjs from "@/infrastructure/database/sequelize/models/index.cjs"; // o arquivo que você já usa
-import redisCacheRepository from "@/infrastructure/cache/redis/RedisCacheRepository"; // export default do client/instance
-
-const db = dbCjs.default || dbCjs;
-const { sequelize } = db;
+const {
+  sequelize,
+} = require("@/infrastructure/database/sequelize/models/index.cjs"); // o arquivo que você já usa
+const redisCacheRepository = require("@/infrastructure/cache/redis/RedisCacheRepository"); // export default do client/instance
 
 describe("Testes da API Principal", () => {
   it("deve responder com status 200 na rota GET /", async () => {
@@ -36,7 +35,10 @@ afterAll(async () => {
         await new Promise((resolve) => client.quit(() => resolve()));
       } else if (typeof client.disconnect === "function") {
         client.disconnect();
-      } else if (typeof client.quit === "object" && client.quit.constructor.name === 'AsyncFunction') {
+      } else if (
+        typeof client.quit === "object" &&
+        client.quit.constructor.name === "AsyncFunction"
+      ) {
         // ioredis ou node-redis v4 returning Promise
         await client.quit();
       }

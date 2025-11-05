@@ -1,14 +1,8 @@
-import {
+const {
   sequelize,
   models,
-} from "../src/infrastructure/database/sequelize/models/index.cjs";
-import {
-  jest,
-  describe,
-  expect,
-  beforeEach,
-  test,
-} from "@jest/globals";
+} = require("../src/infrastructure/database/sequelize/models/index.cjs");
+const { describe, expect, beforeEach, test } = require("@jest/globals");
 
 const { WebhookReprocessado, SoftwareHouse, Cedente } = models;
 
@@ -49,7 +43,7 @@ describe("Integration: Webhook Model Tests", () => {
       cedente_id: createdCedente.id,
       kind: "webhook",
       type: "pago",
-      protocolo: "TESTE-UUID-12345",
+      protocolo: "f0c4e701-9660-4e97-bbed-246122ab60a9",
       servico_id: JSON.stringify(["servico_id_1"]),
     };
 
