@@ -50,7 +50,7 @@ module.exports = {
 
       protocolo: {
         allowNull: false,
-        type: Sequelize.STRING
+        type: Sequelize.UUID
       },
 
       createdAt: {

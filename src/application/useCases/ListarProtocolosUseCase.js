@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-import { subDays, differenceInDays, endOfDay } from "date-fns"; 
-import InvalidRequestException from "../../domain/exceptions/InvalidRequestException.js";
+const { subDays, differenceInDays, endOfDay } = require("date-fns");
+const InvalidRequestException = require("../../domain/exceptions/InvalidRequestException.js");
 
-export default class ListarProtocolosUseCase {
+class ListarProtocolosUseCase {
   constructor({ webhookReprocessadoRepository, cacheRepository }) {
     if (!webhookReprocessadoRepository) {
       throw new Error("webhookReprocessadoRepository is required");
@@ -25,7 +25,7 @@ export default class ListarProtocolosUseCase {
     }
 
     const startDate = new Date(start_date);
-    
+
     const endDate = endOfDay(new Date(end_date));
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
@@ -57,7 +57,7 @@ export default class ListarProtocolosUseCase {
         obj[key] = restFilters[key];
         return obj;
       }, {});
-      
+
     const cacheKey = `protocolos:${start_date}:${end_date}:${JSON.stringify(
       sortedFilters
     )}`;
@@ -67,19 +67,19 @@ export default class ListarProtocolosUseCase {
     if (cachedData) {
       if (typeof cachedData === "string") {
         try {
-          return JSON.parse(cachedData); 
+          return JSON.parse(cachedData);
         } catch (e) {
           console.error("Erro ao parsear dados do cache:", e);
         }
       } else {
-        return cachedData; 
+        return cachedData;
       }
     }
 
     const protocolos =
       await this.webhookReprocessadoRepository.listByDateRangeAndFilters({
-        startDate, 
-        endDate,   
+        startDate,
+        endDate,
         filters: restFilters,
       });
 
@@ -88,3 +88,5 @@ export default class ListarProtocolosUseCase {
     return protocolos;
   }
 }
+
+module.exports = ListarProtocolosUseCase;

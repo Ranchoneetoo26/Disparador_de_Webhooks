@@ -20,36 +20,25 @@ module.exports = {
     }
     const softwareHouseId = softwareHouses[0].id;
 
+<<<<<<< HEAD
+=======
+    // Tenta deletar o cedente antes de inserir, para evitar erro de duplicado
+    await queryInterface.bulkDelete("Cedentes", { cnpj: "22222222000222" }, {});
+
+    // Insere o cedente
+>>>>>>> ac74577e24c01cb6576b44326ef20c19e70cd838
     await queryInterface.bulkInsert(
       'Cedentes',
       [
         {
-          cnpj: '22222222000222',
-          token: 'valid_token_ced',
-          status: 'ativo',
+          cnpj: "22222222000222",
+          token: "valid_token_ced",
+          status: "ativo",
           software_house_id: softwareHouseId,
           data_criacao: new Date(),
-          
-          // --- MUDANÇA AQUI ---
-          // Adicionamos a configuração de notificação (baseada no PDF)
-          // para que o UseCase possa encontrá-la.
-          configuracao_notificacao: JSON.stringify({
-            url: WEBHOOK_SITE_URL,
-            email: null,
-            tipos: {},
-            cancelado: true,
-            pago: true,
-            disponivel: true,
-            header: false,
-            ativado: true,
-            header_campo: "",
-            header_valor: "",
-            headers_adicionais: [{ "x-empresa-teste": "true" }]
-          }),
-          // --- FIM DA MUDANÇA ---
-          
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          configuracao_notificacao: null,
         },
       ],
       {}
@@ -57,6 +46,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('Cedentes', { cnpj: '22222222000222' }, {});
-  }
+    await queryInterface.bulkDelete("Cedentes", { cnpj: "22222222000222" }, {});
+  },
 };

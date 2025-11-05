@@ -1,8 +1,8 @@
 // src/server.js
-'use strict';
+"use strict";
 
-console.log('--- server.js: Iniciando ---');
-import app from "./app.js";
+console.log("--- server.js: Iniciando ---");
+const app = require("./app.js");
 console.log("--- server.js: App importado ---");
 
 const PORT = process.env.PORT || 3333;

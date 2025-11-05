@@ -1,8 +1,8 @@
-import { jest, describe, expect, beforeEach, test } from "@jest/globals";
-import {
+const { describe, expect, beforeEach, test } = require("@jest/globals");
+const {
   sequelize,
   models,
-} from "../../../src/infrastructure/database/sequelize/models/index.cjs";
+} = require("../../../src/infrastructure/database/sequelize/models/index.cjs");
 
 // Importamos todos os models necessários para a cadeia
 const { Conta, Cedente, SoftwareHouse } = models;
