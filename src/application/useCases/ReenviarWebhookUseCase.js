@@ -130,7 +130,7 @@ class ReenviarWebhookUseCase {
       cedente_id: cedente.id,
       kind: kind,
       type: type,
-      servico_id: ids,
+      servico_id: JSON.stringify(ids),
       status: "sent",
     };
     await this.reprocessadoRepository.create(registroProtocolo);
