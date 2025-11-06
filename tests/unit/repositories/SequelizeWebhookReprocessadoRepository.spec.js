@@ -9,7 +9,6 @@ const {
 
 let repository;
 
-// Mock utilitário Sequelize
 const mockSequelize = {
   json: jest.fn((field, value) => ({ mockField: field, mockValue: value })),
   literal: jest.fn((str) => str),
@@ -18,14 +17,12 @@ const mockSequelize = {
 
 describe("SequelizeWebhookReprocessadoRepository Unit Tests", () => {
   beforeEach(() => {
-    // Corrigido o nome do model
     models.WebhookReprocessado = {
       findAll: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
     };
 
-    // Instancia o repositório
     repository = new SequelizeWebhookReprocessadoRepository(
       models.WebhookReprocessado,
       mockSequelize

@@ -12,7 +12,7 @@ describe("ProtocoloController (integration)", () => {
 
     console.log(res.statusCode, res.body);
 
-    expect([200, 400].includes(res.statusCode)).toBe(true); // depende de dados no DB
+    expect([200, 400].includes(res.statusCode)).toBe(true); 
     expect(!!res.body).toBe(true);
   });
 
@@ -26,6 +26,6 @@ describe("ProtocoloController (integration)", () => {
 
     console.log(res.statusCode, res.body);
 
-    expect([200, 404].includes(res.statusCode)).toBe(true); // depende de dados no DB
+    expect([200, 404].includes(res.statusCode)).toBe(true); 
   });
 });

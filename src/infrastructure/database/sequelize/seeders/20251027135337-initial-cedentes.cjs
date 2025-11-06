@@ -1,11 +1,10 @@
-'use strict';
+"use strict";
 /** @type {import('sequelize-cli').Migration} */
 
-// O CNPJ da SoftwareHouse do seeder anterior
-const SOFTWARE_HOUSE_CNPJ = '11111111000111';
+const SOFTWARE_HOUSE_CNPJ = "11111111000111";
 
-// A URL para onde queremos que os webhooks sejam reenviados
-const WEBHOOK_SITE_URL = 'https://webhook.site/692cd884-e83d-4319-8a04-6d89fe995108';
+const WEBHOOK_SITE_URL =
+  "https://webhook.site/692cd884-e83d-4319-8a04-6d89fe995108";
 
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -16,16 +15,16 @@ module.exports = {
     );
 
     if (!softwareHouses || softwareHouses.length === 0) {
-      throw new Error(`Seeder: SoftwareHouse com CNPJ ${SOFTWARE_HOUSE_CNPJ} não encontrada. Rode o seeder de SoftwareHouses primeiro.`);
+      throw new Error(
+        `Seeder: SoftwareHouse com CNPJ ${SOFTWARE_HOUSE_CNPJ} não encontrada. Rode o seeder de SoftwareHouses primeiro.`
+      );
     }
     const softwareHouseId = softwareHouses[0].id;
 
-    // Tenta deletar o cedente antes de inserir, para evitar erro de duplicado
     await queryInterface.bulkDelete("Cedentes", { cnpj: "22222222000222" }, {});
 
-    // Insere o cedente
     await queryInterface.bulkInsert(
-      'Cedentes',
+      "Cedentes",
       [
         {
           cnpj: "22222222000222",

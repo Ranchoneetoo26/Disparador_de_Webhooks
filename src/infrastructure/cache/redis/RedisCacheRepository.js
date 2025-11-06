@@ -149,8 +149,6 @@ class RedisCacheRepository {
     return this.client.set(key, value);
   }
 
-  // --- CORREÇÃO AQUI ---
-  // Adicionando o método .del() que estava faltando
   async del(key) {
     const client = await ensureReadyClient();
     if (!client) {
@@ -166,7 +164,6 @@ class RedisCacheRepository {
       return false;
     }
   }
-  // --- FIM DA CORREÇÃO ---
 
   async disconnect() {
     const client = redisClient;

@@ -9,8 +9,8 @@ class ConflictException extends Error {
   constructor(message) {
     super(message);
     this.name = "ConflictException";
-    this.status = 409; // HTTP 409 Conflict
-    this.ids_invalidos = null; // O controller usa isso, definimos como null
+    this.status = 409;
+    this.ids_invalidos = null;
   }
 }
 

@@ -1,4 +1,3 @@
-// Importe os models no topo do arquivo
 const {
   sequelize,
   models,
@@ -13,7 +12,6 @@ describe("Integration: Convenio model", () => {
   beforeEach(async () => {
     await sequelize.sync({ force: true });
 
-    // 1. CRIE A SOFTWAREHOUSE
     softwareHouse = await SoftwareHouse.create({
       cnpj: "11111111000111",
       token: "valid_token_sh",
@@ -21,33 +19,28 @@ describe("Integration: Convenio model", () => {
       data_criacao: new Date(),
     });
 
-    // 2. CRIE O CEDENTE
     cedente = await Cedente.create({
       cnpj: "22222222000122",
       token: "valid_token_ced",
       status: "ativo",
       data_criacao: new Date(),
-      software_house_id: softwareHouse.id, // <--- CORREÇÃO 1
+      software_house_id: softwareHouse.id,
     });
 
-    // 3. CRIE A CONTA
     conta = await Conta.create({
       produto: "pix",
       banco_codigo: "001",
       status: "ativo",
       data_criacao: new Date(),
-      cedente_id: cedente.id, // <--- CORREÇÃO 2
+      cedente_id: cedente.id,
     });
   });
 
-  // ... (remova o afterAll daqui)
-
   test("deve criar um novo Convenio", async () => {
-    // 4. AGORA TESTE O CONVENIO
     const convenio = await Convenio.create({
       numero_convenio: "1234567",
       data_criacao: new Date(),
-      conta_id: conta.id, // <--- CORREÇÃO 3
+      conta_id: conta.id,
     });
 
     expect(convenio).toBeDefined();

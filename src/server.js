@@ -1,4 +1,3 @@
-// src/server.js
 "use strict";
 
 console.log("--- server.js: Iniciando ---");

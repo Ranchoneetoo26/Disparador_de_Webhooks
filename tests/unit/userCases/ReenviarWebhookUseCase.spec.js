@@ -8,14 +8,11 @@ const {
   afterAll,
 } = require("@jest/globals");
 
-// Importe o UseCase que vamos testar
 const ReenviarWebhookUseCase = require("../../../src/application/useCases/ReenviarWebhookUseCase.js");
 
-// Importe as exceções customizadas para que possamos testá-las
 const ConflictException = require("../../../src/domain/exceptions/ConflictException.js");
 const UnprocessableEntityException = require("../../../src/domain/exceptions/UnprocessableEntityException.js");
 
-// Desativamos os console.logs e console.errors durante os testes
 let consoleLogSpy, consoleErrorSpy;
 beforeAll(() => {
   consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
@@ -71,7 +68,7 @@ describe("ReenviarWebhookUseCase", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks(); // Limpa os mocks entre os testes
+    jest.clearAllMocks();
   });
 
   test("should throw an error if id is not provided", async () => {
@@ -141,18 +138,13 @@ describe("ReenviarWebhookUseCase", () => {
       cedente: { id: 1 },
     };
 
-    // --- CORREÇÃO AQUI ---
-    // Simulamos o cache hit. O 'get' retorna um valor.
     mockRedisClient.get.mockResolvedValue("protocolo-existente");
     mockWebhookRepository.findByIdsAndCedente.mockResolvedValue([]);
-    // --- FIM DA CORREÇÃO ---
 
-    // 2. Executa e espera o erro 409
     await expect(
       reenviarWebhookUseCase.execute(input, mockCedente)
     ).rejects.toThrow(Error);
 
-    // Garante que o código parou ANTES de chamar o banco
     expect(mockWebhookRepository.findByIds).not.toHaveBeenCalled();
     expect(mockHttpClient.post).not.toHaveBeenCalled();
   });
@@ -177,7 +169,7 @@ describe("ReenviarWebhookUseCase", () => {
     mockWebhookRepository.findByIdsAndCedente.mockResolvedValue([fakeWebhook]);
     mockRedisClient.get.mockResolvedValue(null);
     mockHttpClient.post.mockRejectedValue(new Error("Network Error 500"));
-    
+
     try {
       await reenviarWebhookUseCase.execute(input, mockCedente);
     } catch (error) {

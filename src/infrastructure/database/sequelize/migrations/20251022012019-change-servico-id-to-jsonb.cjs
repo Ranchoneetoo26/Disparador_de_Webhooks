@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -8,16 +8,16 @@ module.exports = {
       ALTER COLUMN "servico_id" TYPE JSONB USING servico_id::jsonb;
     `);
 
-    await queryInterface.changeColumn('WebhookReprocessados', 'servico_id', {
+    await queryInterface.changeColumn("WebhookReprocessados", "servico_id", {
       type: Sequelize.JSONB,
-      allowNull: false
+      allowNull: false,
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.changeColumn('WebhookReprocessados', 'servico_id', {
+    await queryInterface.changeColumn("WebhookReprocessados", "servico_id", {
       type: Sequelize.TEXT,
-      allowNull: false
+      allowNull: false,
     });
-  }
+  },
 };

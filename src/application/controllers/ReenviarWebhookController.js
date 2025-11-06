@@ -1,9 +1,6 @@
 "use strict";
 
-// --- CORREÇÃO AQUI ---
-// Mudamos a forma como o Controlador importa o UseCase
 const ReenviarWebhookUseCase = require("../useCases/ReenviarWebhookUseCase.js");
-// --- FIM DA CORREÇÃO ---
 
 const ReenviarWebhookInput = require("../dtos/ReenviarWebhookInput.js");
 const ReenviarWebhookOutput = require("../dtos/ReenviarWebhookOutput.js");
@@ -11,14 +8,14 @@ const UnprocessableEntityException = require("../../domain/exceptions/Unprocessa
 
 class ReenviarWebhookController {
   constructor({
-    servicoRepository, // Adicionada nova dependência
+    servicoRepository,
     webhookRepository,
     webhookReprocessadoRepository,
     httpClient,
     redisClient,
   }) {
     this.useCase = new ReenviarWebhookUseCase({
-      servicoRepository, // Injetada no useCase
+      servicoRepository,
       webhookRepository,
       webhookReprocessadoRepository,
       httpClient,

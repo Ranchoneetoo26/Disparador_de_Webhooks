@@ -26,9 +26,6 @@ class SequelizeWebhookRepository {
     });
   }
 
-  // --- MÉTODO NOVO ADICIONADO ---
-  // O ReenviarWebhookUseCase precisa deste método para
-  // validar se os IDs pertencem ao cedente que está logado.
   async findByIdsAndCedente(ids, cedenteId) {
     if (!ids || ids.length === 0 || !cedenteId) {
       return [];
@@ -42,6 +39,6 @@ class SequelizeWebhookRepository {
       },
     });
   }
-} // <-- Esta é a chave '}' final correta
+}
 
 module.exports = SequelizeWebhookRepository;

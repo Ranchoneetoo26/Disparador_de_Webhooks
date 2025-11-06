@@ -3,8 +3,6 @@
 const { v4: uuidv4 } = require("uuid");
 const UnprocessableEntityException = require("../../domain/exceptions/UnprocessableEntityException.js");
 
-// 1. MAPEAMENTO DE SITUAÇÃO (Regra 3.1.O)
-// Tabela do PDF para validar o status
 const MAPA_SITUACAO = {
   boleto: {
     disponivel: "REGISTRADO",
@@ -24,9 +22,7 @@ const MAPA_SITUACAO = {
 };
 
 class ReenviarWebhookUseCase {
-  // --- FIM DA CORREÇÃO ---
   constructor({
-    // servicoRepository foi REMOVIDO para corrigir o crash
     webhookRepository,
     webhookReprocessadoRepository,
     httpClient,
@@ -48,7 +44,6 @@ class ReenviarWebhookUseCase {
     const { product, id: ids, kind, type } = input;
     const { cedente } = input;
 
-    // 2. CACHE DE REQUISIÇÃO (Regra 3.1.N)
     const cacheKey = `reenvio:${cedente.id}:${JSON.stringify(input)}`;
     const cachedRequest = await this.redisClient.get(cacheKey);
 
@@ -61,8 +56,6 @@ class ReenviarWebhookUseCase {
     }
     await this.redisClient.set(cacheKey, "processing", { ttl: 3600 });
 
-    // 3. VALIDAÇÃO DE SITUAÇÃO (Regra 3.1.O) - Lógica Corrigida
-    // Busca os *Webhooks* (que têm ID string)
     const webhooks = await this.webhookRepository.findByIdsAndCedente(
       ids,
       cedente.id
@@ -91,22 +84,14 @@ class ReenviarWebhookUseCase {
       throw err;
     }
 
-    // Valida o status DENTRO DO PAYLOAD do webhook
     const idsSituacaoErrada = webhooks
       .filter((wh) => {
-        // Assume que o status está em 'webhook.payload.status'
-        // NOTA: O seeder tem 'pago', mas a regra pede 'LIQUIDADO'.
-        // Isso significa que o seeder está "errado" ou a regra do PDF está
-        // simplificada. Vamos assumir que o 'status' no payload deve
-        // corresponder ao 'MAPA_SITUACAO'.
         const statusReal = wh.payload?.status;
         return statusReal !== situacaoEsperada;
       })
       .map((wh) => wh.id);
 
     if (idsSituacaoErrada.length > 0) {
-      // O seeder tem "pago" e o teste é "disponivel" (espera "REGISTRADO")
-      // "pago" != "REGISTRADO", então o erro 422 vai disparar.
       throw new UnprocessableEntityException(
         `Não foi possível gerar a notificação. A situação do ${product} diverge do tipo de notificação solicitado (esperado: ${situacaoEsperada}).`,
         idsSituacaoErrada
@@ -115,7 +100,6 @@ class ReenviarWebhookUseCase {
 
     const protocoloLote = uuidv4();
 
-    // Inicia o reenvio
     const reenviosPromises = webhooks.map((webhook) => {
       console.log(
         `[Reenvio] Processando ID: ${webhook.id}, URL: ${webhook.url}`
@@ -125,7 +109,6 @@ class ReenviarWebhookUseCase {
 
     const resultados = await Promise.allSettled(reenviosPromises);
 
-    // 4. FALHA NO PROCESSAMENTO (Regra 3.1.P)
     const sucessos = resultados.filter((r) => r.status === "fulfilled");
     if (sucessos.length === 0) {
       const err = new Error(
@@ -136,7 +119,6 @@ class ReenviarWebhookUseCase {
       throw err;
     }
 
-    // 5. ARMAZENAMENTO PÓS-SUCESSO (Regra 3.1.R)
     const registroProtocolo = {
       id: uuidv4(),
       protocolo: protocoloLote,

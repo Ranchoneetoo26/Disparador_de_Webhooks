@@ -9,7 +9,6 @@ const SequelizeCedenteRepository = require("../../../database/sequelize/reposito
 const SequelizeSoftwareHouseRepository = require("../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js");
 const SequelizeWebhookReprocessadoRepository = require("../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js");
 
-// Importa a INSTÂNCIA singleton do cache
 const redisCacheRepository = require("../../../cache/redis/RedisCacheRepository.js");
 
 const router = express.Router();

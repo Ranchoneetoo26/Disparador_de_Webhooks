@@ -15,10 +15,6 @@ class SequelizeServicoRepository {
     }
   }
 
-  /**
-   * Busca serviços (boletos, pix, etc.) pelos seus IDs
-   * e garante que eles pertençam ao cedente autenticado.
-   */
   async findByIdsAndCedente(ids, cedenteId) {
     if (!ids || ids.length === 0 || !cedenteId) {
       return [];
@@ -41,7 +37,6 @@ class SequelizeServicoRepository {
               as: "conta",
               required: true,
               where: {
-                // Filtro final para garantir que o serviço pertence ao cedente
                 cedente_id: cedenteId,
               },
             },

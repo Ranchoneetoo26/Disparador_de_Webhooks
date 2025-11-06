@@ -35,7 +35,6 @@ describe("ProtocoloController (unit)", () => {
 
     await controller.consultarProtocolo(req, res);
 
-    // expect(res.status).toHaveBeenCalledWith(404);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });

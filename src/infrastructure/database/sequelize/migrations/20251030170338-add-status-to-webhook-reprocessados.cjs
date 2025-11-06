@@ -1,14 +1,14 @@
-'use strict';
+"use strict";
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('WebhookReprocessados', 'status', {
+    await queryInterface.addColumn("WebhookReprocessados", "status", {
       type: Sequelize.STRING,
-      allowNull: true 
+      allowNull: true,
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.removeColumn('WebhookReprocessados', 'status');
-  }
+    await queryInterface.removeColumn("WebhookReprocessados", "status");
+  },
 };

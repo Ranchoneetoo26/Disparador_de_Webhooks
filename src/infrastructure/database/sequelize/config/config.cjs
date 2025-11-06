@@ -1,14 +1,9 @@
 const path = require("path");
 
-// --- MELHORIA AQUI ---
-// Define qual arquivo .env carregar com base no NODE_ENV
-// O Jest automaticamente define process.env.NODE_ENV = 'test'
-const env = process.env.NODE_ENV || 'development';
-const envPath = env === 'test' ? '.env.test' : '.env';
+const env = process.env.NODE_ENV || "development";
+const envPath = env === "test" ? ".env.test" : ".env";
 
-// Carrega o arquivo .env correto
 require("dotenv").config({ path: path.resolve(process.cwd(), envPath) });
-// --- FIM DA MELHORIA ---
 
 console.log(`--- DEBUG: Carregando env do [${envPath}] ---`);
 console.log("DB_HOST:", process.env.DB_HOST);
@@ -41,7 +36,7 @@ module.exports = {
     port: DB_PORT,
     dialect: "postgres",
     dialectModule: require("pg"),
-    logging: false, // Correto
+    logging: false,
     define: {
       timestamps: true,
       underscored: true,
