@@ -7,7 +7,7 @@ const SequelizeCedenteRepository = require("../../../database/sequelize/reposito
 const SequelizeSoftwareHouseRepository = require("../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js");
 const SequelizeWebhookReprocessadoRepository = require("../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js");
 const SequelizeWebhookRepository = require("../../../database/sequelize/repositories/SequelizeWebhookRepository.js");
-const httpClient = require("../../../http/providers/AxiosProvider.js");
+const httpClient = require("../../providers/AxiosProvider.js");
 
 const RedisCacheRepository = require("../../../cache/redis/RedisCacheRepository.js");
 

@@ -86,7 +86,15 @@ class ReenviarWebhookUseCase {
 
     const idsSituacaoErrada = webhooks
       .filter((wh) => {
-        const statusReal = wh.payload?.status;
+        let whData = wh.data;
+        if (typeof whData === 'string') {
+          try {
+            whData = JSON.parse(whData);
+          } catch (e) {
+            whData = {};
+          }
+        }
+        const statusReal = whData?.payload?.status;
         return statusReal !== situacaoEsperada;
       })
       .map((wh) => wh.id);
@@ -101,10 +109,22 @@ class ReenviarWebhookUseCase {
     const protocoloLote = uuidv4();
 
     const reenviosPromises = webhooks.map((webhook) => {
+      let whData = webhook.data;
+      if (typeof whData === 'string') {
+        try {
+          whData = JSON.parse(whData);
+        } catch (e) {
+          whData = {};
+        }
+      }
+      
+      const url = whData?.url;
+      const payload = whData?.payload;
+
       console.log(
-        `[Reenvio] Processando ID: ${webhook.id}, URL: ${webhook.url}`
+        `[Reenvio] Processando ID: ${webhook.id}, URL: ${url}`
       );
-      return this.processarReenvio(webhook);
+      return this.processarReenvio(webhook.id, url, payload);
     });
 
     const resultados = await Promise.allSettled(reenviosPromises);
@@ -127,28 +147,32 @@ class ReenviarWebhookUseCase {
       cedente_id: cedente.id,
       kind: kind,
       type: type,
-      servico_id: ids,
+      servico_id: { ids_solicitados: ids },
       status: "sent",
     };
     await this.reprocessadoRepository.create(registroProtocolo);
     return { protocolo: protocoloLote };
   }
 
-  async processarReenvio(webhook, cedente, conta) {
+  async processarReenvio(webhookId, url, payload) {
     let response;
     try {
-      response = await this.httpClient.post(webhook.url, webhook.payload, {
+      if (!url || !payload) {
+        throw new Error("URL ou Payload não encontrados no registro 'data'");
+      }
+      
+      response = await this.httpClient.post(url, payload, {
         timeout: 5000,
       });
       const isSuccess =
         response && response.status >= 200 && response.status < 300;
       if (isSuccess) {
-        await this.webhookRepository.update(webhook.id, {
+        await this.webhookRepository.update(webhookId, {
           tentativas: (webhook.tentativas || 0) + 1,
           last_status: response.status,
         });
         return {
-          id: webhook.id,
+          id: webhookId,
           status: "fulfilled",
           httpStatus: response.status,
         };
@@ -157,13 +181,13 @@ class ReenviarWebhookUseCase {
       }
     } catch (err) {
       console.error(
-        `[ProcessarReenvio] Falha ao enviar ID ${webhook.id}: ${err.message}`
+        `[ProcessarReenvio] Falha ao enviar ID ${webhookId}: ${err.message}`
       );
-      await this.webhookRepository.update(webhook.id, {
+      await this.webhookRepository.update(webhookId, {
         tentativas: (webhook.tentativas || 0) + 1,
         last_status: response?.status || null,
       });
-      throw new Error(`Falha no reenvio para ${webhook.id}: ${err.message}`);
+      throw new Error(`Falha no reenvio para ${webhookId}: ${err.message}`);
     }
   }
 }
