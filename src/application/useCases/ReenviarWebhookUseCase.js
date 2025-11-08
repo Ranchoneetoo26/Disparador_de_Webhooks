@@ -124,7 +124,7 @@ class ReenviarWebhookUseCase {
       console.log(
         `[Reenvio] Processando ID: ${webhook.id}, URL: ${url}`
       );
-      return this.processarReenvio(webhook.id, url, payload);
+      return this.processarReenvio(webhook, url, payload);
     });
 
     const resultados = await Promise.allSettled(reenviosPromises);
@@ -154,8 +154,9 @@ class ReenviarWebhookUseCase {
     return { protocolo: protocoloLote };
   }
 
-  async processarReenvio(webhookId, url, payload) {
+  async processarReenvio(webhook, url, payload) {
     let response;
+    const webhookId = webhook.id;
     try {
       if (!url || !payload) {
         throw new Error("URL ou Payload não encontrados no registro 'data'");
