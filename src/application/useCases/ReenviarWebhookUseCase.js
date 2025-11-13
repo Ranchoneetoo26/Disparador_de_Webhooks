@@ -181,25 +181,10 @@ class ReenviarWebhookUseCase {
         throw new Error(`HTTP Status ${response.status}`);
       }
     } catch (err) {
-<<<<<<< HEAD
-      // ✅ Caso erro de rede ou exceção
-      await this.reprocessadoRepository.create({
-        data: webhook.payload,
-        cedente_id: webhook.cedente_id || null,
-        kind: webhook.kind || kind || "unknown",
-        type: webhook.type || type || "unknown",
-        servico_id: webhook.servico_id || JSON.stringify(id) || null,
-        protocolo: `error:${err.message.slice(0, 100)}`,
-        meta: { errorMessage: err.message },
-      });
-
-      await this.webhookRepository.update(webhook.id, {
-=======
       console.error(
         `[ProcessarReenvio] Falha ao enviar ID ${webhookId}: ${err.message}`
       );
       await this.webhookRepository.update(webhookId, {
->>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb
         tentativas: (webhook.tentativas || 0) + 1,
         last_status: response?.status || null,
       });

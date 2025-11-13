@@ -1,18 +1,9 @@
-<<<<<<< HEAD
-'use strict';
-=======
 "use strict";
->>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb
 
 const Joi = require("joi");
 
-<<<<<<< HEAD
-export default class ReenviarWebhookInput {
-  constructor({ product, id, kind, type } = {}) {
-=======
 class ReenviarWebhookInput {
   constructor({ product, id, kind, type }) {
->>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb
     this.product = product;
     this.id = id;
     this.kind = kind;

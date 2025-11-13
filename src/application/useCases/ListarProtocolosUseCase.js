@@ -72,11 +72,7 @@ class ListarProtocolosUseCase {
           console.error("Erro ao parsear dados do cache:", e);
         }
       } else {
-<<<<<<< HEAD
-        return cachedData; 
-=======
         return cachedData;
->>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb
       }
     }
 
