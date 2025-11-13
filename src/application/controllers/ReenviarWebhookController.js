@@ -1,13 +1,21 @@
+"use strict";
 
-'use strict';
+const ReenviarWebhookUseCase = require("../useCases/ReenviarWebhookUseCase.js");
 
-import ReenviarWebhookUseCase from '../useCases/ReenviarWebhookUseCase.js';
-import ReenviarWebhookOutput from '../dtos/ReenviarWebhookOutput.js';
-import ReenviarWebhookInput from '../dtos/ReenviarWebhookInput.js';
+const ReenviarWebhookInput = require("../dtos/ReenviarWebhookInput.js");
+const ReenviarWebhookOutput = require("../dtos/ReenviarWebhookOutput.js");
+const UnprocessableEntityException = require("../../domain/exceptions/UnprocessableEntityException.js");
 
-export default class ReenviarWebhookController {
-  constructor({ webhookRepository, webhookReprocessadoRepository, httpClient, redisClient }) {
+class ReenviarWebhookController {
+  constructor({
+    servicoRepository,
+    webhookRepository,
+    webhookReprocessadoRepository,
+    httpClient,
+    redisClient,
+  }) {
     this.useCase = new ReenviarWebhookUseCase({
+      servicoRepository,
       webhookRepository,
       webhookReprocessadoRepository,
       httpClient,
@@ -17,6 +25,7 @@ export default class ReenviarWebhookController {
 
   handle = async (req, res) => {
     try {
+<<<<<<< HEAD
       const finalPayload = {
         ...req.body,
         id: [req.params.id]
@@ -41,8 +50,44 @@ export default class ReenviarWebhookController {
         status = 502;
       }
 
+=======
+      const { cedente } = req;
+      const input = ReenviarWebhookInput.validate(req.body);
+      input.cedente = cedente;
+
+      const output = await this.useCase.execute(input, cedente);
+
+      return res.status(200).json(output);
+    } catch (err) {
+      console.error("[Erro no Reenvio - Controller]", err);
+
+      if (err instanceof UnprocessableEntityException) {
+        return res
+          .status(err.status)
+          .json(
+            ReenviarWebhookOutput.error(
+              err.status,
+              err.message,
+              err.ids_invalidos
+            )
+          );
+      }
+
+      const status = err.status || 400;
+      const message =
+        err.message || "Erro desconhecido ao processar o reenvio.";
+>>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb
       const detalhes = err.ids_invalidos || null;
-      return res.status(status).json(ReenviarWebhookOutput.error(status, err.message, detalhes));
+
+      return res
+        .status(status)
+        .json(ReenviarWebhookOutput.error(status, message, detalhes));
     }
   }
+<<<<<<< HEAD
 }
+=======
+}
+
+module.exports = ReenviarWebhookController;
+>>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb

@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 'use strict';
+=======
+"use strict";
+>>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb
 
-import Joi from 'joi';
+const Joi = require("joi");
 
+<<<<<<< HEAD
 export default class ReenviarWebhookInput {
   constructor({ product, id, kind, type } = {}) {
+=======
+class ReenviarWebhookInput {
+  constructor({ product, id, kind, type }) {
+>>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb
     this.product = product;
     this.id = id;
     this.kind = kind;
@@ -13,11 +22,11 @@ export default class ReenviarWebhookInput {
   static validate(input) {
     const schema = Joi.object({
       product: Joi.string()
-        .valid('boleto', 'pagamento', 'pix')
+        .valid("boleto", "pagamento", "pix")
         .required()
         .messages({
-          'any.required': 'O campo "product" é obrigatório.',
-          'any.only': 'O campo "product" deve ser boleto, pagamento ou pix.',
+          "any.required": 'O campo "product" é obrigatório.',
+          "any.only": 'O campo "product" deve ser boleto, pagamento ou pix.',
         }),
 
       id: Joi.array()
@@ -26,32 +35,29 @@ export default class ReenviarWebhookInput {
         .max(30)
         .required()
         .messages({
-          'array.base': 'O campo "id" deve ser um array de strings.',
-          'array.max': 'O campo "id" não pode conter mais de 30 elementos.',
-          'any.required': 'O campo "id" é obrigatório.',
+          "array.base": 'O campo "id" deve ser um array de strings.',
+          "array.max": 'O campo "id" não pode conter mais de 30 elementos.',
+          "any.required": 'O campo "id" é obrigatório.',
         }),
 
-      kind: Joi.string()
-        .valid('webhook')
-        .required()
-        .messages({
-          'any.required': 'O campo "kind" é obrigatório.',
-          'any.only': 'O campo "kind" deve ser "webhook".',
-        }),
+      kind: Joi.string().valid("webhook").required().messages({
+        "any.required": 'O campo "kind" é obrigatório.',
+        "any.only": 'O campo "kind" deve ser "webhook".',
+      }),
 
       type: Joi.string()
-        .valid('disponivel', 'cancelado', 'pago')
+        .valid("disponivel", "cancelado", "pago")
         .required()
         .messages({
-          'any.required': 'O campo "type" é obrigatório.',
-          'any.only': 'O campo "type" deve ser disponivel, cancelado ou pago.',
+          "any.required": 'O campo "type" é obrigatório.',
+          "any.only": 'O campo "type" deve ser disponivel, cancelado ou pago.',
         }),
     });
 
     const { error, value } = schema.validate(input, { abortEarly: false });
 
     if (error) {
-      const message = error.details.map((err) => err.message).join(' | ');
+      const message = error.details.map((err) => err.message).join(" | ");
       const validationError = new Error(message);
       validationError.status = 400;
       throw validationError;
@@ -60,3 +66,5 @@ export default class ReenviarWebhookInput {
     return new ReenviarWebhookInput(value);
   }
 }
+
+module.exports = ReenviarWebhookInput;

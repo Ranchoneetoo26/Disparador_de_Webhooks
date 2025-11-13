@@ -1,38 +1,36 @@
 module.exports = {
-  rootDir: '.',
-  testEnvironment: 'node',
+  rootDir: ".",
+  testEnvironment: "node",
   verbose: true,
 
   transform: {
-    '^.+\\.js$': ['babel-jest', { configFile: './babel.config.cjs' }]
+    "^.+\\.js$": ["babel-jest", { configFile: "./babel.config.cjs" }],
   },
 
-  moduleFileExtensions: ['js', 'cjs', 'json', 'node'],
+  moduleFileExtensions: ["js", "cjs", "json", "node"],
 
   moduleNameMapper: {
-  '^@/(.*)$': '<rootDir>/src/$1',
-  "^@database$": "<rootDir>/src/infrastructure/database/sequelize/repositories/index.js",
-  '^@infrastructure/(.*)$': '<rootDir>/src/infrastructure/$1',
-  '^@domain/(.*)$': '<rootDir>/src/domain/$1',
-  '^@application/(.*)$': '<rootDir>/src/application/$1',
-  '^@services/(.*)$': '<rootDir>/src/services/$1',
-  '^@tests/(.*)$': '<rootDir>/tests/$1'
-},
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "^@database$":
+      "<rootDir>/src/infrastructure/database/sequelize/repositories/index.js",
+    "^@infrastructure/(.*)$": "<rootDir>/src/infrastructure/$1",
+    "^@domain/(.*)$": "<rootDir>/src/domain/$1",
+    "^@application/(.*)$": "<rootDir>/src/application/$1",
+    "^@services/(.*)$": "<rootDir>/src/services/$1",
+    "^@tests/(.*)$": "<rootDir>/tests/$1",
+  },
 
-  moduleDirectories: ['node_modules', 'src'],
+  moduleDirectories: ["node_modules", "src"],
 
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.cjs"],
 
-  testMatch: [
-    '<rootDir>/tests/**/*.test.js',
-    '<rootDir>/tests/**/*.spec.js'
-  ],
+  testMatch: ["<rootDir>/tests/**/*.test.js", "<rootDir>/tests/**/*.spec.js"],
 
   testEnvironmentOptions: {
-  customExportConditions: ['node', 'node-addons']
-},
+    customExportConditions: ["node", "node-addons"],
+  },
 
-  transformIgnorePatterns: ['/node_modules/'],
+  transformIgnorePatterns: ["/node_modules/"],
 
-  clearMocks: true
+  clearMocks: true,
 };

@@ -1,12 +1,14 @@
 # 📌 Projeto Disparador de Webhooks
 
+Sistema responsável por reprocessar e reenviar notificações de webhooks do PlugBoleto que não foram entregues corretamente, garantindo rastreabilidade, confiabilidade e controle operacional.
+
 ---
 
 ## 👥 Equipe de Desenvolvimento
 
 | Nome Completo    | Função / Responsabilidade Principal |
 | ---------------- | ----------------------------------- |
-| Antonio Neto     | Analista de projeto                 |
+| Antonio Neto     | Analista de Projeto                 |
 | Matheus Moreira  | QA Engineer                         |
 | Lucas Arruma     | Database Engineer                   |
 | Thiago Cezario   | Backend Developer                   |
@@ -17,80 +19,52 @@
 
 ---
 
-## 📖 Introdução
+## 📖 Descrição do Projeto
 
-O **Disparador de WH** é uma API desenvolvida em **Node.js** com o objetivo de reenviar notificações de **webhooks do PlugBoleto** que não foram entregues corretamente.  
-O sistema garante robustez, controle e rastreabilidade no reprocessamento dessas notificações.
+O Disparador de Webhooks (WH) é uma API construída em Node.js, responsável por identificar, registrar e reenviar webhooks que não foram processados corretamente. Seu objetivo principal é garantir que as notificações cheguem ao destino, evitando perda de eventos críticos.
 
 ---
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Node.js + Express.js** → API Backend
-- **PostgreSQL** → Banco de Dados
-- **Sequelize** → ORM para integração com banco
-- **Redis** → Cache de dados e otimização de performance
-- **Docker** → Gerenciamento de contêineres para o ambiente de desenvolvimento
-- **dotenv** → Variáveis de ambiente
-- **axios** → Requisições HTTP externas
-- **jsonwebtoken (JWT)** → Autenticação
-- **uuid** → Identificadores únicos
-- **joi** → Validação de dados
-- **webhook.site** → Testes de simulação de webhooks
+- Node.js + Express.js
+- PostgreSQL
+- Sequelize ORM
+- Redis
+- Docker
+- JWT (Autenticação)
+- axios (requisições externas)
+- joi (validações)
+- Swagger (Documentação)
+- Jest + Supertest (Testes Automatizados)
 
 ---
 
-## ⚙️ Guia de Configuração e Instalação do Ambiente
+## ⚙️ Configuração do Ambiente
 
-Siga estes passos para configurar e rodar o projeto em sua máquina local, especialmente em um ambiente Windows.
+### Pré-requisitos
 
-### 1. Pré-requisitos
+- Git
+- Node.js
+- Docker Desktop
 
-Antes de começar, garanta que você tenha as seguintes ferramentas instaladas:
+### Configuração no Windows
 
-- **Git**
-- **Node.js** (recomendado via NVM quando possível)
-- **Docker Desktop**
+Liberar execução de scripts no PowerShell:
+Set-ExecutionPolicy RemoteSigned
 
-### 2. Configuração do Ambiente Windows (Passo Único)
-
-#### a. Ajustar a Política do PowerShell
-
-O PowerShell pode bloquear a execução de scripts `npm`. Para permitir:
-
-1. Abra o **PowerShell como Administrador**.
-2. Execute o comando:
-   ```bash
-   Set-ExecutionPolicy RemoteSigned
-   ```
-3. Confirme digitando `S` ou `A` e pressionando Enter.
-
-#### b. Verificar Conflitos de Porta com PostgreSQL
-
-O Docker precisa da porta `5433` livre.  
-Se você tiver o PostgreSQL instalado localmente, ele pode causar conflitos:
-
-1. Abra o **Gerenciador de Serviços** (`Win + R`, digite `services.msc`).
-2. Procure por qualquer serviço chamado `postgresql`.
-3. Se encontrar algum **"Em Execução"**, clique com o botão direito, **Pare** e **Desative** o serviço.
+Verificar conflito com PostgreSQL local:
+Pare o serviço PostgreSQL caso ele esteja usando a porta 5433.
 
 ---
 
-### 3. Passos para Configurar o Projeto
+### Instalação do Projeto
 
-1. **Clonar o Repositório:**
-
-```bash
-git clone <URL_DO_REPOSITORIO_GIT>
+Clonar repositório:
+git clone <https://github.com/Ranchoneetoo26/Disparador_de_Webhooks.git>
 cd Disparador_de_Webhooks
-```
 
-2. **Criar o Arquivo `.env`**
-
-Na raiz do projeto, crie o arquivo `.env` com o conteúdo abaixo:
-
-```env
-# --- BANCO DE DADOS DE DESENVOLVIMENTO ---
+Criar arquivo `.env`:
 DB_HOST=localhost
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
@@ -98,150 +72,103 @@ DB_DATABASE=disparador_dev
 DB_DIALECT=postgres
 DB_PORT=5433
 
-# --- BANCO DE DADOS DE TESTE ---
 DB_HOST_TEST=localhost
 DB_USERNAME_TEST=postgres
 DB_PASSWORD_TEST=postgres
 DB_DATABASE_TEST=disparador_test
 DB_DIALECT_TEST=postgres
 DB_PORT_TEST=5433
-```
 
-3. **Instalar as Dependências:**
-
-```bash
+Instalar dependências:
 npm install
-```
 
-4. **Iniciar o Banco de Dados com Docker:**
+Subir containers e preparar banco:
 
-```bash
-docker-compose up -d
-```
-
-5. **Rodar as "Migrations":**
-
-```bash
+docker compose down -v
+docker compose up -d
 npx sequelize-cli db:migrate
-npx sequelize-cli db:migrate --env test
-```
+npx sequelize-cli db:seed:all
+
+Se ocorrer erro nos testes, repetir a preparação do banco.
 
 ---
 
-### 4. Rodando a Aplicação
+### Execução
 
-- **Modo de desenvolvimento:**
+Rodar a aplicação:
+npm start
 
-  ```bash
-  npm start
-  ```
+Rodar todos os testes:
+npm test
 
-- **Rodar os testes automatizados:**
-  ```bash
-  npm test
-  ```
-- **Rodando Testes Unitários Específicos:**
-
-  - Para testar o `UseCase` de consulta individual de protocolo (`GET /protocolo/:uuid`):
-    ```bash
-    npm test -- tests/unit/userCases/ConsultarProtocoloUseCase.spec.js
-    ```
-  - Para testar o `Middleware` de autenticação:
-    ```bash
-    npm test -- tests/unit/middlewares/AuthMiddleware.spec.js
-    ```
-  - Para testar a lógica de prioridade de configuração (Conta vs. Cedente):
-    ```bash
-    npm test -- tests/unit/services/notificationConfigResolver.spec.js
-    ```
+Rodar testes específicos se necessario:
+npm test -- tests/unit/userCases/ConsultarProtocoloUseCase.spec.js
+npm test -- tests/unit/middlewares/AuthMiddleware.spec.js
+npm test -- tests/unit/services/notificationConfigResolver.spec.js
 
 ---
 
-## Swagger
+## 📄 Swagger
 
-- Bibliotecas a serem instaladas
-
-- npm install js-yaml swagger-ui-express
-
-## Porta de acesso
-
-- http://localhost:3333/
+Acesse no navegador após subir a API:
+http://localhost:3333/wb-docs
 
 ---
 
-## 📂 Estrutura do Projeto - Clean Architecture
+## 📂 Estrutura do Projeto (Clean Architecture)
 
-```
 Disparador_de_Webhooks/
-│
-├── config/
-│   ├── config.js
-│   └── index.js
-│
-├── src/
-│   ├── app.js
-│   ├── server.js
-│   ├── application/
-│   │   ├── dtos/
-│   │   └── useCases/
-│   ├── domain/
-│   │   ├── entities/
-│   │   ├── exceptions/
-│   │   └── repositories/
-│   └── infrastructure/
-│       ├── database/
-│       ├── cache/
-│       ├── http/
-│       └── providers/
-│
-├── tests/
-│   ├── unit/
-│   └── integration/
-│
-├── .env
-├── docker-compose.yml
-├── package.json
-└── README.md
-```
+├─ config/
+├─ src/
+│ ├─ app.js
+│ ├─ server.js
+│ ├─ application/
+│ ├─ domain/
+│ └─ infrastructure/
+├─ tests/
+└─ docker-compose.yml
 
 ---
 
 ## 🧩 Entidades Principais
 
-- **SoftwareHouse**
-- **Cedente**
-- **Conta**
-- **Convênio**
-- **Serviço**
-- **WebhookReprocessado**
+- SoftwareHouse
+- Cedente
+- Conta
+- Convênio
+- Serviço
+- WebhookReprocessado
 
 ---
 
-## 🧠 Regras de Negócio
+## 📖 Regras de Negócio
 
-- O sistema deve reenviar webhooks pendentes ou falhos.
-- Cada requisição de webhook é armazenada com histórico de tentativas.
-- Logs e protocolos são rastreáveis por UUID.
-- Configurações específicas podem ser aplicadas por **conta** ou **cedente**.
-- Validações e autenticação via **JWT**.
+1.  **Autenticação**: Este endpoint é protegido e exige um token JWT válido.
+2.  **Validação**: O corpo da requisição (payload) é validado pelo Joi.
+3.  **Processo**: Ao receber uma requisição, o sistema:
+    - Identifica os webhooks pendentes ou falhos com base nos critérios recebidos.
+    - Enfileira esses webhooks (provavelmente no Redis) para serem processados de forma assíncrona.
+    - Retorna imediatamente um protocolo (UUID) para o usuário, confirmando que a solicitação foi recebida.
+4.  **Assíncrono**: O reenvio **não** acontece no momento da requisição. Ele é apenas agendado. O processamento real é feito por outro serviço (worker) que consome a fila.
+
+## ✍️ Termos Específicos (Onboarding)
+
+- **Protocolo**: É o UUID retornado. Ele é a "chave" para consultar o status desse lote de reenvio.
+- **Reenvio vs. Reprocessamento**: Para este endpoint, "reenviar" significa "agendar um reprocessamento".
 
 ---
 
 ## 🔑 Endpoints Principais
 
-| Método | Rota               | Descrição                                      |
-| ------ | ------------------ | ---------------------------------------------- |
-| `POST` | `/reenviar`        | Reenvia notificações de webhooks não entregues |
-| `GET`  | `/protocolo`       | Lista protocolos de reenvio                    |
-| `GET`  | `/protocolo/:uuid` | Consulta detalhes de um protocolo específico   |
+| Método | Rota             | Descrição                     |
+| ------ | ---------------- | ----------------------------- |
+| POST   | /reenviar        | Reenvia webhooks pendentes    |
+| GET    | /protocolo       | Lista protocolos              |
+| GET    | /protocolo/:uuid | Consulta protocolo específico |
 
 ---
 
 ## 🧾 Licença
 
-Este projeto foi desenvolvido para fins educacionais e acadêmicos.  
-© 2025 - Todos os direitos reservados à equipe de desenvolvimento.
-
-```
-
-```
+Projeto criado para fins educacionais e acadêmicos.  
+© 2025 — Todos os direitos reservados à equipe de desenvolvimento.

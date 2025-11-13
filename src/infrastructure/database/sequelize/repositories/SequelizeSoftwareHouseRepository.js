@@ -1,28 +1,31 @@
-import { models, sequelize } from '../models/index.cjs';
+"use strict";
+const { models } = require("../models/index.cjs");
 
-export default class SequelizeSoftwareHouseRepository {
-  constructor() {
-    this.db = sequelize;
+class SequelizeSoftwareHouseRepository {
+  /**
+   * @param {Object} params
+   * @param {import('sequelize').Sequelize} params.sequelize - instância do Sequelize (opcional)
+   */
+  constructor() {}
+
+  _getSoftwareHouseModel() {
+    return models.SoftwareHouse;
   }
 
   async findByCnpjAndToken(cnpj, token) {
-    if (!cnpj || !token) return null;
-    return models.SoftwareHouse.findOne({ where: { cnpj, token } });
-  }
+    if (!cnpj || !token) {
+      return null;
+    }
 
-  async findByToken(token) {
-    if (!token) return null;
+    const SoftwareHouse = this._getSoftwareHouseModel();
 
-    return models.SoftwareHouse.findOne({ where: { token } });
-  }
-
-  async findById(id) {
-    if (!id) return null;
-
-    return models.SoftwareHouse.findByPk(id);
-  }
-
-  async listarTodas() {
-    return models.SoftwareHouse.findAll();
+    return SoftwareHouse.findOne({
+      where: {
+        cnpj,
+        token,
+      },
+    });
   }
 }
+
+module.exports = SequelizeSoftwareHouseRepository;

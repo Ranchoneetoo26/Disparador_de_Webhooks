@@ -1,10 +1,14 @@
-console.log("--- server.js: Iniciando ---"); // <-- Adicione aqui
-import app from "./app.js";
-console.log("--- server.js: app importado ---"); // <-- Adicione aqui
+"use strict";
+
+console.log("--- server.js: Iniciando ---");
+const app = require("./app.js");
+console.log("--- server.js: App importado ---");
 
 const PORT = process.env.PORT || 3333;
+console.log(`--- server.js: Tentando iniciar na porta ${PORT} ---`);
 
-console.log(`--- server.js: Tentando iniciar na porta ${PORT} ---`); // <-- Adicione aqui
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Servidor rodando!`);
+  console.log(`🔗 API disponível em: http://localhost:${PORT}`);
+  console.log(`📘 Documentação Swagger: http://localhost:${PORT}/wb-docs/`);
 });

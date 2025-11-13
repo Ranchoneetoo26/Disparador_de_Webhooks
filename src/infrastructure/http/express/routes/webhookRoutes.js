@@ -1,44 +1,43 @@
-import express from 'express';
-import createAuthMiddleware from '../middlewares/AuthMiddleware.js';
-import SequelizeCedenteRepository from '../../../database/sequelize/repositories/SequelizeCedenteRepository.js';
-import SequelizeSoftwareHouseRepository from '../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js';
-import WebhookController from '../controllers/WebhookController.js';
+"use strict";
+
+const express = require("express");
+const createAuthMiddleware = require("../middlewares/AuthMiddleware.js");
+const ReenviarWebhookController = require("../../../../application/controllers/ReenviarWebhookController.js");
+const SequelizeCedenteRepository = require("../../../database/sequelize/repositories/SequelizeCedenteRepository.js");
+const SequelizeSoftwareHouseRepository = require("../../../database/sequelize/repositories/SequelizeSoftwareHouseRepository.js");
+const SequelizeWebhookReprocessadoRepository = require("../../../database/sequelize/repositories/SequelizeWebhookReprocessadoRepository.js");
+const SequelizeWebhookRepository = require("../../../database/sequelize/repositories/SequelizeWebhookRepository.js");
+const httpClient = require("../../providers/AxiosProvider.js");
+
+const RedisCacheRepository = require("../../../cache/redis/RedisCacheRepository.js");
+
+const { models } = require("../../../database/sequelize/models/index.cjs");
 
 const router = express.Router();
 
-let cedenteRepository;
-let softwareHouseRepository;
+const cedenteRepository = new SequelizeCedenteRepository({ models });
+const softwareHouseRepository = new SequelizeSoftwareHouseRepository({
+  models,
+});
+const authMiddleware = createAuthMiddleware({
+  cedenteRepository,
+  softwareHouseRepository,
+});
 
-try {
-  cedenteRepository = new SequelizeCedenteRepository();
-} catch (e) {
-  cedenteRepository = SequelizeCedenteRepository;
-}
+const redisCacheRepository = new RedisCacheRepository();
 
-try {
-  softwareHouseRepository = new SequelizeSoftwareHouseRepository();
-} catch (e) {
-  softwareHouseRepository = SequelizeSoftwareHouseRepository;
-}
+const webhookRepository = new SequelizeWebhookRepository();
+const webhookReprocessadoRepository =
+  new SequelizeWebhookReprocessadoRepository();
 
-const authMiddleware = createAuthMiddleware({ cedenteRepository, softwareHouseRepository });
+const reenviarWebhookController = new ReenviarWebhookController({
+  webhookRepository,
+  webhookReprocessadoRepository,
+  httpClient,
+  redisClient: redisCacheRepository,
+});
+
 router.use(authMiddleware);
+router.post("/", (req, res) => reenviarWebhookController.handle(req, res));
 
-const safeHandler = (ctrl, method) => {
-  try {
-  if (!ctrl) return (req, res) => res.status(204).end();
-  const fn = ctrl[method] || ctrl;
-  if (typeof fn === 'function') return fn.bind(ctrl);
-  return (req, res) => res.status(204).end();
-  } catch (error) {
-    console.error('Error in safeHandler:', error);
-    return (req, res) => res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-
-const webhookController = new WebhookController();
-
-router.post('/', safeHandler(webhookController, 'reenviar'));
-router.get('/', safeHandler(webhookController, 'list'));
-
-export default router;
+module.exports = router;

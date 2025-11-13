@@ -1,16 +1,15 @@
-import {
+const {
   sequelize,
   models,
-} from "../../../src/infrastructure/database/sequelize/models/index.cjs";
-import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
+} = require("../../../src/infrastructure/database/sequelize/models/index.cjs");
+const { describe, expect, beforeEach, test } = require("@jest/globals");
+
 const { Convenio, Conta, Cedente, SoftwareHouse } = models;
 
 describe("Integration: Convenio model", () => {
-  let softwareHouse;
-  let conta;
-  let cedente;
+  let softwareHouse, cedente, conta;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     await sequelize.sync({ force: true });
 
     softwareHouse = await SoftwareHouse.create({
@@ -24,33 +23,28 @@ describe("Integration: Convenio model", () => {
       cnpj: "22222222000122",
       token: "valid_token_ced",
       status: "ativo",
-      softwarehouse_id: softwareHouse.id,
       data_criacao: new Date(),
+      software_house_id: softwareHouse.id,
     });
 
     conta = await Conta.create({
-      cedente_id: cedente.id,
-      produto: "boleto",
-      banco_codigo: "341",
+      produto: "pix",
+      banco_codigo: "001",
       status: "ativo",
       data_criacao: new Date(),
+      cedente_id: cedente.id,
     });
   });
 
-  afterAll(async () => {
-    await sequelize.close();
-  });
-
-  it("deve criar um novo Convenio", async () => {
-    const convenioData = {
-      numero_convenio: "1234567890",
+  test("deve criar um novo Convenio", async () => {
+    const convenio = await Convenio.create({
+      numero_convenio: "1234567",
       data_criacao: new Date(),
       conta_id: conta.id,
-    };
+    });
 
-    const convenioCriado = await Convenio.create(convenioData);
-
-    expect(convenioCriado).toBeDefined();
-    expect(convenioCriado.numero_convenio).toBe(convenioData.numero_convenio);
+    expect(convenio).toBeDefined();
+    expect(convenio.numero_convenio).toBe("1234567");
+    expect(convenio.conta_id).toBe(conta.id);
   });
 });

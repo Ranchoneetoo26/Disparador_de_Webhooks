@@ -1,28 +1,37 @@
-import { models, sequelize } from '../models/index.cjs';
+"use strict";
 
-export default class SequelizeCedenteRepository {
-  constructor() {
-    this.db = sequelize;
+const { models } = require("../models/index.cjs");
+
+class SequelizeCedenteRepository {
+  /**
+   * @param {Object} params
+   * @param {import('sequelize').Sequelize} params.sequelize - instância do Sequelize (opcional)
+   */
+  constructor() {}
+
+  _getCedenteModel() {
+    return models.Cedente;
   }
 
+  /**
+   * @param {string} cnpj
+   * @param {string} token
+   * @returns {Promise<Object|null>}
+   */
   async findByCnpjAndToken(cnpj, token) {
-    if (!cnpj || !token) return null;
-    return models.Cedente.findOne({ where: { cnpj, token } });
-  }
+    if (!cnpj || !token) {
+      return null;
+    }
 
-  async findByToken(token) {
-    if (!token) return null;
+    const Cedente = this._getCedenteModel();
 
-    return models.Cedente.findOne({ where: { token } });
-  }
-
-  async findById(id) {
-    if (!id) return null;
-
-    return models.Cedente.findByPk(id);
-  }
-
-  async listarTodos() {
-    return models.Cedente.findAll();
+    return Cedente.findOne({
+      where: {
+        cnpj: cnpj,
+        token: token,
+      },
+    });
   }
 }
+
+module.exports = SequelizeCedenteRepository;

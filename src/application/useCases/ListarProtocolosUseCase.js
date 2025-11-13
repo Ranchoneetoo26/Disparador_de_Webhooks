@@ -1,6 +1,9 @@
-import { subDays, differenceInDays } from "date-fns";
-import InvalidRequestException from "../../domain/exceptions/InvalidRequestException.js";
-export default class ListarProtocolosUseCase {
+"use strict";
+
+const { subDays, differenceInDays, endOfDay } = require("date-fns");
+const InvalidRequestException = require("../../domain/exceptions/InvalidRequestException.js");
+
+class ListarProtocolosUseCase {
   constructor({ webhookReprocessadoRepository, cacheRepository }) {
     if (!webhookReprocessadoRepository) {
       throw new Error("webhookReprocessadoRepository is required");
@@ -22,7 +25,8 @@ export default class ListarProtocolosUseCase {
     }
 
     const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
+
+    const endDate = endOfDay(new Date(end_date));
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       throw new InvalidRequestException("As datas fornecidas são inválidas.");
@@ -53,6 +57,7 @@ export default class ListarProtocolosUseCase {
         obj[key] = restFilters[key];
         return obj;
       }, {});
+
     const cacheKey = `protocolos:${start_date}:${end_date}:${JSON.stringify(
       sortedFilters
     )}`;
@@ -67,7 +72,11 @@ export default class ListarProtocolosUseCase {
           console.error("Erro ao parsear dados do cache:", e);
         }
       } else {
+<<<<<<< HEAD
         return cachedData; 
+=======
+        return cachedData;
+>>>>>>> 929a7ec6c858b3cadf7036896999f620d5e879bb
       }
     }
 
@@ -83,3 +92,5 @@ export default class ListarProtocolosUseCase {
     return protocolos;
   }
 }
+
+module.exports = ListarProtocolosUseCase;

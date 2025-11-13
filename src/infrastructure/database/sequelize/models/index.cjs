@@ -1,26 +1,32 @@
-require("dotenv").config();
+"use strict";
 
+require("dotenv").config();
 const SequelizeModule = require("sequelize");
 const Sequelize = SequelizeModule.Sequelize;
 const path = require("path");
 
-var isTest = process.env.NODE_ENV === "test";
+const env = process.env.NODE_ENV || "development";
 
-var DB_DIALECT = isTest
-  ? process.env.DB_DIALECT_TEST || "sqlite"
-  : process.env.DB_DIALECT || "sqlite";
-var DB_STORAGE = process.env.DB_STORAGE || ":memory:";
-var DB_HOST = process.env.DB_HOST || "localhost";
-var DB_DATABASE = process.env.DB_DATABASE || "disparador";
-var DB_USERNAME = process.env.DB_USERNAME || "root";
-var DB_PASSWORD = process.env.DB_PASSWORD || null;
+const configPath = path.resolve(__dirname, "..", "config", "config.cjs");
+const config = require(configPath)[env];
 
-const sequelize = new Sequelize(DB_DATABASE, DB_USERNAME, DB_PASSWORD, {
-  host: DB_HOST,
-  dialect: DB_DIALECT,
-  storage: DB_STORAGE,
-  logging: false,
-});
+if (!config) {
+  console.error(
+    `[index.cjs] FATAL: Configuração de DB para o ambiente "${env}" não encontrada em config.cjs`
+  );
+  process.exit(1);
+}
+
+console.log(
+  `[index.cjs] Conectando ao DB: Dialect=${config.dialect}, Host=${config.host}, DB=${config.database}`
+);
+
+const sequelize = new Sequelize(
+  config.database,
+  config.username,
+  config.password,
+  config
+);
 
 const models = {};
 
@@ -41,25 +47,31 @@ try {
     sequelize,
     SequelizeModule.DataTypes
   );
-  const WebhookModel = require("./WebhookModel.cjs")(
+  const WebhookReprocessado = require("./WebhookReprocessado.cjs")(
     sequelize,
     SequelizeModule.DataTypes
   );
-  const WebhookReprocessado = require("./WebhookReprocessadoModel.cjs")(
+
+  const Servico = require("./ServicoModel.cjs")(
     sequelize,
     SequelizeModule.DataTypes
   );
 
   models.WebhookReprocessado = WebhookReprocessado;
-  models.WebhookModel = WebhookModel;
   models.Convenio = Convenio;
   models.Conta = Conta;
   models.Cedente = Cedente;
   models.SoftwareHouse = SoftwareHouse;
+  models.Servico = Servico;
 } catch (err) {
-  console.warn(
-    "Aviso: nenhum model foi carregado automaticamente. Isso é esperado em ambiente de teste."
-  );
+  console.error("ERRO ao carregar Models no index.cjs:", err.message);
 }
+
+Object.keys(models).forEach((modelName) => {
+  if (models[modelName].associate) {
+    console.log(`[index.cjs] Associando model: ${modelName}`);
+    models[modelName].associate(models);
+  }
+});
 
 module.exports = { sequelize, Sequelize, models };
