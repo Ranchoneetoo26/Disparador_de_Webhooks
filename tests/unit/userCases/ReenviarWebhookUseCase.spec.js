@@ -10,9 +10,6 @@ const {
 
 const ReenviarWebhookUseCase = require("../../../src/application/useCases/ReenviarWebhookUseCase.js");
 
-const ConflictException = require("../../../src/domain/exceptions/ConflictException.js");
-const UnprocessableEntityException = require("../../../src/domain/exceptions/UnprocessableEntityException.js");
-
 let consoleLogSpy, consoleErrorSpy;
 beforeAll(() => {
   consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
@@ -104,11 +101,14 @@ describe("ReenviarWebhookUseCase", () => {
 
   test("should re-send the webhook successfully on a 2xx response", async () => {
     const fakeId = "boleto-123";
+    // CORREÇÃO AQUI: Estrutura do objeto simulado atualizada para ter 'data.payload'
     const fakeWebhook = {
       id: fakeId,
-      payload: { data: "test", status: "LIQUIDADO" },
       cedente_id: 1,
-      url: "http://original.com",
+      data: {
+        url: "http://original.com",
+        payload: { data: "test", status: "LIQUIDADO" },
+      },
     };
     const input = {
       id: [fakeId],
@@ -125,8 +125,18 @@ describe("ReenviarWebhookUseCase", () => {
 
     const result = await reenviarWebhookUseCase.execute(input, mockCedente);
 
-    expect(result.protocolo).toBeDefined();
-    expect(mockHttpClient.post).toHaveBeenCalled();
+    // CORREÇÃO AQUI: Espera o novo formato de resposta { success: true, ... }
+    expect(result).toEqual({
+      success: true,
+      protocolo: expect.any(String),
+      message: "Webhook reenviado com sucesso.",
+    });
+    expect(mockHttpClient.post).toHaveBeenCalledWith(
+      "http://original.com",
+      { data: "test", status: "LIQUIDADO" },
+      { timeout: 5000 }
+    );
+    expect(mockReprocessadoRepository.create).toHaveBeenCalled();
   });
 
   test("should throw ConflictException (409) if request is duplicated", async () => {
@@ -151,11 +161,15 @@ describe("ReenviarWebhookUseCase", () => {
 
   test("should update webhook but not save to reprocessado on HTTP error", async () => {
     const fakeId = "boleto-123";
+    // CORREÇÃO AQUI: Estrutura do objeto simulado atualizada
     const fakeWebhook = {
       id: fakeId,
-      payload: { data: "test", status: "LIQUIDADO" },
       cedente_id: 1,
-      url: "http://original.com",
+      data: {
+        url: "http://original.com",
+        payload: { data: "test", status: "LIQUIDADO" },
+      },
+      tentativas: 1,
     };
     const input = {
       id: [fakeId],
@@ -173,8 +187,15 @@ describe("ReenviarWebhookUseCase", () => {
     try {
       await reenviarWebhookUseCase.execute(input, mockCedente);
     } catch (error) {
-      expect(mockHttpClient.post).toHaveBeenCalled();
-      expect(mockWebhookRepository.update).toHaveBeenCalled();
+        // Esperado cair aqui
     }
+    
+    expect(mockHttpClient.post).toHaveBeenCalled();
+    // Verifica se atualizou tentivas para 2
+    expect(mockWebhookRepository.update).toHaveBeenCalledWith(fakeId, {
+      tentativas: 2,
+      last_status: null,
+    });
+    expect(mockReprocessadoRepository.create).not.toHaveBeenCalled();
   });
 });

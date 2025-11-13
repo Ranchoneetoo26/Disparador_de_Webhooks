@@ -151,7 +151,12 @@ class ReenviarWebhookUseCase {
       status: "sent",
     };
     await this.reprocessadoRepository.create(registroProtocolo);
-    return { protocolo: protocoloLote };
+    
+    return {
+      success: true,
+      protocolo: protocoloLote,
+      message: "Webhook reenviado com sucesso."
+    };
   }
 
   async processarReenvio(webhook, url, payload) {
