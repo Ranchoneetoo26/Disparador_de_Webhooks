@@ -23,10 +23,11 @@ class ReenviarWebhookController {
     });
   }
 
-  async handle(req, res) {
+  handle = async (req, res) => {
     try {
+      const { cedente } = req;
       const input = ReenviarWebhookInput.validate(req.body);
-      input.cedente = req.cedente;
+      input.cedente = cedente;
 
       const output = await this.useCase.execute(input, cedente);
 
