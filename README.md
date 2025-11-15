@@ -85,8 +85,11 @@ npm install
 Subir containers e preparar banco:
 
 docker compose down -v
+
 docker compose up -d
+
 npx sequelize-cli db:migrate
+
 npx sequelize-cli db:seed:all
 
 Se ocorrer erro nos testes, repetir a preparação do banco.

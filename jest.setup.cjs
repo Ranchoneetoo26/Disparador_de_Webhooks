@@ -8,14 +8,25 @@ try {
   } catch (e) {}
 }
 
+const {
+  beforeAll,
+  afterAll,
+} = require("@jest/globals");
+
+let db, sequelize, models;
+
 try {
   const indexModule = require("./src/infrastructure/database/sequelize/models/index.cjs");
-  const db = indexModule && (indexModule.default || indexModule);
+  db = indexModule && (indexModule.default || indexModule);
   if (db) {
     global.db = db;
-    if (db.sequelize) global.sequelize = db.sequelize;
+    if (db.sequelize) {
+      global.sequelize = db.sequelize;
+      sequelize = db.sequelize;
+    }
     if (db.models) {
       global.models = db.models;
+      models = db.models;
       Object.keys(db.models).forEach((m) => {
         if (!global[m]) global[m] = db.models[m];
       });
@@ -38,13 +49,28 @@ try {
   );
 }
 
+beforeAll(async () => {
+  if (sequelize) {
+    try {
+      console.log("[Jest] Sincronizando o banco de dados de teste (sync)...");
+      await sequelize.sync({ force: true });
+      console.log("[Jest] Banco de dados de teste sincronizado.");
+    } catch (error) {
+      console.error("[Jest] ERRO AO SINCRONIZAR O BANCO DE TESTE:", error);
+      process.exit(1);
+    }
+  } else {
+    console.error("[Jest] Instância do Sequelize não encontrada no beforeAll.");
+  }
+});
+
 afterAll(async () => {
   try {
-    const sequelize = global.sequelize || (global.db && global.db.sequelize);
-    if (sequelize && typeof sequelize.close === "function") {
+    const seq = global.sequelize || (global.db && global.db.sequelize);
+    if (seq && typeof seq.close === "function") {
       console.log("[Jest] Fechando conexão Sequelize...");
       try {
-        await sequelize.close();
+        await seq.close();
       } catch (e) {
         console.warn(
           "[Jest] Erro ao fechar sequelize (ignored):",

@@ -5,9 +5,15 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "jest --runInBand",
+    "docker:stop": "docker compose down -v",
+    "docker:start": "docker-compose up -d",
+    "db:create": "npx sequelize-cli db:create",
+    "db:migrate": "npx sequelize-cli db:migrate",
+    "db:seed": "npx sequelize-cli db:seed:all",
+    "db:wait": "node -e \"setTimeout(() => { console.log('[DB] Esperando 10s o banco de dados iniciar...'); process.exit(0); }, 10000)\"",
+    "db:setup": "npm run docker:stop && npm run docker:start && npm run db:wait && (npm run db:create || (call)) && npm run db:migrate && npm run db:seed"
   },
   "keywords": [],
   "author": "",
