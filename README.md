@@ -10,7 +10,7 @@ Sistema responsável por reprocessar e reenviar notificações de webhooks do Pl
 | ---------------- | ----------------------------------- |
 | Antonio Neto     | Analista de Projeto                 |
 | Matheus Moreira  | QA Engineer                         |
-| Lucas Arruma     | Database Engineer                   |
+| Lucas Arruda     | Database Engineer                   |
 | Thiago Cezario   | Backend Developer                   |
 | Cauan Hiyuji     | Backend Developer                   |
 | João Miguel      | Backend Developer                   |
